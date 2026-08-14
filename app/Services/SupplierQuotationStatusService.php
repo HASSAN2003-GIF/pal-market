@@ -22,6 +22,14 @@ class SupplierQuotationStatusService
                 'status' => 'Quotations can only be submitted for open buyer requests.',
             ]);
         }
+        if (
+            $quotation->buyerRequest->expires_at !== null &&
+            $quotation->buyerRequest->expires_at->isPast()
+        ) {
+            throw ValidationException::withMessages([
+                'status' => 'Quotations cannot be submitted for expired buyer requests.',
+            ]);
+        }
 
         $quotation->update([
             'status' => 'submitted',

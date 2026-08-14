@@ -389,4 +389,19 @@ class SupplierQuotationStatusTest extends TestCase
         app(SupplierQuotationStatusService::class)
             ->submit($quotation);
     }
+
+    public function test_quotation_cannot_be_submitted_when_buyer_request_has_expired(): void
+    {
+        $quotation = $this->createQuotation('draft');
+
+        $quotation->buyerRequest->update([
+            'status' => 'open',
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->submit($quotation);
+    }
 }
