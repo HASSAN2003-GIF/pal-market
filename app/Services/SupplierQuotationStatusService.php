@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SupplierQuotation;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class SupplierQuotationStatusService
 {
@@ -25,28 +26,39 @@ class SupplierQuotationStatusService
     public function accept(
     SupplierQuotation $quotation
 ): SupplierQuotation {
-    if ($quotation->status !== 'submitted') {
-        throw ValidationException::withMessages([
-            'status' => 'Only submitted quotations can be accepted.',
+    return DB::transaction(function () use ($quotation) {
+
+        if ($quotation->status !== 'submitted') {
+            throw ValidationException::withMessages([
+                'status' => 'Only submitted quotations can be accepted.',
+            ]);
+        }
+
+        $anotherAcceptedQuotationExists = SupplierQuotation::query()
+            ->where('buyer_request_id', $quotation->buyer_request_id)
+            ->where('status', 'accepted')
+            ->whereKeyNot($quotation->id)
+            ->exists();
+
+        if ($anotherAcceptedQuotationExists) {
+            throw ValidationException::withMessages([
+                'status' => 'Another quotation has already been accepted for this buyer request.',
+            ]);
+        }
+
+        SupplierQuotation::query()
+            ->where('buyer_request_id', $quotation->buyer_request_id)
+            ->where('status', 'submitted')
+            ->whereKeyNot($quotation->id)
+            ->update([
+                'status' => 'rejected',
+            ]);
+
+        $quotation->update([
+            'status' => 'accepted',
         ]);
-    }
 
-    $anotherAcceptedQuotationExists = SupplierQuotation::query()
-        ->where('buyer_request_id', $quotation->buyer_request_id)
-        ->where('status', 'accepted')
-        ->whereKeyNot($quotation->id)
-        ->exists();
-
-    if ($anotherAcceptedQuotationExists) {
-        throw ValidationException::withMessages([
-            'status' => 'Another quotation has already been accepted for this buyer request.',
-        ]);
-    }
-
-    $quotation->update([
-        'status' => 'accepted',
-    ]);
-
-    return $quotation->refresh();
+        return $quotation->refresh();
+    });
 }
 }

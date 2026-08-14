@@ -252,4 +252,75 @@ public function test_cannot_accept_second_quotation_for_same_buyer_request(): vo
 
     $service->accept($secondQuotation);
 }
+public function test_accepting_quotation_rejects_other_submitted_quotations(): void
+{
+    $buyerUser = User::factory()->create();
+
+    $buyer = BuyerProfile::create([
+        'user_id' => $buyerUser->id,
+        'business_name' => 'Hassan Hardware',
+        'business_type' => 'Hardware Store',
+        'status' => 'active',
+    ]);
+
+    $supplierUser1 = User::factory()->create();
+
+    $supplier1 = Supplier::create([
+        'user_id' => $supplierUser1->id,
+        'business_name' => 'Supplier One',
+        'tin_number' => '111111111',
+        'description' => 'First supplier',
+        'status' => 'approved',
+    ]);
+
+    $supplierUser2 = User::factory()->create();
+
+    $supplier2 = Supplier::create([
+        'user_id' => $supplierUser2->id,
+        'business_name' => 'Supplier Two',
+        'tin_number' => '222222222',
+        'description' => 'Second supplier',
+        'status' => 'approved',
+    ]);
+
+    $request = BuyerRequest::create([
+        'buyer_profile_id' => $buyer->id,
+        'request_number' => 'REQ-' . uniqid(),
+        'title' => 'Cement requirement',
+        'description' => 'We need cement.',
+        'status' => 'open',
+    ]);
+
+    $quotationOne = SupplierQuotation::create([
+        'buyer_request_id' => $request->id,
+        'supplier_id' => $supplier1->id,
+        'quotation_number' => 'QUO-' . uniqid(),
+        'subtotal' => 1000000,
+        'delivery_fee' => 50000,
+        'total_amount' => 1050000,
+        'currency' => 'TZS',
+        'status' => 'submitted',
+    ]);
+
+    $quotationTwo = SupplierQuotation::create([
+        'buyer_request_id' => $request->id,
+        'supplier_id' => $supplier2->id,
+        'quotation_number' => 'QUO-' . uniqid(),
+        'subtotal' => 1200000,
+        'delivery_fee' => 50000,
+        'total_amount' => 1250000,
+        'currency' => 'TZS',
+        'status' => 'submitted',
+    ]);
+
+    $service = app(SupplierQuotationStatusService::class);
+
+    $service->accept($quotationOne);
+
+    $quotationOne->refresh();
+    $quotationTwo->refresh();
+
+    $this->assertEquals('accepted', $quotationOne->status);
+    $this->assertEquals('rejected', $quotationTwo->status);
+}
 }
