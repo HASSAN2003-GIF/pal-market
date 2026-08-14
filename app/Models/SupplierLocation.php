@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SupplierLocation extends Model
 {
@@ -34,4 +35,8 @@ class SupplierLocation extends Model
     {
         return $this->belongsTo(Supplier::class);
     }
+    public function inventories(): HasMany
+{
+    return $this->hasMany(SupplierInventory::class);
+}
 }
