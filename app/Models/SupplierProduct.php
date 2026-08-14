@@ -36,4 +36,8 @@ class SupplierProduct extends Model
 {
     return $this->hasMany(SupplierInventory::class);
 }
+public function prices(): HasMany
+{
+    return $this->hasMany(SupplierPrice::class);
+}
 }
