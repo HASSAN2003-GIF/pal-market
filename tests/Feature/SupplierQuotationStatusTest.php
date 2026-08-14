@@ -404,4 +404,18 @@ class SupplierQuotationStatusTest extends TestCase
         app(SupplierQuotationStatusService::class)
             ->submit($quotation);
     }
+
+    public function test_expired_quotation_cannot_be_accepted(): void
+    {
+        $quotation = $this->createQuotation('submitted');
+
+        $quotation->update([
+            'valid_until' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->accept($quotation);
+    }
 }

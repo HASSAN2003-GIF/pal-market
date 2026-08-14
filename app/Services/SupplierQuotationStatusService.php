@@ -48,6 +48,14 @@ class SupplierQuotationStatusService
                     'status' => 'Only submitted quotations can be accepted.',
                 ]);
             }
+            if (
+                $quotation->valid_until !== null &&
+                $quotation->valid_until->isPast()
+            ) {
+                throw ValidationException::withMessages([
+                    'status' => 'Expired quotations cannot be accepted.',
+                ]);
+            }
 
             $anotherAcceptedQuotationExists = SupplierQuotation::query()
                 ->where('buyer_request_id', $quotation->buyer_request_id)
