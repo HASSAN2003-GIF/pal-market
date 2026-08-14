@@ -183,4 +183,116 @@ public function test_buyer_request_relationships_work(): void
         $item->product->is($product)
     );
 }
+public function test_draft_buyer_request_can_be_published(): void
+{
+    $user = User::factory()->create();
+
+    $buyer = BuyerProfile::create([
+        'user_id' => $user->id,
+        'business_name' => 'Hassan Hardware',
+        'business_type' => 'Hardware Store',
+        'tin_number' => '123456789',
+        'description' => 'Hardware business',
+        'status' => 'active',
+    ]);
+
+    $request = BuyerRequest::create([
+        'buyer_profile_id' => $buyer->id,
+        'request_number' => 'REQ-PUBLISH-001',
+        'title' => 'Cement requirement',
+        'description' => 'Need cement.',
+        'status' => 'draft',
+    ]);
+
+    $request = app(\App\Services\BuyerRequestStatusService::class)
+        ->publish($request);
+
+    $this->assertEquals('open', $request->status);
+}
+public function test_open_buyer_request_cannot_be_published_again(): void
+{
+    $user = User::factory()->create();
+
+    $buyer = BuyerProfile::create([
+        'user_id' => $user->id,
+        'business_name' => 'Hassan Hardware',
+        'business_type' => 'Hardware Store',
+        'tin_number' => '123456789',
+        'description' => 'Hardware business',
+        'status' => 'active',
+    ]);
+
+    $request = BuyerRequest::create([
+        'buyer_profile_id' => $buyer->id,
+        'request_number' => 'REQ-PUBLISH-002',
+        'title' => 'Cement requirement',
+        'description' => 'Need cement.',
+        'status' => 'open',
+    ]);
+
+    $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+    app(\App\Services\BuyerRequestStatusService::class)
+        ->publish($request);
+}
+public function test_draft_buyer_request_can_be_cancelled(): void
+{
+    $request = $this->createBuyerRequest('draft');
+
+    $request = app(\App\Services\BuyerRequestStatusService::class)
+        ->cancel($request);
+
+    $this->assertEquals('cancelled', $request->status);
+}
+
+public function test_open_buyer_request_can_be_cancelled(): void
+{
+    $request = $this->createBuyerRequest('open');
+
+    $request = app(\App\Services\BuyerRequestStatusService::class)
+        ->cancel($request);
+
+    $this->assertEquals('cancelled', $request->status);
+}
+
+public function test_closed_buyer_request_cannot_be_cancelled(): void
+{
+    $request = $this->createBuyerRequest('closed');
+
+    $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+    app(\App\Services\BuyerRequestStatusService::class)
+        ->cancel($request);
+}
+
+public function test_cancelled_buyer_request_cannot_be_cancelled_again(): void
+{
+    $request = $this->createBuyerRequest('cancelled');
+
+    $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+    app(\App\Services\BuyerRequestStatusService::class)
+        ->cancel($request);
+}
+private function createBuyerRequest(string $status): BuyerRequest
+{
+    $user = User::factory()->create();
+
+    $buyer = BuyerProfile::create([
+        'user_id' => $user->id,
+        'business_name' => 'Test Hardware',
+        'business_type' => 'Hardware Store',
+        'tin_number' => '999888777',
+        'description' => 'Test buyer',
+        'status' => 'active',
+    ]);
+
+    return BuyerRequest::create([
+        'buyer_profile_id' => $buyer->id,
+        'request_number' => 'REQ-' . uniqid(),
+        'title' => 'Test request',
+        'description' => 'Test buyer request.',
+        'status' => $status,
+    ]);
+}
 }
