@@ -38,4 +38,8 @@ class Product extends Model
 {
     return $this->hasMany(SupplierProduct::class);
 }
+public function quotationItems(): HasMany
+{
+    return $this->hasMany(SupplierQuotationItem::class);
+}
 }

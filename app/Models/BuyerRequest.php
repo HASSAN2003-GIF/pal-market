@@ -30,4 +30,8 @@ class BuyerRequest extends Model
     {
         return $this->hasMany(BuyerRequestItem::class);
     }
+    public function quotations(): HasMany
+{
+    return $this->hasMany(SupplierQuotation::class);
+}
 }

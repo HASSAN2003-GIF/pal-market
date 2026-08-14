@@ -37,4 +37,8 @@ class Supplier extends Model
 {
     return $this->hasMany(SupplierProduct::class);
 }
+public function quotations(): HasMany
+{
+    return $this->hasMany(SupplierQuotation::class);
+}
 }
