@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\SupplierQuotation;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SupplierQuotationStatusService
 {
@@ -17,48 +17,59 @@ class SupplierQuotationStatusService
             ]);
         }
 
+        if ($quotation->buyerRequest->status !== 'open') {
+            throw ValidationException::withMessages([
+                'status' => 'Quotations can only be submitted for open buyer requests.',
+            ]);
+        }
+
         $quotation->update([
             'status' => 'submitted',
         ]);
 
         return $quotation->refresh();
     }
+
     public function accept(
-    SupplierQuotation $quotation
-): SupplierQuotation {
-    return DB::transaction(function () use ($quotation) {
+        SupplierQuotation $quotation
+    ): SupplierQuotation {
+        return DB::transaction(function () use ($quotation) {
 
-        if ($quotation->status !== 'submitted') {
-            throw ValidationException::withMessages([
-                'status' => 'Only submitted quotations can be accepted.',
+            if ($quotation->status !== 'submitted') {
+                throw ValidationException::withMessages([
+                    'status' => 'Only submitted quotations can be accepted.',
+                ]);
+            }
+
+            $anotherAcceptedQuotationExists = SupplierQuotation::query()
+                ->where('buyer_request_id', $quotation->buyer_request_id)
+                ->where('status', 'accepted')
+                ->whereKeyNot($quotation->id)
+                ->exists();
+
+            if ($anotherAcceptedQuotationExists) {
+                throw ValidationException::withMessages([
+                    'status' => 'Another quotation has already been accepted for this buyer request.',
+                ]);
+            }
+
+            SupplierQuotation::query()
+                ->where('buyer_request_id', $quotation->buyer_request_id)
+                ->where('status', 'submitted')
+                ->whereKeyNot($quotation->id)
+                ->update([
+                    'status' => 'rejected',
+                ]);
+
+            $quotation->update([
+                'status' => 'accepted',
             ]);
-        }
 
-        $anotherAcceptedQuotationExists = SupplierQuotation::query()
-            ->where('buyer_request_id', $quotation->buyer_request_id)
-            ->where('status', 'accepted')
-            ->whereKeyNot($quotation->id)
-            ->exists();
-
-        if ($anotherAcceptedQuotationExists) {
-            throw ValidationException::withMessages([
-                'status' => 'Another quotation has already been accepted for this buyer request.',
-            ]);
-        }
-
-        SupplierQuotation::query()
-            ->where('buyer_request_id', $quotation->buyer_request_id)
-            ->where('status', 'submitted')
-            ->whereKeyNot($quotation->id)
-            ->update([
-                'status' => 'rejected',
+            $quotation->buyerRequest->update([
+                'status' => 'closed',
             ]);
 
-        $quotation->update([
-            'status' => 'accepted',
-        ]);
-
-        return $quotation->refresh();
-    });
-}
+            return $quotation->refresh();
+        });
+    }
 }
