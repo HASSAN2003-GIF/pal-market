@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BuyerProfile extends Model
 {
@@ -20,4 +21,8 @@ class BuyerProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function requests(): HasMany
+{
+    return $this->hasMany(BuyerRequest::class);
+}
 }
