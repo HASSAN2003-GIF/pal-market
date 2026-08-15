@@ -8,7 +8,10 @@ use App\Models\BuyerRequestItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\BuyerRequestStatusService;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class BuyerRequestTest extends TestCase
@@ -273,6 +276,61 @@ public function test_cancelled_buyer_request_cannot_be_cancelled_again(): void
 
     app(\App\Services\BuyerRequestStatusService::class)
         ->cancel($request);
+}
+public function test_open_buyer_request_can_expire_when_expiration_time_has_passed(): void
+{
+    $request = $this->createBuyerRequest('open');
+
+    $request->update([
+        'expires_at' => now()->subMinute(),
+    ]);
+
+    $request = app(BuyerRequestStatusService::class)
+        ->expire($request);
+
+    $this->assertEquals('expired', $request->status);
+}
+
+public function test_open_buyer_request_cannot_expire_before_expiration_time(): void
+{
+    $request = $this->createBuyerRequest('open');
+
+    $request->update([
+        'expires_at' => now()->addMinute(),
+    ]);
+
+    $this->expectException(ValidationException::class);
+
+    app(BuyerRequestStatusService::class)
+        ->expire($request);
+}
+
+public function test_draft_buyer_request_cannot_expire(): void
+{
+    $request = $this->createBuyerRequest('draft');
+
+    $request->update([
+        'expires_at' => now()->subMinute(),
+    ]);
+
+    $this->expectException(ValidationException::class);
+
+    app(BuyerRequestStatusService::class)
+        ->expire($request);
+}
+
+public function test_expired_buyer_request_cannot_expire_again(): void
+{
+    $request = $this->createBuyerRequest('expired');
+
+    $request->update([
+        'expires_at' => now()->subMinute(),
+    ]);
+
+    $this->expectException(ValidationException::class);
+
+    app(BuyerRequestStatusService::class)
+        ->expire($request);
 }
 private function createBuyerRequest(string $status): BuyerRequest
 {
