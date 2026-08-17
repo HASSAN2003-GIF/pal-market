@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Brand;
+use App\Models\BuyerProfile;
+use App\Models\BuyerRequest;
+use App\Models\BuyerRequestItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Supplier;
@@ -10,13 +13,11 @@ use App\Models\SupplierProduct;
 use App\Models\SupplierQuotation;
 use App\Models\SupplierQuotationItem;
 use App\Models\User;
-use App\Models\BuyerProfile;
-use App\Models\BuyerRequest;
-use App\Models\BuyerRequestItem;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use App\Services\SupplierQuotationService;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\TestCase;
 
 class SupplierQuotationWorkflowTest extends TestCase
 {
@@ -141,398 +142,606 @@ class SupplierQuotationWorkflowTest extends TestCase
             'total_price' => 2500000,
         ]);
     }
+
     public function test_supplier_cannot_quote_for_product_not_in_buyer_request(): void
-{
-    $buyerUser = User::factory()->create();
+    {
+        $buyerUser = User::factory()->create();
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $buyerUser->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'status' => 'active',
-    ]);
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
 
-    $supplierUser = User::factory()->create();
+        $supplierUser = User::factory()->create();
 
-    $supplier = Supplier::create([
-        'user_id' => $supplierUser->id,
-        'business_name' => 'Tanzania Building Supplies',
-        'tin_number' => '987654321',
-        'description' => 'Construction materials supplier',
-        'status' => 'approved',
-    ]);
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654321',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
 
-    $category = Category::create([
-        'name' => 'Construction Materials',
-        'slug' => 'construction-materials',
-        'description' => 'Construction materials',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Construction Materials',
+            'slug' => 'construction-materials',
+            'description' => 'Construction materials',
+            'is_active' => true,
+        ]);
 
-    $brand = Brand::create([
-        'name' => 'Example Cement',
-        'slug' => 'example-cement',
-        'description' => 'Cement brand',
-        'is_active' => true,
-    ]);
+        $brand = Brand::create([
+            'name' => 'Example Cement',
+            'slug' => 'example-cement',
+            'description' => 'Cement brand',
+            'is_active' => true,
+        ]);
 
-    $requestedProduct = Product::create([
-        'category_id' => $category->id,
-        'brand_id' => $brand->id,
-        'name' => 'Cement 50kg',
-        'slug' => 'cement-50kg',
-        'description' => '50kg cement bag',
-        'unit' => 'bag',
-        'is_active' => true,
-    ]);
+        $requestedProduct = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Cement 50kg',
+            'slug' => 'cement-50kg',
+            'description' => '50kg cement bag',
+            'unit' => 'bag',
+            'is_active' => true,
+        ]);
 
-    $unrequestedProduct = Product::create([
-        'category_id' => $category->id,
-        'brand_id' => $brand->id,
-        'name' => 'Iron Sheets',
-        'slug' => 'iron-sheets',
-        'description' => 'Corrugated iron sheets',
-        'unit' => 'piece',
-        'is_active' => true,
-    ]);
+        $unrequestedProduct = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Iron Sheets',
+            'slug' => 'iron-sheets',
+            'description' => 'Corrugated iron sheets',
+            'unit' => 'piece',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $requestedProduct->id,
-        'supplier_sku' => 'CEM-50',
-        'description' => '50kg cement',
-        'is_active' => true,
-    ]);
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $requestedProduct->id,
+            'supplier_sku' => 'CEM-50',
+            'description' => '50kg cement',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $unrequestedProduct->id,
-        'supplier_sku' => 'IRON-01',
-        'description' => 'Iron sheets',
-        'is_active' => true,
-    ]);
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $unrequestedProduct->id,
+            'supplier_sku' => 'IRON-01',
+            'description' => 'Iron sheets',
+            'is_active' => true,
+        ]);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-2026-0002',
-        'title' => 'Cement requirement',
-        'description' => 'We need cement.',
-        'status' => 'open',
-    ]);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-2026-0002',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
 
-    BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $requestedProduct->id,
-        'quantity' => 100,
-        'unit' => 'bag',
-    ]);
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $requestedProduct->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+        ]);
 
-    $quotation = SupplierQuotation::create([
-        'buyer_request_id' => $request->id,
-        'supplier_id' => $supplier->id,
-        'quotation_number' => 'QUO-2026-0002',
-        'subtotal' => 0,
-        'delivery_fee' => 0,
-        'total_amount' => 0,
-        'currency' => 'TZS',
-        'status' => 'draft',
-    ]);
+        $quotation = SupplierQuotation::create([
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => 'QUO-2026-0002',
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'draft',
+        ]);
 
-    $this->expectException(ValidationException::class);
+        $this->expectException(ValidationException::class);
 
-    app(SupplierQuotationService::class)->addItem(
-        $quotation,
-        $unrequestedProduct->id,
-        50,
-        'piece',
-        30000
-    );
+        app(SupplierQuotationService::class)->addItem(
+            $quotation,
+            $unrequestedProduct->id,
+            50,
+            'piece',
+            30000
+        );
 
-    $this->assertDatabaseMissing('supplier_quotation_items', [
-        'supplier_quotation_id' => $quotation->id,
-        'product_id' => $unrequestedProduct->id,
-    ]);
-}
-public function test_quotation_totals_are_calculated_from_items(): void
-{
-    $buyerUser = User::factory()->create();
+        $this->assertDatabaseMissing('supplier_quotation_items', [
+            'supplier_quotation_id' => $quotation->id,
+            'product_id' => $unrequestedProduct->id,
+        ]);
+    }
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $buyerUser->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'status' => 'active',
-    ]);
+    public function test_quotation_totals_are_calculated_from_items(): void
+    {
+        $buyerUser = User::factory()->create();
 
-    $supplierUser = User::factory()->create();
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
 
-    $supplier = Supplier::create([
-        'user_id' => $supplierUser->id,
-        'business_name' => 'Tanzania Building Supplies',
-        'tin_number' => '987654322',
-        'description' => 'Construction materials supplier',
-        'status' => 'approved',
-    ]);
+        $supplierUser = User::factory()->create();
 
-    $category = Category::create([
-        'name' => 'Construction Materials',
-        'slug' => 'construction-materials',
-        'description' => 'Construction materials',
-        'is_active' => true,
-    ]);
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654322',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
 
-    $brand = Brand::create([
-        'name' => 'Example Cement',
-        'slug' => 'example-cement',
-        'description' => 'Cement brand',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Construction Materials',
+            'slug' => 'construction-materials',
+            'description' => 'Construction materials',
+            'is_active' => true,
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'brand_id' => $brand->id,
-        'name' => 'Cement 50kg',
-        'slug' => 'cement-50kg',
-        'description' => '50kg cement bag',
-        'unit' => 'bag',
-        'is_active' => true,
-    ]);
+        $brand = Brand::create([
+            'name' => 'Example Cement',
+            'slug' => 'example-cement',
+            'description' => 'Cement brand',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $product->id,
-        'supplier_sku' => 'CEM-50',
-        'description' => '50kg cement',
-        'is_active' => true,
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Cement 50kg',
+            'slug' => 'cement-50kg',
+            'description' => '50kg cement bag',
+            'unit' => 'bag',
+            'is_active' => true,
+        ]);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-2026-0003',
-        'title' => 'Cement requirement',
-        'description' => 'We need cement.',
-        'status' => 'open',
-    ]);
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'CEM-50',
+            'description' => '50kg cement',
+            'is_active' => true,
+        ]);
 
-    BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $product->id,
-        'quantity' => 100,
-        'unit' => 'bag',
-    ]);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-2026-0003',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
 
-    $quotation = SupplierQuotation::create([
-        'buyer_request_id' => $request->id,
-        'supplier_id' => $supplier->id,
-        'quotation_number' => 'QUO-2026-0003',
-        'subtotal' => 0,
-        'delivery_fee' => 100000,
-        'total_amount' => 0,
-        'currency' => 'TZS',
-        'status' => 'draft',
-    ]);
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+        ]);
 
-    $service = app(\App\Services\SupplierQuotationService::class);
+        $quotation = SupplierQuotation::create([
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => 'QUO-2026-0003',
+            'subtotal' => 0,
+            'delivery_fee' => 100000,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'draft',
+        ]);
 
-    $service->addItem(
-        $quotation,
-        $product->id,
-        100,
-        'bag',
-        25000
-    );
+        $service = app(SupplierQuotationService::class);
 
-    $quotation->refresh();
+        $service->addItem(
+            $quotation,
+            $product->id,
+            100,
+            'bag',
+            25000
+        );
 
-    $this->assertEquals(2500000, $quotation->subtotal);
-    $this->assertEquals(2600000, $quotation->total_amount);
-}
-public function test_supplier_cannot_quote_for_product_it_does_not_offer(): void
-{
-    $buyerUser = User::factory()->create();
+        $quotation->refresh();
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $buyerUser->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'status' => 'active',
-    ]);
+        $this->assertEquals(2500000, $quotation->subtotal);
+        $this->assertEquals(2600000, $quotation->total_amount);
+    }
 
-    $supplierUser = User::factory()->create();
+    public function test_supplier_cannot_quote_for_product_it_does_not_offer(): void
+    {
+        $buyerUser = User::factory()->create();
 
-    $supplier = Supplier::create([
-        'user_id' => $supplierUser->id,
-        'business_name' => 'Tanzania Building Supplies',
-        'tin_number' => '987654323',
-        'description' => 'Construction materials supplier',
-        'status' => 'approved',
-    ]);
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
 
-    $category = Category::create([
-        'name' => 'Construction Materials',
-        'slug' => 'construction-materials',
-        'description' => 'Construction materials',
-        'is_active' => true,
-    ]);
+        $supplierUser = User::factory()->create();
 
-    $brand = Brand::create([
-        'name' => 'Example Cement',
-        'slug' => 'example-cement',
-        'description' => 'Cement brand',
-        'is_active' => true,
-    ]);
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654323',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'brand_id' => $brand->id,
-        'name' => 'Cement 50kg',
-        'slug' => 'cement-50kg',
-        'description' => '50kg cement bag',
-        'unit' => 'bag',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Construction Materials',
+            'slug' => 'construction-materials',
+            'description' => 'Construction materials',
+            'is_active' => true,
+        ]);
 
-    // Notice: supplier does NOT offer this product.
+        $brand = Brand::create([
+            'name' => 'Example Cement',
+            'slug' => 'example-cement',
+            'description' => 'Cement brand',
+            'is_active' => true,
+        ]);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-2026-0004',
-        'title' => 'Cement requirement',
-        'description' => 'We need cement.',
-        'status' => 'open',
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Cement 50kg',
+            'slug' => 'cement-50kg',
+            'description' => '50kg cement bag',
+            'unit' => 'bag',
+            'is_active' => true,
+        ]);
 
-    BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $product->id,
-        'quantity' => 100,
-        'unit' => 'bag',
-    ]);
+        // Notice: supplier does NOT offer this product.
 
-    $quotation = SupplierQuotation::create([
-        'buyer_request_id' => $request->id,
-        'supplier_id' => $supplier->id,
-        'quotation_number' => 'QUO-2026-0004',
-        'subtotal' => 0,
-        'delivery_fee' => 0,
-        'total_amount' => 0,
-        'currency' => 'TZS',
-        'status' => 'draft',
-    ]);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-2026-0004',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
 
-    $this->expectException(ValidationException::class);
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+        ]);
 
-    app(SupplierQuotationService::class)->addItem(
-        $quotation,
-        $product->id,
-        100,
-        'bag',
-        25000
-    );
+        $quotation = SupplierQuotation::create([
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => 'QUO-2026-0004',
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'draft',
+        ]);
 
-    $this->assertDatabaseMissing('supplier_quotation_items', [
-        'supplier_quotation_id' => $quotation->id,
-        'product_id' => $product->id,
-    ]);
-}
+        $this->expectException(ValidationException::class);
 
-public function test_supplier_cannot_add_same_product_twice_to_quotation(): void
-{
-    $buyerUser = User::factory()->create();
+        app(SupplierQuotationService::class)->addItem(
+            $quotation,
+            $product->id,
+            100,
+            'bag',
+            25000
+        );
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $buyerUser->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'status' => 'active',
-    ]);
+        $this->assertDatabaseMissing('supplier_quotation_items', [
+            'supplier_quotation_id' => $quotation->id,
+            'product_id' => $product->id,
+        ]);
+    }
 
-    $supplierUser = User::factory()->create();
+    public function test_supplier_cannot_add_same_product_twice_to_quotation(): void
+    {
+        $buyerUser = User::factory()->create();
 
-    $supplier = Supplier::create([
-        'user_id' => $supplierUser->id,
-        'business_name' => 'Tanzania Building Supplies',
-        'tin_number' => '987654324',
-        'description' => 'Construction materials supplier',
-        'status' => 'approved',
-    ]);
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
 
-    $category = Category::create([
-        'name' => 'Construction Materials',
-        'slug' => 'construction-materials',
-        'description' => 'Construction materials',
-        'is_active' => true,
-    ]);
+        $supplierUser = User::factory()->create();
 
-    $brand = Brand::create([
-        'name' => 'Example Cement',
-        'slug' => 'example-cement',
-        'description' => 'Cement brand',
-        'is_active' => true,
-    ]);
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654324',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'brand_id' => $brand->id,
-        'name' => 'Cement 50kg',
-        'slug' => 'cement-50kg',
-        'description' => '50kg cement bag',
-        'unit' => 'bag',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Construction Materials',
+            'slug' => 'construction-materials',
+            'description' => 'Construction materials',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $product->id,
-        'supplier_sku' => 'CEM-50',
-        'description' => '50kg cement',
-        'is_active' => true,
-    ]);
+        $brand = Brand::create([
+            'name' => 'Example Cement',
+            'slug' => 'example-cement',
+            'description' => 'Cement brand',
+            'is_active' => true,
+        ]);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-2026-0005',
-        'title' => 'Cement requirement',
-        'description' => 'We need cement.',
-        'status' => 'open',
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Cement 50kg',
+            'slug' => 'cement-50kg',
+            'description' => '50kg cement bag',
+            'unit' => 'bag',
+            'is_active' => true,
+        ]);
 
-    BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $product->id,
-        'quantity' => 100,
-        'unit' => 'bag',
-    ]);
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'CEM-50',
+            'description' => '50kg cement',
+            'is_active' => true,
+        ]);
 
-    $quotation = SupplierQuotation::create([
-        'buyer_request_id' => $request->id,
-        'supplier_id' => $supplier->id,
-        'quotation_number' => 'QUO-2026-0005',
-        'subtotal' => 0,
-        'delivery_fee' => 0,
-        'total_amount' => 0,
-        'currency' => 'TZS',
-        'status' => 'draft',
-    ]);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-2026-0005',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
 
-    $service = app(SupplierQuotationService::class);
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+        ]);
 
-    $service->addItem(
-        $quotation,
-        $product->id,
-        100,
-        'bag',
-        25000
-    );
+        $quotation = SupplierQuotation::create([
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => 'QUO-2026-0005',
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'draft',
+        ]);
 
-    $this->expectException(\Illuminate\Database\QueryException::class);
+        $service = app(SupplierQuotationService::class);
 
-    $service->addItem(
-        $quotation,
-        $product->id,
-        50,
-        'bag',
-        24000
-    );
-}
+        $service->addItem(
+            $quotation,
+            $product->id,
+            100,
+            'bag',
+            25000
+        );
+
+        $this->expectException(QueryException::class);
+
+        $service->addItem(
+            $quotation,
+            $product->id,
+            50,
+            'bag',
+            24000
+        );
+    }
+
+    public function test_non_draft_quotation_cannot_add_item(): void
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654323',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
+
+        $category = Category::create([
+            'name' => 'Construction Materials',
+            'slug' => 'construction-materials',
+            'description' => 'Construction materials',
+            'is_active' => true,
+        ]);
+
+        $brand = Brand::create([
+            'name' => 'Example Cement',
+            'slug' => 'example-cement',
+            'description' => 'Cement brand',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Cement 50kg',
+            'slug' => 'cement-50kg',
+            'description' => '50kg cement bag',
+            'unit' => 'bag',
+            'is_active' => true,
+        ]);
+
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'CEM-50',
+            'description' => '50kg cement',
+            'is_active' => true,
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-2026-0004',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
+
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+        ]);
+
+        $quotation = SupplierQuotation::create([
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => 'QUO-2026-0004',
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'submitted',
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->addItem(
+            $quotation,
+            $product->id,
+            50,
+            'bag',
+            25000
+        );
+
+        $this->assertDatabaseMissing('supplier_quotation_items', [
+            'supplier_quotation_id' => $quotation->id,
+            'product_id' => $product->id,
+        ]);
+    }
+
+    public function test_quotation_item_quantity_must_be_greater_than_zero(): void
+    {
+        $quotation = $this->createQuotationForWorkflowTest();
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->addItem(
+            $quotation,
+            $quotation->buyerRequest->items()->first()->product_id,
+            0,
+            'bag',
+            25000
+        );
+    }
+
+    public function test_quotation_item_unit_price_cannot_be_negative(): void
+    {
+        $quotation = $this->createQuotationForWorkflowTest();
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->addItem(
+            $quotation,
+            $quotation->buyerRequest->items()->first()->product_id,
+            10,
+            'bag',
+            -25000
+        );
+    }
+
+    private function createQuotationForWorkflowTest(): SupplierQuotation
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Test Buyer',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Test Supplier',
+            'tin_number' => 'TIN-'.uniqid(),
+            'description' => 'Test supplier',
+            'status' => 'approved',
+        ]);
+
+        $category = Category::create([
+            'name' => 'Test Category',
+            'slug' => 'test-category-'.uniqid(),
+            'description' => 'Test category',
+            'is_active' => true,
+        ]);
+
+        $brand = Brand::create([
+            'name' => 'Test Brand',
+            'slug' => 'test-brand-'.uniqid(),
+            'description' => 'Test brand',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'name' => 'Test Product',
+            'slug' => 'test-product-'.uniqid(),
+            'description' => 'Test product',
+            'unit' => 'bag',
+            'is_active' => true,
+        ]);
+
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'TEST-'.uniqid(),
+            'description' => 'Test supplier product',
+            'is_active' => true,
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-'.uniqid(),
+            'title' => 'Test Request',
+            'description' => 'Test buyer request',
+            'status' => 'open',
+        ]);
+
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+        ]);
+
+        return SupplierQuotation::create([
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => 'QUO-'.uniqid(),
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'draft',
+        ]);
+    }
 }

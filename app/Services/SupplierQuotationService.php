@@ -16,6 +16,22 @@ class SupplierQuotationService
         float $unitPrice,
         ?string $notes = null
     ): SupplierQuotationItem {
+        if ($quotation->status !== 'draft') {
+            throw ValidationException::withMessages([
+                'status' => 'Only draft quotations can be modified.',
+            ]);
+        }
+        if ($quantity <= 0) {
+            throw ValidationException::withMessages([
+                'quantity' => 'Quantity must be greater than zero.',
+            ]);
+        }
+
+        if ($unitPrice < 0) {
+            throw ValidationException::withMessages([
+                'unit_price' => 'Unit price cannot be negative.',
+            ]);
+        }
         $productIsRequested = $quotation->buyerRequest
             ->items()
             ->where('product_id', $productId)
