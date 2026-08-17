@@ -143,6 +143,223 @@ class SupplierQuotationWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_approved_supplier_can_create_draft_quotation(): void
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654323',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-CREATE-001',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
+
+        $quotation = app(SupplierQuotationService::class)->create(
+            $request,
+            $supplier
+        );
+
+        $this->assertDatabaseHas('supplier_quotations', [
+            'id' => $quotation->id,
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+            'status' => 'draft',
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+        ]);
+
+        $this->assertNotEmpty($quotation->quotation_number);
+    }
+
+    public function test_unapproved_supplier_cannot_create_quotation(): void
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Pending Supplier',
+            'tin_number' => '987654324',
+            'description' => 'Supplier awaiting approval',
+            'status' => 'pending',
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-CREATE-002',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->create(
+            $request,
+            $supplier
+        );
+
+        $this->assertDatabaseMissing('supplier_quotations', [
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+        ]);
+    }
+
+    public function test_quotation_cannot_be_created_for_closed_buyer_request(): void
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654325',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-CREATE-003',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'closed',
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->create(
+            $request,
+            $supplier
+        );
+
+        $this->assertDatabaseMissing('supplier_quotations', [
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+        ]);
+    }
+
+    public function test_quotation_cannot_be_created_for_expired_buyer_request(): void
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654326',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-CREATE-004',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->create(
+            $request,
+            $supplier
+        );
+
+        $this->assertDatabaseMissing('supplier_quotations', [
+            'buyer_request_id' => $request->id,
+            'supplier_id' => $supplier->id,
+        ]);
+    }
+
+    public function test_supplier_cannot_create_two_quotations_for_same_buyer_request(): void
+    {
+        $buyerUser = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $buyerUser->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'status' => 'active',
+        ]);
+
+        $supplierUser = User::factory()->create();
+
+        $supplier = Supplier::create([
+            'user_id' => $supplierUser->id,
+            'business_name' => 'Tanzania Building Supplies',
+            'tin_number' => '987654327',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
+
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-CREATE-005',
+            'title' => 'Cement requirement',
+            'description' => 'We need cement.',
+            'status' => 'open',
+        ]);
+
+        app(SupplierQuotationService::class)->create(
+            $request,
+            $supplier
+        );
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationService::class)->create(
+            $request,
+            $supplier
+        );
+    }
+
     public function test_supplier_cannot_quote_for_product_not_in_buyer_request(): void
     {
         $buyerUser = User::factory()->create();

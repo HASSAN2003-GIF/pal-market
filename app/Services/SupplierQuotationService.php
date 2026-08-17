@@ -2,12 +2,64 @@
 
 namespace App\Services;
 
+use App\Models\BuyerRequest;
+use App\Models\Supplier;
 use App\Models\SupplierQuotation;
 use App\Models\SupplierQuotationItem;
 use Illuminate\Validation\ValidationException;
 
 class SupplierQuotationService
 {
+    public function create(
+        BuyerRequest $buyerRequest,
+        Supplier $supplier
+    ): SupplierQuotation {
+        if ($buyerRequest->status !== 'open') {
+            throw ValidationException::withMessages([
+                'buyer_request_id' => 'Quotations can only be created for open buyer requests.',
+            ]);
+        }
+
+        if (
+            $buyerRequest->expires_at !== null &&
+            $buyerRequest->expires_at->isPast()
+        ) {
+            throw ValidationException::withMessages([
+                'buyer_request_id' => 'Quotations cannot be created for expired buyer requests.',
+            ]);
+        }
+
+        if ($supplier->status !== 'approved') {
+            throw ValidationException::withMessages([
+                'supplier_id' => 'Only approved suppliers can create quotations.',
+            ]);
+        }
+
+        $quotationAlreadyExists = $supplier
+            ->quotations()
+            ->where('buyer_request_id', $buyerRequest->id)
+            ->exists();
+
+        if ($quotationAlreadyExists) {
+            throw ValidationException::withMessages([
+                'buyer_request_id' => 'This supplier has already created a quotation for this buyer request.',
+            ]);
+        }
+
+        $quotationNumber = 'QUO-'.now()->format('YmdHis').'-'.$supplier->id;
+
+        return SupplierQuotation::create([
+            'buyer_request_id' => $buyerRequest->id,
+            'supplier_id' => $supplier->id,
+            'quotation_number' => $quotationNumber,
+            'subtotal' => 0,
+            'delivery_fee' => 0,
+            'total_amount' => 0,
+            'currency' => 'TZS',
+            'status' => 'draft',
+        ]);
+    }
+
     public function addItem(
         SupplierQuotation $quotation,
         int $productId,
