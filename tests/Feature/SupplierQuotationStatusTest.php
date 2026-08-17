@@ -106,6 +106,107 @@ class SupplierQuotationStatusTest extends TestCase
         $this->assertEquals('submitted', $quotation->status);
     }
 
+    public function test_submitted_quotation_can_expire_after_valid_until(): void
+    {
+        $quotation = $this->createQuotation('submitted');
+
+        $quotation->update([
+            'valid_until' => now()->subMinute(),
+        ]);
+
+        $quotation = app(SupplierQuotationStatusService::class)
+            ->expire($quotation);
+
+        $this->assertEquals('expired', $quotation->status);
+    }
+
+    public function test_submitted_quotation_cannot_expire_before_valid_until(): void
+    {
+        $quotation = $this->createQuotation('submitted');
+
+        $quotation->update([
+            'valid_until' => now()->addMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->expire($quotation);
+    }
+
+    public function test_draft_quotation_cannot_expire(): void
+    {
+        $quotation = $this->createQuotation('draft');
+
+        $quotation->update([
+            'valid_until' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->expire($quotation);
+    }
+
+    public function test_accepted_quotation_cannot_expire(): void
+    {
+        $quotation = $this->createQuotation('accepted');
+
+        $quotation->update([
+            'valid_until' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->expire($quotation);
+    }
+
+    public function test_expired_quotation_cannot_expire_again(): void
+    {
+        $quotation = $this->createQuotation('expired');
+
+        $quotation->update([
+            'valid_until' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->expire($quotation);
+    }
+
+    public function test_expire_supplier_quotations_command_expires_due_quotations(): void
+    {
+        $quotation = $this->createQuotation('submitted');
+
+        $quotation->update([
+            'valid_until' => now()->subMinute(),
+        ]);
+
+        $this->artisan('app:expire-supplier-quotations')
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('supplier_quotations', [
+            'id' => $quotation->id,
+            'status' => 'expired',
+        ]);
+    }
+
+    public function test_submitted_quotation_without_expiration_date_cannot_expire(): void
+    {
+        $quotation = $this->createQuotation('submitted');
+
+        $quotation->update([
+            'valid_until' => null,
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(SupplierQuotationStatusService::class)
+            ->expire($quotation);
+    }
+
     private function createQuotation(
         string $status = 'draft'
     ): SupplierQuotation {

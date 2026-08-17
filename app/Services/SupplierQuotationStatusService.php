@@ -88,4 +88,29 @@ class SupplierQuotationStatusService
             return $quotation->refresh();
         });
     }
+
+    public function expire(
+        SupplierQuotation $quotation
+    ): SupplierQuotation {
+        if ($quotation->status !== 'submitted') {
+            throw ValidationException::withMessages([
+                'status' => 'Only submitted quotations can expire.',
+            ]);
+        }
+
+        if (
+            $quotation->valid_until === null ||
+            $quotation->valid_until->isFuture()
+        ) {
+            throw ValidationException::withMessages([
+                'status' => 'Only quotations whose expiration time has passed can expire.',
+            ]);
+        }
+
+        $quotation->update([
+            'status' => 'expired',
+        ]);
+
+        return $quotation->refresh();
+    }
 }
