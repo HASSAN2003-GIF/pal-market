@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BuyerRequest;
 use App\Models\SupplierQuotation;
 use App\Services\SupplierQuotationService;
+use App\Services\SupplierQuotationStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -13,20 +14,32 @@ use Illuminate\Validation\ValidationException;
 class SupplierQuotationController extends Controller
 {
     public function __construct(
-        private SupplierQuotationService $quotationService
+        private SupplierQuotationService $quotationService,
+        private SupplierQuotationStatusService $quotationStatusService
     ) {}
 
     public function store(BuyerRequest $buyerRequest): JsonResponse
     {
-        $user = request()->user();
-
-        $supplier = $user->supplier;
+        $supplier = request()->user()->supplier;
 
         if (! $supplier) {
             return response()->json([
                 'message' => 'You do not have a supplier profile.',
             ], 403);
         }
+
+        if ($supplier->status !== 'approved') {
+            return response()->json([
+                'message' => 'Unable to create quotation.',
+                'errors' => [
+                    'supplier_id' => [
+                        'Your supplier account must be approved before creating a quotation.',
+                    ],
+                ],
+            ], 422);
+        }
+
+        $this->authorize('create', SupplierQuotation::class);
 
         try {
             $quotation = $this->quotationService->create(
@@ -54,21 +67,7 @@ class SupplierQuotationController extends Controller
         Request $request,
         SupplierQuotation $quotation
     ): JsonResponse {
-        $user = $request->user();
-
-        $supplier = $user->supplier;
-
-        if (! $supplier) {
-            return response()->json([
-                'message' => 'You do not have a supplier profile.',
-            ], 403);
-        }
-
-        if ($quotation->supplier_id !== $supplier->id) {
-            return response()->json([
-                'message' => 'You are not authorized to modify this quotation.',
-            ], 403);
-        }
+        $this->authorize('update', $quotation);
 
         $validated = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
@@ -99,5 +98,70 @@ class SupplierQuotationController extends Controller
                 'errors' => $exception->errors(),
             ], 422);
         }
+    }
+
+    public function submit(
+        Request $request,
+        SupplierQuotation $quotation
+    ): JsonResponse {
+        $this->authorize('submit', $quotation);
+
+        try {
+            $quotation = $this->quotationStatusService->submit($quotation);
+
+            return response()->json([
+                'message' => 'Quotation submitted successfully.',
+                'quotation' => $quotation->load([
+                    'buyerRequest',
+                    'supplier',
+                    'items',
+                ]),
+            ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'message' => 'Unable to submit quotation.',
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+    }
+
+    public function accept(
+        Request $request,
+        SupplierQuotation $quotation
+    ): JsonResponse {
+        $this->authorize('accept', $quotation);
+
+        try {
+            $quotation = $this->quotationStatusService->accept($quotation);
+
+            return response()->json([
+                'message' => 'Quotation accepted successfully.',
+                'quotation' => $quotation->load([
+                    'buyerRequest',
+                    'supplier',
+                    'items',
+                ]),
+            ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'message' => 'Unable to accept quotation.',
+                'errors' => $exception->errors(),
+            ]);
+        }
+    }
+
+    public function show(
+        Request $request,
+        SupplierQuotation $quotation
+    ): JsonResponse {
+        $this->authorize('view', $quotation);
+
+        return response()->json([
+            'quotation' => $quotation->load([
+                'buyerRequest',
+                'supplier',
+                'items.product',
+            ]),
+        ]);
     }
 }
