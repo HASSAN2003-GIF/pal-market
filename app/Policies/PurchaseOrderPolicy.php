@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\PurchaseOrder;
+use App\Models\SupplierQuotation;
 use App\Models\User;
 
 class PurchaseOrderPolicy
@@ -13,9 +14,12 @@ class PurchaseOrderPolicy
             || $user->supplier?->id === $purchaseOrder->supplier_id;
     }
 
-    public function create(User $user): bool
-    {
-        return $user->buyerProfile !== null;
+    public function create(
+        User $user,
+        SupplierQuotation $quotation
+    ): bool {
+        return $user->buyerProfile?->id ===
+            $quotation->buyerRequest->buyer_profile_id;
     }
 
     public function confirm(User $user, PurchaseOrder $purchaseOrder): bool
