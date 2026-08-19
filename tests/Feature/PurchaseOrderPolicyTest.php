@@ -91,7 +91,10 @@ class PurchaseOrderPolicyTest extends TestCase
         $data = $this->createPurchaseOrderScenario();
 
         $this->assertTrue(
-            app(PurchaseOrderPolicy::class)->create($data['buyerUser'])
+            app(PurchaseOrderPolicy::class)->create(
+                $data['buyerUser'],
+                $data['quotation']
+            )
         );
     }
 
@@ -100,7 +103,10 @@ class PurchaseOrderPolicyTest extends TestCase
         $data = $this->createPurchaseOrderScenario();
 
         $this->assertFalse(
-            app(PurchaseOrderPolicy::class)->create($data['supplierUser'])
+            app(PurchaseOrderPolicy::class)->create(
+                $data['supplierUser'],
+                $data['quotation']
+            )
         );
     }
 
