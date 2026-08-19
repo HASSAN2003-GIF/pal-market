@@ -12,17 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('brands', function (Blueprint $table) {
-    $table->id();
+            $table->id();
 
-    $table->string('name')->unique();
-    $table->string('slug')->unique();
+            $table->string('name')->unique();
+            $table->string('slug')->unique();
 
-    $table->text('description')->nullable();
+            $table->text('description')->nullable();
 
-    $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
 
-    $table->timestamps();
-});
+            $table->timestamps();
+        });
     }
 
     /**

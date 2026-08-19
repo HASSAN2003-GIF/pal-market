@@ -10,36 +10,36 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('supplier_locations', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('supplier_locations', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('supplier_id')
-            ->constrained()
-            ->cascadeOnDelete();
+            $table->foreignId('supplier_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->string('name');
-        $table->string('address');
+            $table->string('name');
+            $table->string('address');
 
-        $table->string('region');
-        $table->string('district')->nullable();
-        $table->string('ward')->nullable();
+            $table->string('region');
+            $table->string('district')->nullable();
+            $table->string('ward')->nullable();
 
-        $table->decimal('latitude', 10, 7)->nullable();
-        $table->decimal('longitude', 10, 7)->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
 
-        $table->string('phone')->nullable();
+            $table->string('phone')->nullable();
 
-        $table->boolean('is_primary')->default(false);
+            $table->boolean('is_primary')->default(false);
 
-        $table->enum('status', [
-            'active',
-            'inactive',
-        ])->default('active');
+            $table->enum('status', [
+                'active',
+                'inactive',
+            ])->default('active');
 
-        $table->timestamps();
-    });
-}
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

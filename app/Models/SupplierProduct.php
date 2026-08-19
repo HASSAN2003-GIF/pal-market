@@ -32,12 +32,14 @@ class SupplierProduct extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
     public function inventories(): HasMany
-{
-    return $this->hasMany(SupplierInventory::class);
-}
-public function prices(): HasMany
-{
-    return $this->hasMany(SupplierPrice::class);
-}
+    {
+        return $this->hasMany(SupplierInventory::class);
+    }
+
+    public function prices(): HasMany
+    {
+        return $this->hasMany(SupplierPrice::class);
+    }
 }

@@ -146,7 +146,7 @@ class SupplierQuotationController extends Controller
             return response()->json([
                 'message' => 'Unable to accept quotation.',
                 'errors' => $exception->errors(),
-            ]);
+            ], 422);
         }
     }
 

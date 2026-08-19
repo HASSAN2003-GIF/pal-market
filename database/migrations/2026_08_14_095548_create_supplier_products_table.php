@@ -12,26 +12,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('supplier_products', function (Blueprint $table) {
-    $table->id();
+            $table->id();
 
-    $table->foreignId('supplier_id')
-        ->constrained()
-        ->cascadeOnDelete();
+            $table->foreignId('supplier_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->foreignId('product_id')
-        ->constrained()
-        ->cascadeOnDelete();
+            $table->foreignId('product_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->string('supplier_sku')->nullable();
+            $table->string('supplier_sku')->nullable();
 
-    $table->text('description')->nullable();
+            $table->text('description')->nullable();
 
-    $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
 
-    $table->timestamps();
+            $table->timestamps();
 
-    $table->unique(['supplier_id', 'product_id']);
-});
+            $table->unique(['supplier_id', 'product_id']);
+        });
     }
 
     /**

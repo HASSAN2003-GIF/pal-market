@@ -77,280 +77,287 @@ class BuyerRequestTest extends TestCase
             'quantity' => 100,
         ]);
     }
+
     public function test_buyer_cannot_add_the_same_product_twice_to_a_request(): void
-{
-    $user = User::factory()->create();
+    {
+        $user = User::factory()->create();
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $user->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'tin_number' => '444555666',
-        'description' => 'Construction materials buyer',
-        'status' => 'active',
-    ]);
+        $buyer = BuyerProfile::create([
+            'user_id' => $user->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'tin_number' => '444555666',
+            'description' => 'Construction materials buyer',
+            'status' => 'active',
+        ]);
 
-    $category = Category::create([
-        'name' => 'Plumbing',
-        'slug' => 'plumbing',
-        'description' => 'Plumbing materials',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Plumbing',
+            'slug' => 'plumbing',
+            'description' => 'Plumbing materials',
+            'is_active' => true,
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'name' => 'PVC Pipe 1 Inch',
-        'slug' => 'pvc-pipe-1-inch',
-        'description' => '1 inch PVC pipe',
-        'unit' => 'piece',
-        'is_active' => true,
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'PVC Pipe 1 Inch',
+            'slug' => 'pvc-pipe-1-inch',
+            'description' => '1 inch PVC pipe',
+            'unit' => 'piece',
+            'is_active' => true,
+        ]);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-000002',
-        'title' => 'Plumbing materials',
-        'description' => 'Required plumbing materials.',
-        'status' => 'open',
-    ]);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-000002',
+            'title' => 'Plumbing materials',
+            'description' => 'Required plumbing materials.',
+            'status' => 'open',
+        ]);
 
-    BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $product->id,
-        'quantity' => 50,
-        'unit' => 'piece',
-    ]);
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 50,
+            'unit' => 'piece',
+        ]);
 
-    $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
-    BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $product->id,
-        'quantity' => 20,
-        'unit' => 'piece',
-    ]);
-}
-public function test_buyer_request_relationships_work(): void
-{
-    $user = User::factory()->create();
+        BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 20,
+            'unit' => 'piece',
+        ]);
+    }
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $user->id,
-        'business_name' => 'Relationship Test Buyer',
-        'business_type' => 'Hardware Store',
-        'tin_number' => '777888999',
-        'description' => 'Testing relationships',
-        'status' => 'active',
-    ]);
+    public function test_buyer_request_relationships_work(): void
+    {
+        $user = User::factory()->create();
 
-    $category = Category::create([
-        'name' => 'Roofing',
-        'slug' => 'roofing',
-        'description' => 'Roofing materials',
-        'is_active' => true,
-    ]);
+        $buyer = BuyerProfile::create([
+            'user_id' => $user->id,
+            'business_name' => 'Relationship Test Buyer',
+            'business_type' => 'Hardware Store',
+            'tin_number' => '777888999',
+            'description' => 'Testing relationships',
+            'status' => 'active',
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'name' => 'Iron Sheet',
-        'slug' => 'iron-sheet',
-        'description' => 'Roofing iron sheet',
-        'unit' => 'piece',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Roofing',
+            'slug' => 'roofing',
+            'description' => 'Roofing materials',
+            'is_active' => true,
+        ]);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-000003',
-        'title' => 'Roofing materials',
-        'description' => 'Need roofing materials.',
-        'status' => 'open',
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Iron Sheet',
+            'slug' => 'iron-sheet',
+            'description' => 'Roofing iron sheet',
+            'unit' => 'piece',
+            'is_active' => true,
+        ]);
 
-    $item = BuyerRequestItem::create([
-        'buyer_request_id' => $request->id,
-        'product_id' => $product->id,
-        'quantity' => 100,
-        'unit' => 'piece',
-    ]);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-000003',
+            'title' => 'Roofing materials',
+            'description' => 'Need roofing materials.',
+            'status' => 'open',
+        ]);
 
-    $this->assertTrue(
-        $buyer->requests->contains($request)
-    );
+        $item = BuyerRequestItem::create([
+            'buyer_request_id' => $request->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'piece',
+        ]);
 
-    $this->assertTrue(
-        $request->items->contains($item)
-    );
+        $this->assertTrue(
+            $buyer->requests->contains($request)
+        );
 
-    $this->assertTrue(
-        $item->product->is($product)
-    );
-}
-public function test_draft_buyer_request_can_be_published(): void
-{
-    $user = User::factory()->create();
+        $this->assertTrue(
+            $request->items->contains($item)
+        );
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $user->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'tin_number' => '123456789',
-        'description' => 'Hardware business',
-        'status' => 'active',
-    ]);
+        $this->assertTrue(
+            $item->product->is($product)
+        );
+    }
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-PUBLISH-001',
-        'title' => 'Cement requirement',
-        'description' => 'Need cement.',
-        'status' => 'draft',
-    ]);
+    public function test_draft_buyer_request_can_be_published(): void
+    {
+        $user = User::factory()->create();
 
-    $request = app(\App\Services\BuyerRequestStatusService::class)
-        ->publish($request);
+        $buyer = BuyerProfile::create([
+            'user_id' => $user->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'tin_number' => '123456789',
+            'description' => 'Hardware business',
+            'status' => 'active',
+        ]);
 
-    $this->assertEquals('open', $request->status);
-}
-public function test_open_buyer_request_cannot_be_published_again(): void
-{
-    $user = User::factory()->create();
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-PUBLISH-001',
+            'title' => 'Cement requirement',
+            'description' => 'Need cement.',
+            'status' => 'draft',
+        ]);
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $user->id,
-        'business_name' => 'Hassan Hardware',
-        'business_type' => 'Hardware Store',
-        'tin_number' => '123456789',
-        'description' => 'Hardware business',
-        'status' => 'active',
-    ]);
+        $request = app(BuyerRequestStatusService::class)
+            ->publish($request);
 
-    $request = BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-PUBLISH-002',
-        'title' => 'Cement requirement',
-        'description' => 'Need cement.',
-        'status' => 'open',
-    ]);
+        $this->assertEquals('open', $request->status);
+    }
 
-    $this->expectException(\Illuminate\Validation\ValidationException::class);
+    public function test_open_buyer_request_cannot_be_published_again(): void
+    {
+        $user = User::factory()->create();
 
-    app(\App\Services\BuyerRequestStatusService::class)
-        ->publish($request);
-}
-public function test_draft_buyer_request_can_be_cancelled(): void
-{
-    $request = $this->createBuyerRequest('draft');
+        $buyer = BuyerProfile::create([
+            'user_id' => $user->id,
+            'business_name' => 'Hassan Hardware',
+            'business_type' => 'Hardware Store',
+            'tin_number' => '123456789',
+            'description' => 'Hardware business',
+            'status' => 'active',
+        ]);
 
-    $request = app(\App\Services\BuyerRequestStatusService::class)
-        ->cancel($request);
+        $request = BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-PUBLISH-002',
+            'title' => 'Cement requirement',
+            'description' => 'Need cement.',
+            'status' => 'open',
+        ]);
 
-    $this->assertEquals('cancelled', $request->status);
-}
+        $this->expectException(ValidationException::class);
 
-public function test_open_buyer_request_can_be_cancelled(): void
-{
-    $request = $this->createBuyerRequest('open');
+        app(BuyerRequestStatusService::class)
+            ->publish($request);
+    }
 
-    $request = app(\App\Services\BuyerRequestStatusService::class)
-        ->cancel($request);
+    public function test_draft_buyer_request_can_be_cancelled(): void
+    {
+        $request = $this->createBuyerRequest('draft');
 
-    $this->assertEquals('cancelled', $request->status);
-}
+        $request = app(BuyerRequestStatusService::class)
+            ->cancel($request);
 
-public function test_closed_buyer_request_cannot_be_cancelled(): void
-{
-    $request = $this->createBuyerRequest('closed');
+        $this->assertEquals('cancelled', $request->status);
+    }
 
-    $this->expectException(\Illuminate\Validation\ValidationException::class);
+    public function test_open_buyer_request_can_be_cancelled(): void
+    {
+        $request = $this->createBuyerRequest('open');
 
-    app(\App\Services\BuyerRequestStatusService::class)
-        ->cancel($request);
-}
+        $request = app(BuyerRequestStatusService::class)
+            ->cancel($request);
 
-public function test_cancelled_buyer_request_cannot_be_cancelled_again(): void
-{
-    $request = $this->createBuyerRequest('cancelled');
+        $this->assertEquals('cancelled', $request->status);
+    }
 
-    $this->expectException(\Illuminate\Validation\ValidationException::class);
+    public function test_closed_buyer_request_cannot_be_cancelled(): void
+    {
+        $request = $this->createBuyerRequest('closed');
 
-    app(\App\Services\BuyerRequestStatusService::class)
-        ->cancel($request);
-}
-public function test_open_buyer_request_can_expire_when_expiration_time_has_passed(): void
-{
-    $request = $this->createBuyerRequest('open');
+        $this->expectException(ValidationException::class);
 
-    $request->update([
-        'expires_at' => now()->subMinute(),
-    ]);
+        app(BuyerRequestStatusService::class)
+            ->cancel($request);
+    }
 
-    $request = app(BuyerRequestStatusService::class)
-        ->expire($request);
+    public function test_cancelled_buyer_request_cannot_be_cancelled_again(): void
+    {
+        $request = $this->createBuyerRequest('cancelled');
 
-    $this->assertEquals('expired', $request->status);
-}
+        $this->expectException(ValidationException::class);
 
-public function test_open_buyer_request_cannot_expire_before_expiration_time(): void
-{
-    $request = $this->createBuyerRequest('open');
+        app(BuyerRequestStatusService::class)
+            ->cancel($request);
+    }
 
-    $request->update([
-        'expires_at' => now()->addMinute(),
-    ]);
+    public function test_open_buyer_request_can_expire_when_expiration_time_has_passed(): void
+    {
+        $request = $this->createBuyerRequest('open');
 
-    $this->expectException(ValidationException::class);
+        $request->update([
+            'expires_at' => now()->subMinute(),
+        ]);
 
-    app(BuyerRequestStatusService::class)
-        ->expire($request);
-}
+        $request = app(BuyerRequestStatusService::class)
+            ->expire($request);
 
-public function test_draft_buyer_request_cannot_expire(): void
-{
-    $request = $this->createBuyerRequest('draft');
+        $this->assertEquals('expired', $request->status);
+    }
 
-    $request->update([
-        'expires_at' => now()->subMinute(),
-    ]);
+    public function test_open_buyer_request_cannot_expire_before_expiration_time(): void
+    {
+        $request = $this->createBuyerRequest('open');
 
-    $this->expectException(ValidationException::class);
+        $request->update([
+            'expires_at' => now()->addMinute(),
+        ]);
 
-    app(BuyerRequestStatusService::class)
-        ->expire($request);
-}
+        $this->expectException(ValidationException::class);
 
-public function test_expired_buyer_request_cannot_expire_again(): void
-{
-    $request = $this->createBuyerRequest('expired');
+        app(BuyerRequestStatusService::class)
+            ->expire($request);
+    }
 
-    $request->update([
-        'expires_at' => now()->subMinute(),
-    ]);
+    public function test_draft_buyer_request_cannot_expire(): void
+    {
+        $request = $this->createBuyerRequest('draft');
 
-    $this->expectException(ValidationException::class);
+        $request->update([
+            'expires_at' => now()->subMinute(),
+        ]);
 
-    app(BuyerRequestStatusService::class)
-        ->expire($request);
-}
-private function createBuyerRequest(string $status): BuyerRequest
-{
-    $user = User::factory()->create();
+        $this->expectException(ValidationException::class);
 
-    $buyer = BuyerProfile::create([
-        'user_id' => $user->id,
-        'business_name' => 'Test Hardware',
-        'business_type' => 'Hardware Store',
-        'tin_number' => '999888777',
-        'description' => 'Test buyer',
-        'status' => 'active',
-    ]);
+        app(BuyerRequestStatusService::class)
+            ->expire($request);
+    }
 
-    return BuyerRequest::create([
-        'buyer_profile_id' => $buyer->id,
-        'request_number' => 'REQ-' . uniqid(),
-        'title' => 'Test request',
-        'description' => 'Test buyer request.',
-        'status' => $status,
-    ]);
-}
+    public function test_expired_buyer_request_cannot_expire_again(): void
+    {
+        $request = $this->createBuyerRequest('expired');
+
+        $request->update([
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $this->expectException(ValidationException::class);
+
+        app(BuyerRequestStatusService::class)
+            ->expire($request);
+    }
+
+    private function createBuyerRequest(string $status): BuyerRequest
+    {
+        $user = User::factory()->create();
+
+        $buyer = BuyerProfile::create([
+            'user_id' => $user->id,
+            'business_name' => 'Test Hardware',
+            'business_type' => 'Hardware Store',
+            'tin_number' => '999888777',
+            'description' => 'Test buyer',
+            'status' => 'active',
+        ]);
+
+        return BuyerRequest::create([
+            'buyer_profile_id' => $buyer->id,
+            'request_number' => 'REQ-'.uniqid(),
+            'title' => 'Test request',
+            'description' => 'Test buyer request.',
+            'status' => $status,
+        ]);
+    }
 }

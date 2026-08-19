@@ -10,34 +10,34 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('supplier_prices', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('supplier_prices', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('supplier_product_id')
-            ->constrained('supplier_products')
-            ->cascadeOnDelete();
+            $table->foreignId('supplier_product_id')
+                ->constrained('supplier_products')
+                ->cascadeOnDelete();
 
-        $table->decimal('price', 15, 2);
+            $table->decimal('price', 15, 2);
 
-        $table->string('currency', 3)->default('TZS');
+            $table->string('currency', 3)->default('TZS');
 
-        $table->string('unit')->default('piece');
+            $table->string('unit')->default('piece');
 
-        $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
 
-        $table->timestamp('effective_from')->nullable();
+            $table->timestamp('effective_from')->nullable();
 
-        $table->timestamp('effective_until')->nullable();
+            $table->timestamp('effective_until')->nullable();
 
-        $table->timestamps();
+            $table->timestamps();
 
-        $table->index([
-            'supplier_product_id',
-            'is_active',
-        ]);
-    });
-}
+            $table->index([
+                'supplier_product_id',
+                'is_active',
+            ]);
+        });
+    }
 
     /**
      * Reverse the migrations.

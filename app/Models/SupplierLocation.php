@@ -35,8 +35,9 @@ class SupplierLocation extends Model
     {
         return $this->belongsTo(Supplier::class);
     }
+
     public function inventories(): HasMany
-{
-    return $this->hasMany(SupplierInventory::class);
-}
+    {
+        return $this->hasMany(SupplierInventory::class);
+    }
 }

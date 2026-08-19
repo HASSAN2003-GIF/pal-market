@@ -10,32 +10,33 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('buyer_requests', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('buyer_requests', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('buyer_profile_id')
-            ->constrained()
-            ->cascadeOnDelete();
+            $table->foreignId('buyer_profile_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->string('request_number')->unique();
+            $table->string('request_number')->unique();
 
-        $table->string('title');
+            $table->string('title');
 
-        $table->text('description')->nullable();
+            $table->text('description')->nullable();
 
-        $table->enum('status', [
-            'draft',
-            'open',
-            'closed',
-            'cancelled',
-        ])->default('draft');
+            $table->enum('status', [
+                'draft',
+                'open',
+                'closed',
+                'cancelled',
+            ])->default('draft');
 
-        $table->timestamp('expires_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
 
-        $table->timestamps();
-    });
-}
+            $table->timestamps();
+        });
+    }
+
     /**
      * Reverse the migrations.
      */

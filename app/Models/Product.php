@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -35,23 +35,26 @@ class Product extends Model
     {
         return $this->belongsTo(Brand::class);
     }
+
     public function supplierProducts(): HasMany
-{
-    return $this->hasMany(SupplierProduct::class);
-}
-public function quotationItems(): HasMany
-{
-    return $this->hasMany(SupplierQuotationItem::class);
-}
-public function suppliers(): BelongsToMany
-{
-    return $this->belongsToMany(
-        Supplier::class,
-        'supplier_products'
-    )->withPivot([
-        'supplier_sku',
-        'description',
-        'is_active',
-    ]);
-}
+    {
+        return $this->hasMany(SupplierProduct::class);
+    }
+
+    public function quotationItems(): HasMany
+    {
+        return $this->hasMany(SupplierQuotationItem::class);
+    }
+
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Supplier::class,
+            'supplier_products'
+        )->withPivot([
+            'supplier_sku',
+            'description',
+            'is_active',
+        ]);
+    }
 }

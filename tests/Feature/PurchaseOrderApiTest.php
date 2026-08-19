@@ -7,11 +7,11 @@ use App\Models\BuyerRequest;
 use App\Models\BuyerRequestItem;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\SupplierQuotation;
 use App\Models\SupplierQuotationItem;
 use App\Models\User;
+use App\Services\PurchaseOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -60,7 +60,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         Sanctum::actingAs($data['buyerUser']);
@@ -79,7 +79,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         $otherUser = User::factory()->create();
@@ -102,7 +102,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         Sanctum::actingAs($data['supplierUser']);
@@ -121,7 +121,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         Sanctum::actingAs($data['buyerUser']);
@@ -135,7 +135,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         $purchaseOrder->update([
@@ -158,7 +158,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         $purchaseOrder->update([
@@ -181,7 +181,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         $purchaseOrder->update([
@@ -204,7 +204,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         $purchaseOrder->update([
@@ -227,7 +227,7 @@ class PurchaseOrderApiTest extends TestCase
     {
         $data = $this->createScenario();
 
-        $purchaseOrder = app(\App\Services\PurchaseOrderService::class)
+        $purchaseOrder = app(PurchaseOrderService::class)
             ->createFromQuotation($data['quotation']);
 
         Sanctum::actingAs($data['buyerUser']);
@@ -240,6 +240,119 @@ class PurchaseOrderApiTest extends TestCase
                 'purchase_order.status',
                 'cancelled'
             );
+    }
+
+    public function test_supplier_cannot_ship_pending_purchase_order(): void
+    {
+        $data = $this->createScenario();
+
+        $purchaseOrder = app(PurchaseOrderService::class)
+            ->createFromQuotation($data['quotation']);
+
+        Sanctum::actingAs($data['supplierUser']);
+
+        $this->postJson(
+            "/api/purchase-orders/{$purchaseOrder->id}/ship"
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('purchase_orders', [
+            'id' => $purchaseOrder->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_supplier_cannot_process_pending_purchase_order(): void
+    {
+        $data = $this->createScenario();
+
+        $purchaseOrder = app(PurchaseOrderService::class)
+            ->createFromQuotation($data['quotation']);
+
+        Sanctum::actingAs($data['supplierUser']);
+
+        $this->postJson(
+            "/api/purchase-orders/{$purchaseOrder->id}/process"
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('purchase_orders', [
+            'id' => $purchaseOrder->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_buyer_cannot_complete_unfinished_purchase_order(): void
+    {
+        $data = $this->createScenario();
+
+        $purchaseOrder = app(PurchaseOrderService::class)
+            ->createFromQuotation($data['quotation']);
+
+        Sanctum::actingAs($data['buyerUser']);
+
+        $this->postJson(
+            "/api/purchase-orders/{$purchaseOrder->id}/complete"
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('purchase_orders', [
+            'id' => $purchaseOrder->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_buyer_cannot_cancel_completed_purchase_order(): void
+    {
+        $data = $this->createScenario();
+
+        $purchaseOrder = app(PurchaseOrderService::class)
+            ->createFromQuotation($data['quotation']);
+
+        $purchaseOrder->update([
+            'status' => 'completed',
+        ]);
+
+        Sanctum::actingAs($data['buyerUser']);
+
+        $this->postJson(
+            "/api/purchase-orders/{$purchaseOrder->id}/cancel"
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('purchase_orders', [
+            'id' => $purchaseOrder->id,
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_supplier_cannot_confirm_already_processing_purchase_order(): void
+    {
+        $data = $this->createScenario();
+
+        $purchaseOrder = app(PurchaseOrderService::class)
+            ->createFromQuotation($data['quotation']);
+
+        $purchaseOrder->update([
+            'status' => 'processing',
+        ]);
+
+        Sanctum::actingAs($data['supplierUser']);
+
+        $this->postJson(
+            "/api/purchase-orders/{$purchaseOrder->id}/confirm"
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('purchase_orders', [
+            'id' => $purchaseOrder->id,
+            'status' => 'processing',
+        ]);
     }
 
     private function createScenario(): array

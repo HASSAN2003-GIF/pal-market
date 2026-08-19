@@ -446,6 +446,26 @@ class SupplierQuotationApiTest extends TestCase
         $this->assertDatabaseCount('supplier_quotation_items', 0);
     }
 
+    public function test_buyer_cannot_accept_draft_quotation(): void
+    {
+        $data = $this->createQuotationScenario();
+
+        Sanctum::actingAs($data['buyer']->user);
+
+        $response = $this->postJson(
+            "/api/quotations/{$data['quotation']->id}/accept"
+        );
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('supplier_quotations', [
+            'id' => $data['quotation']->id,
+            'status' => 'draft',
+        ]);
+    }
+
     private function createBuyer(): BuyerProfile
     {
         $user = User::factory()->create();

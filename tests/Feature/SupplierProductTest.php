@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\SupplierProduct;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -69,90 +70,92 @@ class SupplierProductTest extends TestCase
             $supplier->products->contains($product)
         );
     }
+
     public function test_product_can_find_its_supplier(): void
-{
-    $user = User::factory()->create();
+    {
+        $user = User::factory()->create();
 
-    $supplier = Supplier::create([
-        'user_id' => $user->id,
-        'business_name' => 'Hassan Hardware',
-        'tin_number' => '987654321',
-        'description' => 'Construction materials supplier',
-        'status' => 'approved',
-    ]);
+        $supplier = Supplier::create([
+            'user_id' => $user->id,
+            'business_name' => 'Hassan Hardware',
+            'tin_number' => '987654321',
+            'description' => 'Construction materials supplier',
+            'status' => 'approved',
+        ]);
 
-    $category = Category::create([
-        'name' => 'Plumbing',
-        'slug' => 'plumbing',
-        'description' => 'Plumbing materials',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Plumbing',
+            'slug' => 'plumbing',
+            'description' => 'Plumbing materials',
+            'is_active' => true,
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'name' => 'PVC Pipe 1 Inch',
-        'slug' => 'pvc-pipe-1-inch',
-        'description' => '1 inch PVC pipe',
-        'unit' => 'piece',
-        'is_active' => true,
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'PVC Pipe 1 Inch',
+            'slug' => 'pvc-pipe-1-inch',
+            'description' => '1 inch PVC pipe',
+            'unit' => 'piece',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $product->id,
-        'supplier_sku' => 'PVC-1',
-        'description' => '1 inch PVC pipe',
-        'is_active' => true,
-    ]);
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'PVC-1',
+            'description' => '1 inch PVC pipe',
+            'is_active' => true,
+        ]);
 
-    $this->assertTrue(
-        $product->suppliers->contains($supplier)
-    );
-}
-public function test_supplier_cannot_register_the_same_product_twice(): void
-{
-    $user = User::factory()->create();
+        $this->assertTrue(
+            $product->suppliers->contains($supplier)
+        );
+    }
 
-    $supplier = Supplier::create([
-        'user_id' => $user->id,
-        'business_name' => 'Duplicate Test Hardware',
-        'tin_number' => '555555555',
-        'description' => 'Test supplier',
-        'status' => 'approved',
-    ]);
+    public function test_supplier_cannot_register_the_same_product_twice(): void
+    {
+        $user = User::factory()->create();
 
-    $category = Category::create([
-        'name' => 'Electrical',
-        'slug' => 'electrical',
-        'description' => 'Electrical materials',
-        'is_active' => true,
-    ]);
+        $supplier = Supplier::create([
+            'user_id' => $user->id,
+            'business_name' => 'Duplicate Test Hardware',
+            'tin_number' => '555555555',
+            'description' => 'Test supplier',
+            'status' => 'approved',
+        ]);
 
-    $product = Product::create([
-        'category_id' => $category->id,
-        'name' => 'Electrical Cable',
-        'slug' => 'electrical-cable',
-        'description' => 'Electrical cable',
-        'unit' => 'meter',
-        'is_active' => true,
-    ]);
+        $category = Category::create([
+            'name' => 'Electrical',
+            'slug' => 'electrical',
+            'description' => 'Electrical materials',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $product->id,
-        'supplier_sku' => 'CAB-001',
-        'description' => 'Electrical cable',
-        'is_active' => true,
-    ]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Electrical Cable',
+            'slug' => 'electrical-cable',
+            'description' => 'Electrical cable',
+            'unit' => 'meter',
+            'is_active' => true,
+        ]);
 
-    $this->expectException(\Illuminate\Database\QueryException::class);
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'CAB-001',
+            'description' => 'Electrical cable',
+            'is_active' => true,
+        ]);
 
-    SupplierProduct::create([
-        'supplier_id' => $supplier->id,
-        'product_id' => $product->id,
-        'supplier_sku' => 'CAB-002',
-        'description' => 'Same product again',
-        'is_active' => true,
-    ]);
-}
+        $this->expectException(QueryException::class);
+
+        SupplierProduct::create([
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'supplier_sku' => 'CAB-002',
+            'description' => 'Same product again',
+            'is_active' => true,
+        ]);
+    }
 }

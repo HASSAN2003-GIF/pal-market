@@ -12,29 +12,29 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('supplier_inventories', function (Blueprint $table) {
-    $table->id();
+            $table->id();
 
-    $table->foreignId('supplier_product_id')
-        ->constrained()
-        ->cascadeOnDelete();
+            $table->foreignId('supplier_product_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->foreignId('supplier_location_id')
-        ->constrained()
-        ->cascadeOnDelete();
+            $table->foreignId('supplier_location_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->unsignedInteger('quantity')->default(0);
+            $table->unsignedInteger('quantity')->default(0);
 
-    $table->unsignedInteger('low_stock_threshold')->default(0);
+            $table->unsignedInteger('low_stock_threshold')->default(0);
 
-    $table->boolean('is_available')->default(true);
+            $table->boolean('is_available')->default(true);
 
-    $table->timestamps();
+            $table->timestamps();
 
-    $table->unique(
-    ['supplier_product_id', 'supplier_location_id'],
-    'supplier_inventory_product_location_unique'
-);
-});
+            $table->unique(
+                ['supplier_product_id', 'supplier_location_id'],
+                'supplier_inventory_product_location_unique'
+            );
+        });
     }
 
     /**

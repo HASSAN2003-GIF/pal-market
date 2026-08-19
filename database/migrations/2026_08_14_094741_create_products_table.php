@@ -12,28 +12,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-    $table->id();
+            $table->id();
 
-    $table->foreignId('category_id')
-        ->constrained()
-        ->cascadeOnDelete();
+            $table->foreignId('category_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-    $table->foreignId('brand_id')
-        ->nullable()
-        ->constrained()
-        ->nullOnDelete();
+            $table->foreignId('brand_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
 
-    $table->string('name');
-    $table->string('slug')->unique();
+            $table->string('name');
+            $table->string('slug')->unique();
 
-    $table->text('description')->nullable();
+            $table->text('description')->nullable();
 
-    $table->string('unit')->default('piece');
+            $table->string('unit')->default('piece');
 
-    $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
 
-    $table->timestamps();
-});
+            $table->timestamps();
+        });
     }
 
     /**

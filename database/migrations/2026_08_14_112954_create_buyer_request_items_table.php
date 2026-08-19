@@ -10,32 +10,32 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('buyer_request_items', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('buyer_request_items', function (Blueprint $table) {
+            $table->id();
 
-        $table->foreignId('buyer_request_id')
-            ->constrained()
-            ->cascadeOnDelete();
+            $table->foreignId('buyer_request_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->foreignId('product_id')
-            ->constrained()
-            ->cascadeOnDelete();
+            $table->foreignId('product_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-        $table->unsignedInteger('quantity');
+            $table->unsignedInteger('quantity');
 
-        $table->string('unit')->default('piece');
+            $table->string('unit')->default('piece');
 
-        $table->text('notes')->nullable();
+            $table->text('notes')->nullable();
 
-        $table->timestamps();
+            $table->timestamps();
 
-        $table->unique(
-            ['buyer_request_id', 'product_id'],
-            'buyer_request_product_unique'
-        );
-    });
-}
+            $table->unique(
+                ['buyer_request_id', 'product_id'],
+                'buyer_request_product_unique'
+            );
+        });
+    }
 
     /**
      * Reverse the migrations.
