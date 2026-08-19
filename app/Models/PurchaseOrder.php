@@ -5,20 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class SupplierQuotation extends Model
+class PurchaseOrder extends Model
 {
     protected $fillable = [
-        'buyer_request_id',
+        'buyer_profile_id',
         'supplier_id',
-        'quotation_number',
+        'supplier_quotation_id',
+        'order_number',
         'subtotal',
         'delivery_fee',
         'total_amount',
         'currency',
         'status',
-        'valid_until',
         'notes',
     ];
 
@@ -26,12 +25,11 @@ class SupplierQuotation extends Model
         'subtotal' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'valid_until' => 'datetime',
     ];
 
-    public function buyerRequest(): BelongsTo
+    public function buyerProfile(): BelongsTo
     {
-        return $this->belongsTo(BuyerRequest::class);
+        return $this->belongsTo(BuyerProfile::class);
     }
 
     public function supplier(): BelongsTo
@@ -39,13 +37,13 @@ class SupplierQuotation extends Model
         return $this->belongsTo(Supplier::class);
     }
 
-    public function items(): HasMany
+    public function supplierQuotation(): BelongsTo
     {
-        return $this->hasMany(SupplierQuotationItem::class);
+        return $this->belongsTo(SupplierQuotation::class);
     }
 
-    public function purchaseOrder(): HasOne
+    public function items(): HasMany
     {
-        return $this->hasOne(PurchaseOrder::class);
+        return $this->hasMany(PurchaseOrderItem::class);
     }
 }

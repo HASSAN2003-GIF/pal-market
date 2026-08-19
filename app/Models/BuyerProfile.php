@@ -21,8 +21,14 @@ class BuyerProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function requests(): HasMany
-{
-    return $this->hasMany(BuyerRequest::class);
-}
+    {
+        return $this->hasMany(BuyerRequest::class);
+    }
+
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
 }

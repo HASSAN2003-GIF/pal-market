@@ -30,8 +30,14 @@ class BuyerRequest extends Model
     {
         return $this->hasMany(BuyerRequestItem::class);
     }
+
     public function quotations(): HasMany
-{
-    return $this->hasMany(SupplierQuotation::class);
-}
+    {
+        return $this->hasMany(SupplierQuotation::class);
+    }
+
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
 }
