@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierQuotationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BuyerRequestController;
+use App\Http\Controllers\Api\SupplierProductController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -112,5 +113,11 @@ Route::post('/buyer-requests/{buyerRequest}/cancel', [
         SupplierQuotationController::class,
         'accept',
     ]);
+
+    Route::get('/supplier-products', [SupplierProductController::class, 'index']);
+    Route::post('/supplier-products', [SupplierProductController::class, 'store']);
+    Route::get('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'show']);
+    Route::put('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'update']);
+    Route::delete('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'destroy']);
 
 });
