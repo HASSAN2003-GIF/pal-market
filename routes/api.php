@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\SupplierQuotationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BuyerRequestController;
 use App\Http\Controllers\Api\SupplierProductController;
+use App\Http\Controllers\Api\SupplierLocationController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -119,5 +120,30 @@ Route::post('/buyer-requests/{buyerRequest}/cancel', [
     Route::get('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'show']);
     Route::put('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'update']);
     Route::delete('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'destroy']);
+
+    Route::get('/supplier-locations', [
+    SupplierLocationController::class,
+    'index',
+]);
+
+Route::post('/supplier-locations', [
+    SupplierLocationController::class,
+    'store',
+]);
+
+Route::get('/supplier-locations/{supplierLocation}', [
+    SupplierLocationController::class,
+    'show',
+]);
+
+Route::put('/supplier-locations/{supplierLocation}', [
+    SupplierLocationController::class,
+    'update',
+]);
+
+Route::delete('/supplier-locations/{supplierLocation}', [
+    SupplierLocationController::class,
+    'destroy',
+]);
 
 });

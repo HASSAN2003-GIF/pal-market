@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\BuyerRequest;
+use App\Models\SupplierLocation;
 use App\Models\SupplierProduct;
 use App\Policies\BuyerRequestPolicy;
+use App\Policies\SupplierLocationPolicy;
 use App\Policies\SupplierProductPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(
             SupplierProduct::class,
             SupplierProductPolicy::class
+        );
+
+        Gate::policy(
+            SupplierLocation::class,
+            SupplierLocationPolicy::class
         );
     }
 }
