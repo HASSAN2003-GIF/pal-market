@@ -10,6 +10,8 @@ use App\Policies\SupplierLocationPolicy;
 use App\Policies\SupplierProductPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use App\Models\SupplierInventory;
+use App\Policies\SupplierInventoryPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,5 +42,10 @@ class AppServiceProvider extends ServiceProvider
             SupplierLocation::class,
             SupplierLocationPolicy::class
         );
+
+        Gate::policy(
+    SupplierInventory::class,
+    SupplierInventoryPolicy::class
+);
     }
 }

@@ -1,12 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BuyerRequestController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\SupplierInventoryController;
+use App\Http\Controllers\Api\SupplierLocationController;
+use App\Http\Controllers\Api\SupplierProductController;
 use App\Http\Controllers\Api\SupplierQuotationController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\BuyerRequestController;
-use App\Http\Controllers\Api\SupplierProductController;
-use App\Http\Controllers\Api\SupplierLocationController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -19,6 +20,31 @@ Route::middleware('auth:sanctum')->group(function () {
         '/buyer-requests/{buyerRequest}/quotations',
         [SupplierQuotationController::class, 'store']
     );
+
+    Route::get('/supplier-inventory', [
+        SupplierInventoryController::class,
+        'index',
+    ]);
+
+    Route::post('/supplier-inventory', [
+        SupplierInventoryController::class,
+        'store',
+    ]);
+
+    Route::get('/supplier-inventory/{supplierInventory}', [
+        SupplierInventoryController::class,
+        'show',
+    ]);
+
+    Route::put('/supplier-inventory/{supplierInventory}', [
+        SupplierInventoryController::class,
+        'update',
+    ]);
+
+    Route::delete('/supplier-inventory/{supplierInventory}', [
+        SupplierInventoryController::class,
+        'destroy',
+    ]);
 
     Route::post(
         '/quotations/{quotation}/purchase-order',
@@ -56,39 +82,39 @@ Route::middleware('auth:sanctum')->group(function () {
     );
 
     Route::get('/buyer-requests', [
-    BuyerRequestController::class,
-    'index',
-]);
+        BuyerRequestController::class,
+        'index',
+    ]);
 
-Route::post('/buyer-requests', [
-    BuyerRequestController::class,
-    'store',
-]);
+    Route::post('/buyer-requests', [
+        BuyerRequestController::class,
+        'store',
+    ]);
 
-Route::get('/buyer-requests/{buyerRequest}', [
-    BuyerRequestController::class,
-    'show',
-]);
+    Route::get('/buyer-requests/{buyerRequest}', [
+        BuyerRequestController::class,
+        'show',
+    ]);
 
-Route::put('/buyer-requests/{buyerRequest}', [
-    BuyerRequestController::class,
-    'update',
-]);
+    Route::put('/buyer-requests/{buyerRequest}', [
+        BuyerRequestController::class,
+        'update',
+    ]);
 
-Route::post('/buyer-requests/{buyerRequest}/items', [
-    BuyerRequestController::class,
-    'addItem',
-]);
+    Route::post('/buyer-requests/{buyerRequest}/items', [
+        BuyerRequestController::class,
+        'addItem',
+    ]);
 
-Route::post('/buyer-requests/{buyerRequest}/publish', [
-    BuyerRequestController::class,
-    'publish',
-]);
+    Route::post('/buyer-requests/{buyerRequest}/publish', [
+        BuyerRequestController::class,
+        'publish',
+    ]);
 
-Route::post('/buyer-requests/{buyerRequest}/cancel', [
-    BuyerRequestController::class,
-    'cancel',
-]);
+    Route::post('/buyer-requests/{buyerRequest}/cancel', [
+        BuyerRequestController::class,
+        'cancel',
+    ]);
 
     Route::post(
         '/purchase-orders/{purchaseOrder}/cancel',
@@ -122,28 +148,28 @@ Route::post('/buyer-requests/{buyerRequest}/cancel', [
     Route::delete('/supplier-products/{supplierProduct}', [SupplierProductController::class, 'destroy']);
 
     Route::get('/supplier-locations', [
-    SupplierLocationController::class,
-    'index',
-]);
+        SupplierLocationController::class,
+        'index',
+    ]);
 
-Route::post('/supplier-locations', [
-    SupplierLocationController::class,
-    'store',
-]);
+    Route::post('/supplier-locations', [
+        SupplierLocationController::class,
+        'store',
+    ]);
 
-Route::get('/supplier-locations/{supplierLocation}', [
-    SupplierLocationController::class,
-    'show',
-]);
+    Route::get('/supplier-locations/{supplierLocation}', [
+        SupplierLocationController::class,
+        'show',
+    ]);
 
-Route::put('/supplier-locations/{supplierLocation}', [
-    SupplierLocationController::class,
-    'update',
-]);
+    Route::put('/supplier-locations/{supplierLocation}', [
+        SupplierLocationController::class,
+        'update',
+    ]);
 
-Route::delete('/supplier-locations/{supplierLocation}', [
-    SupplierLocationController::class,
-    'destroy',
-]);
+    Route::delete('/supplier-locations/{supplierLocation}', [
+        SupplierLocationController::class,
+        'destroy',
+    ]);
 
 });
