@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierQuotationController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\BuyerRequestController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -51,6 +52,41 @@ Route::middleware('auth:sanctum')->group(function () {
         '/purchase-orders/{purchaseOrder}/complete',
         [PurchaseOrderController::class, 'complete']
     );
+
+    Route::get('/buyer-requests', [
+    BuyerRequestController::class,
+    'index',
+]);
+
+Route::post('/buyer-requests', [
+    BuyerRequestController::class,
+    'store',
+]);
+
+Route::get('/buyer-requests/{buyerRequest}', [
+    BuyerRequestController::class,
+    'show',
+]);
+
+Route::put('/buyer-requests/{buyerRequest}', [
+    BuyerRequestController::class,
+    'update',
+]);
+
+Route::post('/buyer-requests/{buyerRequest}/items', [
+    BuyerRequestController::class,
+    'addItem',
+]);
+
+Route::post('/buyer-requests/{buyerRequest}/publish', [
+    BuyerRequestController::class,
+    'publish',
+]);
+
+Route::post('/buyer-requests/{buyerRequest}/cancel', [
+    BuyerRequestController::class,
+    'cancel',
+]);
 
     Route::post(
         '/purchase-orders/{purchaseOrder}/cancel',

@@ -29,6 +29,13 @@ class BuyerRequestPolicy
         ) && $buyerRequest->status === 'draft';
     }
 
+    public function cancel(User $user, BuyerRequest $buyerRequest): bool
+{
+    return (
+        $user->buyerProfile?->is($buyerRequest->buyerProfile) ?? false
+    ) && in_array($buyerRequest->status, ['draft', 'open'], true);
+}
+
     public function delete(User $user, BuyerRequest $buyerRequest): bool
     {
         return (
