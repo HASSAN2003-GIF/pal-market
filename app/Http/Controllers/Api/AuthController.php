@@ -23,8 +23,8 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
+            'role' => 'buyer',
         ]);
-
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
