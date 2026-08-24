@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\BuyerRequestController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierInventoryController;
 use App\Http\Controllers\Api\SupplierLocationController;
+use App\Http\Controllers\Api\SupplierPriceController;
 use App\Http\Controllers\Api\SupplierProductController;
 use App\Http\Controllers\Api\SupplierQuotationController;
 use Illuminate\Support\Facades\Route;
@@ -171,5 +172,10 @@ Route::middleware('auth:sanctum')->group(function () {
         SupplierLocationController::class,
         'destroy',
     ]);
+
+    Route::apiResource(
+        'supplier-prices',
+        SupplierPriceController::class
+    );
 
 });

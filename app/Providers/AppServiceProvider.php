@@ -3,15 +3,17 @@
 namespace App\Providers;
 
 use App\Models\BuyerRequest;
+use App\Models\SupplierInventory;
 use App\Models\SupplierLocation;
+use App\Models\SupplierPrice;
 use App\Models\SupplierProduct;
 use App\Policies\BuyerRequestPolicy;
+use App\Policies\SupplierInventoryPolicy;
 use App\Policies\SupplierLocationPolicy;
+use App\Policies\SupplierPricePolicy;
 use App\Policies\SupplierProductPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
-use App\Models\SupplierInventory;
-use App\Policies\SupplierInventoryPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -44,8 +46,13 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Gate::policy(
-    SupplierInventory::class,
-    SupplierInventoryPolicy::class
-);
+            SupplierInventory::class,
+            SupplierInventoryPolicy::class
+        );
+
+        Gate::policy(
+            SupplierPrice::class,
+            SupplierPricePolicy::class
+        );
     }
 }
