@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminBuyerController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AdminSupplierController;
 use App\Http\Controllers\Api\AdminUserController;
@@ -241,6 +242,26 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::post('/admin/suppliers/{supplier}/reactivate', [
         AdminSupplierController::class,
+        'reactivate',
+    ]);
+
+    Route::get('/admin/buyers', [
+        AdminBuyerController::class,
+        'index',
+    ]);
+
+    Route::get('/admin/buyers/{buyer}', [
+        AdminBuyerController::class,
+        'show',
+    ]);
+
+    Route::post('/admin/buyers/{buyer}/suspend', [
+        AdminBuyerController::class,
+        'suspend',
+    ]);
+
+    Route::post('/admin/buyers/{buyer}/reactivate', [
+        AdminBuyerController::class,
         'reactivate',
     ]);
 });
