@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminSupplierController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BuyerRequestController;
@@ -210,5 +211,30 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::delete('/admin/users/{user}', [
         AdminUserController::class,
         'destroy',
+    ]);
+
+    Route::get('/admin/suppliers', [
+        AdminSupplierController::class,
+        'index',
+    ]);
+
+    Route::get('/admin/suppliers/{supplier}', [
+        AdminSupplierController::class,
+        'show',
+    ]);
+
+    Route::post('/admin/suppliers/{supplier}/approve', [
+        AdminSupplierController::class,
+        'approve',
+    ]);
+
+    Route::post('/admin/suppliers/{supplier}/suspend', [
+        AdminSupplierController::class,
+        'suspend',
+    ]);
+
+    Route::post('/admin/suppliers/{supplier}/reactivate', [
+        AdminSupplierController::class,
+        'reactivate',
     ]);
 });
