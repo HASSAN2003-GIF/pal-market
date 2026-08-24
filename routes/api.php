@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BuyerRequestController;
+use App\Http\Controllers\Api\ProductCatalogController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierInventoryController;
 use App\Http\Controllers\Api\SupplierLocationController;
@@ -12,6 +13,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/products', [
+    ProductCatalogController::class,
+    'index',
+]);
+
+Route::get('/products/{product}', [
+    ProductCatalogController::class,
+    'show',
+]);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
