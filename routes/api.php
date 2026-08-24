@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\SupplierLocationController;
 use App\Http\Controllers\Api\SupplierPriceController;
 use App\Http\Controllers\Api\SupplierProductController;
 use App\Http\Controllers\Api\SupplierQuotationController;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -188,4 +189,12 @@ Route::middleware('auth:sanctum')->group(function () {
         SupplierPriceController::class
     );
 
+});
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/admin/users', function (): JsonResponse {
+        return response()->json([
+            'message' => 'Admin access granted.',
+        ]);
+    });
 });
