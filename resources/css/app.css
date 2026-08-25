@@ -4,6 +4,52 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+    /* PAL Market brand — blue */
+    --color-pal-50: #f1f8fc;
+    --color-pal-100: #eaf4fb;
+    --color-pal-200: #cce5f4;
+    --color-pal-300: #9dcae2;
+    --color-pal-400: #4d9bc7;
+    --color-pal-500: #1769aa;
+    --color-pal-600: #15527f;
+    --color-pal-700: #103e60;
+
+    /* Main text */
+    --color-ink-950: #1c2228;
+    --color-ink-900: #252b31;
+    --color-ink-800: #343b43;
+    --color-ink-700: #4b5560;
+    --color-ink-600: #626d78;
+    --color-ink-500: #7d8791;
+
+    /* Surfaces */
+    --color-surface: #faf9f6;
+    --color-surface-soft: #f4f2ed;
+    --color-border: #e5e2da;
+}
+
+html {
+    background: #faf9f6;
+}
+
+body {
+    margin: 0;
+    background: #faf9f6;
+    color: #252b31;
+    font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+::selection {
+    background: #cce5f4;
+    color: #252b31;
 }

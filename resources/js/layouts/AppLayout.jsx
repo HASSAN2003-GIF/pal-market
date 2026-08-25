@@ -1,39 +1,82 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function AppLayout({ children }) {
-    return (
-        <div className="min-h-screen bg-slate-50 text-slate-900">
-            <header className="border-b border-slate-200 bg-white">
-                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-                    <Link
-                        to="/"
-                        className="text-lg font-semibold tracking-tight text-slate-900"
-                    >
-                        PAL Market
-                    </Link>
+    const { user, isAuthenticated, logout } = useAuth();
 
-                    <nav className="flex items-center gap-6 text-sm font-medium text-slate-600">
+    async function handleLogout() {
+        await logout();
+    }
+
+    return (
+        <div className="min-h-screen bg-surface text-ink-900">
+            <header className="border-b border-border bg-white">
+                <div className="mx-auto max-w-7xl px-6">
+                    <div className="flex h-[72px] items-center gap-8">
                         <Link
                             to="/"
-                            className="transition hover:text-slate-900"
+                            className="shrink-0 text-xl font-extrabold tracking-[-0.03em] text-ink-950"
+                        >
+                            PAL<span className="text-pal-600">.</span>
+                        </Link>
+
+                        <Link
+                            to="/marketplace"
+                            className="hidden text-sm font-semibold text-ink-700 transition hover:text-pal-600 md:block"
                         >
                             Marketplace
                         </Link>
 
-                        <Link
-                            to="/login"
-                            className="transition hover:text-slate-900"
-                        >
-                            Sign in
-                        </Link>
+                        <div className="hidden h-6 w-px bg-border md:block" />
 
-                        <Link
-                            to="/register"
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-800"
-                        >
-                            Get started
-                        </Link>
-                    </nav>
+                        <nav className="ml-auto flex items-center gap-7 text-sm font-semibold">
+                            <Link
+                                to="/marketplace"
+                                className="text-ink-700 transition hover:text-pal-600"
+                            >
+                                Browse
+                            </Link>
+
+                            {isAuthenticated ? (
+                                <>
+                                    <Link
+                                        to="/dashboard"
+                                        className="text-ink-700 transition hover:text-pal-600"
+                                    >
+                                        Dashboard
+                                    </Link>
+
+                                    <span className="hidden text-ink-500 md:block">
+                                        {user?.name}
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="rounded-lg border border-border bg-white px-4 py-2.5 text-ink-700 transition hover:border-pal-200 hover:text-pal-700"
+                                    >
+                                        Sign out
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        to="/login"
+                                        className="text-ink-700 transition hover:text-pal-600"
+                                    >
+                                        Sign in
+                                    </Link>
+
+                                    <Link
+                                        to="/register"
+                                        className="rounded-lg bg-pal-600 px-4 py-2.5 text-white shadow-sm transition hover:bg-pal-700"
+                                    >
+                                        Create account
+                                    </Link>
+                                </>
+                            )}
+                        </nav>
+                    </div>
                 </div>
             </header>
 
