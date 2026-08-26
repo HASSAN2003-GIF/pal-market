@@ -46,13 +46,16 @@ class UserRoleTest extends TestCase
 
     public function test_registration_does_not_allow_role_assignment(): void
     {
-        $response = $this->postJson('/api/register', [
-            'name' => 'Hassan',
-            'email' => 'admin-attempt@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'role' => 'admin',
-        ]);
+       $response = $this->postJson('/api/register', [
+    'first_name' => 'Admin',
+    'last_name' => 'Attempt',
+    'email' => 'admin-attempt@example.com',
+    'phone' => '+255700000001',
+    'password' => 'password123',
+    'password_confirmation' => 'password123',
+    'verification_channel' => 'email',
+    'role' => 'admin',
+]);
 
         $response
             ->assertCreated()
