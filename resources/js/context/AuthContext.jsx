@@ -18,13 +18,13 @@ export function AuthProvider({ children }) {
         const token = localStorage.getItem(TOKEN_KEY);
 
         if (!token) {
+            setUser(null);
             setLoading(false);
             return;
         }
 
         try {
             const response = await getCurrentUser();
-
             setUser(response.user);
         } catch {
             localStorage.removeItem(TOKEN_KEY);
@@ -48,13 +48,13 @@ export function AuthProvider({ children }) {
     }
 
     async function register(payload) {
-        const response = await registerUser(payload);
+    const response = await registerUser(payload);
 
-        localStorage.setItem(TOKEN_KEY, response.token);
-        setUser(response.user);
+    localStorage.setItem(TOKEN_KEY, response.token);
+    setUser(response.user);
 
-        return response;
-    }
+    return response;
+}
 
     async function logout() {
         try {
@@ -72,6 +72,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        loadUser,
     };
 
     return (

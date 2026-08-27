@@ -17,16 +17,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::post('/verify', [
-    AuthController::class,
-    'verify',
-]);
-
-Route::post('/verify/resend', [
-    AuthController::class,
-    'resendVerification',
-]);
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/products', [
     ProductCatalogController::class,

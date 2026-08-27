@@ -7,6 +7,7 @@ import MarketplacePage from '../pages/MarketplacePage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProtectedRoute from '../components/ProtectedRoute';
+import GoogleAuthSuccessPage from '../pages/GoogleAuthSuccessPage';
 
 export default function AppRouter() {
     return (
@@ -31,6 +32,11 @@ export default function AppRouter() {
                         path="/register"
                         element={<RegisterPage />}
                     />
+                    
+                    <Route
+    path="/auth/google/success"
+    element={<GoogleAuthSuccessPage />}
+/>
 
                     <Route element={<ProtectedRoute />}>
                         <Route

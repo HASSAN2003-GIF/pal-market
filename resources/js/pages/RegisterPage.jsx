@@ -7,8 +7,10 @@ export default function RegisterPage() {
     const { register } = useAuth();
 
     const [form, setForm] = useState({
-        name: '',
+        first_name: '',
+        last_name: '',
         email: '',
+        phone: '',
         password: '',
         password_confirmation: '',
     });
@@ -30,20 +32,14 @@ export default function RegisterPage() {
 
         setError('');
         setLoading(true);
+try {
+    await register(form);
 
-        try {
-            const response = await register(form);
-
-            const role = response.user?.role;
-
-            if (role === 'admin') {
-                navigate('/admin', { replace: true });
-            } else if (role === 'supplier') {
-                navigate('/supplier', { replace: true });
-            } else {
-                navigate('/dashboard', { replace: true });
-            }
-        } catch (err) {
+    navigate('/dashboard', {
+        replace: true,
+    });
+}
+        catch (err) {
             if (err.data?.errors) {
                 const firstError = Object.values(err.data.errors)
                     .flat()
@@ -72,8 +68,8 @@ export default function RegisterPage() {
                         </h1>
 
                         <p className="mt-2 text-sm leading-6 text-ink-600">
-                            Join PAL Market and manage your construction
-                            marketplace activity in one place.
+                            Create your PAL Market account and start buying
+                            construction materials from trusted suppliers.
                         </p>
                     </div>
 
@@ -88,24 +84,46 @@ export default function RegisterPage() {
                         )}
 
                         <div className="space-y-5">
-                            <div>
-                                <label
-                                    htmlFor="name"
-                                    className="mb-2 block text-sm font-medium text-ink-800"
-                                >
-                                    Full name
-                                </label>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label
+                                        htmlFor="first_name"
+                                        className="mb-2 block text-sm font-medium text-ink-800"
+                                    >
+                                        First name
+                                    </label>
 
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    value={form.name}
-                                    onChange={handleChange}
-                                    autoComplete="name"
-                                    required
-                                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
-                                />
+                                    <input
+                                        id="first_name"
+                                        name="first_name"
+                                        type="text"
+                                        value={form.first_name}
+                                        onChange={handleChange}
+                                        autoComplete="given-name"
+                                        required
+                                        className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="last_name"
+                                        className="mb-2 block text-sm font-medium text-ink-800"
+                                    >
+                                        Last name
+                                    </label>
+
+                                    <input
+                                        id="last_name"
+                                        name="last_name"
+                                        type="text"
+                                        value={form.last_name}
+                                        onChange={handleChange}
+                                        autoComplete="family-name"
+                                        required
+                                        className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
+                                    />
+                                </div>
                             </div>
 
                             <div>
@@ -130,6 +148,29 @@ export default function RegisterPage() {
 
                             <div>
                                 <label
+                                    htmlFor="phone"
+                                    className="mb-2 block text-sm font-medium text-ink-800"
+                                >
+                                    Phone number
+                                    <span className="ml-1 text-ink-400">
+                                        optional
+                                    </span>
+                                </label>
+
+                                <input
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    value={form.phone}
+                                    onChange={handleChange}
+                                    autoComplete="tel"
+                                    placeholder="+255..."
+                                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
+                                />
+                            </div>
+                
+                            <div>
+                                <label
                                     htmlFor="password"
                                     className="mb-2 block text-sm font-medium text-ink-800"
                                 >
@@ -144,8 +185,13 @@ export default function RegisterPage() {
                                     onChange={handleChange}
                                     autoComplete="new-password"
                                     required
+                                    minLength={8}
                                     className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
                                 />
+
+                                <p className="mt-2 text-xs text-ink-500">
+                                    Use at least 8 characters.
+                                </p>
                             </div>
 
                             <div>
