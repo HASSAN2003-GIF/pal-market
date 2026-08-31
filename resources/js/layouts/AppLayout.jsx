@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 export default function AppLayout({ children }) {
     const { user, isAuthenticated, logout } = useAuth();
@@ -13,11 +14,8 @@ export default function AppLayout({ children }) {
             <header className="border-b border-border bg-white">
                 <div className="mx-auto max-w-7xl px-6">
                     <div className="flex h-[72px] items-center gap-8">
-                        <Link
-                            to="/"
-                            className="shrink-0 text-xl font-extrabold tracking-[-0.03em] text-ink-950"
-                        >
-                            PAL<span className="text-pal-600">.</span>
+                        <Link to="/" className="shrink-0 flex items-center">
+                            <Logo className="h-8 w-auto" />
                         </Link>
 
                         <Link

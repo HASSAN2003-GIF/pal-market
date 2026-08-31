@@ -8,10 +8,9 @@ export default function LoginPage() {
     const { login } = useAuth();
 
     const [form, setForm] = useState({
-        email: '',
+        login: '', // Changed to match the backend expectation
         password: '',
     });
-
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -90,19 +89,19 @@ export default function LoginPage() {
                         <div className="space-y-5">
                             <div>
                                 <label
-                                    htmlFor="email"
+                                    htmlFor="login"
                                     className="mb-2 block text-sm font-medium text-ink-800"
                                 >
-                                    Email address
+                                    Email address or Phone number
                                 </label>
 
                                 <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    value={form.email}
+                                    id="login"
+                                    name="login"
+                                    type="text" // Changed to text so it accepts phone numbers too
+                                    value={form.login}
                                     onChange={handleChange}
-                                    autoComplete="email"
+                                    autoComplete="username"
                                     required
                                     className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
                                 />

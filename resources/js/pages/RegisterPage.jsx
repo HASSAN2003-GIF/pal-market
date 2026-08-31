@@ -13,8 +13,8 @@ export default function RegisterPage() {
         phone: '',
         password: '',
         password_confirmation: '',
+        role: 'buyer', // NEW
     });
-
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -84,6 +84,36 @@ try {
                         )}
 
                         <div className="space-y-5">
+                            {/* Account Type Selection */}
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-ink-800">
+                                    I want to...
+                                </label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm({ ...form, role: 'buyer' })}
+                                        className={`rounded-xl border p-3 text-sm font-semibold transition ${
+                                            form.role === 'buyer'
+                                                ? 'border-pal-600 bg-pal-50 text-pal-700'
+                                                : 'border-border bg-white text-ink-600 hover:border-pal-300'
+                                        }`}
+                                    >
+                                        Buy Materials
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm({ ...form, role: 'supplier' })}
+                                        className={`rounded-xl border p-3 text-sm font-semibold transition ${
+                                            form.role === 'supplier'
+                                                ? 'border-pal-600 bg-pal-50 text-pal-700'
+                                                : 'border-border bg-white text-ink-600 hover:border-pal-300'
+                                        }`}
+                                    >
+                                        Sell Materials
+                                    </button>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label

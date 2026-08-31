@@ -19,25 +19,34 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:30', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'string', 'in:buyer,supplier'], // We explicitly require a valid role
         ]);
 
-        $user = User::create([
-            'name' => trim(
-                $validated['first_name'] . ' ' . $validated['last_name']
-            ),
+        $user = \App\Models\User::create([
+            'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
-            'password' => $validated['password'],
-            'role' => 'buyer',
+            'password' => \Illuminate\Support\Facades\Hash::make($validated['password']), // Secure hashing restored
+            'role' => $validated['role'], // Role is now dynamic
             'email_verified_at' => now(),
-            'phone_verified_at' => $validated['phone']
-                ? now()
-                : null,
         ]);
 
-        $token = $user
-            ->createToken('api-token')
-            ->plainTextToken;
+        // Automatically generate a profile for the user based on their role
+        // Automatically generate a profile for the user based on their role
+        if ($validated['role'] === 'buyer') {
+            // Provide a default business name to satisfy the database constraint
+            $user->buyerProfile()->create([
+                'business_name' => $user->name, 
+            ]);
+        } else {
+            // Suppliers need an entry in the suppliers table
+            $user->supplier()->create([
+                'company_name' => $user->name . ' Hardware', // Default name they can change later
+                'status' => 'pending', // Keeps them from selling until admin approves
+            ]);
+        }
+
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Account created successfully.',
