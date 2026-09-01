@@ -8,6 +8,9 @@ import ProductDetailPage from '../pages/ProductDetailPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProtectedRoute from '../components/ProtectedRoute';
 import GoogleAuthSuccessPage from '../pages/GoogleAuthSuccessPage';
+import BuyerDashboardPage from '../pages/BuyerDashboardPage';
+import CreateRequestPage from '../pages/CreateRequestPage';
+import RequestDetailPage from '../pages/RequestDetailPage';
 
 export default function AppRouter() {
     return (
@@ -39,21 +42,11 @@ export default function AppRouter() {
 />
 
                     <Route element={<ProtectedRoute />}>
-                        <Route
-                            path="/dashboard"
-                            element={
-                                <div className="mx-auto max-w-7xl px-6 py-16">
-                                    <h1 className="text-3xl font-semibold text-ink-950">
-                                        Your dashboard
-                                    </h1>
+                        <Route path="/dashboard" element={<BuyerDashboardPage />} />
 
-                                    <p className="mt-2 text-sm text-ink-600">
-                                        Your PAL Market activity will appear
-                                        here.
-                                    </p>
-                                </div>
-                            }
-                        />
+                        <Route path="/requests/new" element={<CreateRequestPage />} />
+
+                        <Route path="/requests/:requestId" element={<RequestDetailPage />} />
 
                         <Route
                             path="/supplier"

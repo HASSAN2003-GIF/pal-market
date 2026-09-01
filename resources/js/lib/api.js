@@ -86,3 +86,25 @@ export function logoutUser() {
         method: 'POST',
     });
 }
+
+export function getBuyerRequests() {
+    return request('/buyer-requests');
+}
+
+export function createBuyerRequest(payload) {
+    return request('/buyer-requests', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export function getBuyerRequest(id) {
+    return request(`/buyer-requests/${id}`);
+}
+
+export function addItemToRequest(requestId, payload) {
+    return request(`/buyer-requests/${requestId}/items`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}

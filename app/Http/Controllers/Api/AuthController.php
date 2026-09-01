@@ -22,29 +22,31 @@ class AuthController extends Controller
             'role' => ['required', 'string', 'in:buyer,supplier'], // We explicitly require a valid role
         ]);
 
-        $user = \App\Models\User::create([
-            'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
-            'email' => $validated['email'],
-            'phone' => $validated['phone'] ?? null,
-            'password' => \Illuminate\Support\Facades\Hash::make($validated['password']), // Secure hashing restored
-            'role' => $validated['role'], // Role is now dynamic
-            'email_verified_at' => now(),
-        ]);
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+            // 1. Create the base user
+            $newUser = \App\Models\User::create([
+                'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? null,
+                'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+                'role' => $validated['role'],
+                'email_verified_at' => now(),
+            ]);
 
-        // Automatically generate a profile for the user based on their role
-        // Automatically generate a profile for the user based on their role
-        if ($validated['role'] === 'buyer') {
-            // Provide a default business name to satisfy the database constraint
-            $user->buyerProfile()->create([
-                'business_name' => $user->name, 
-            ]);
-        } else {
-            // Suppliers need an entry in the suppliers table
-            $user->supplier()->create([
-                'company_name' => $user->name . ' Hardware', // Default name they can change later
-                'status' => 'pending', // Keeps them from selling until admin approves
-            ]);
-        }
+            // 2. Create the role-specific profile
+            if ($validated['role'] === 'buyer') {
+                $newUser->buyerProfile()->create([
+                    'business_name' => $newUser->name,
+                ]);
+            } else {
+                $newUser->supplier()->create([
+                    'company_name' => $newUser->name . ' Hardware',
+                    'status' => 'pending',
+                ]);
+            }
+
+            return $newUser;
+        });
 
         $token = $user->createToken('api-token')->plainTextToken;
 
