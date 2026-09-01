@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useBuyerRequest } from '../hooks/useBuyerRequest';
+import { publishBuyerRequest } from '../lib/api';
 
 export default function RequestDetailPage() {
     const { requestId } = useParams();
     const { data, isLoading, error } = useBuyerRequest(requestId);
+
+    const [publishing, setPublishing] = useState(false);
 
     if (isLoading) {
         return (
@@ -27,6 +30,22 @@ export default function RequestDetailPage() {
 
     const request = data.buyer_request;
     const items = request.items || [];
+
+    async function handlePublish() {
+        if (!window.confirm("Are you sure? Once published, suppliers will begin preparing quotations.")) {
+            return;
+        }
+        
+        setPublishing(true);
+        try {
+            await publishBuyerRequest(request.id);
+            // Refresh the page to get the updated status from the server
+            window.location.reload(); 
+        } catch (err) {
+            alert(err.data?.message || 'Failed to publish request.');
+            setPublishing(false);
+        }
+    }
 
     return (
         <div className="mx-auto max-w-5xl px-6 py-16">
@@ -51,10 +70,11 @@ export default function RequestDetailPage() {
                 {request.status === 'draft' && (
                     <button
                         type="button"
+                        onClick={handlePublish}
+                        disabled={items.length === 0 || publishing}
                         className="shrink-0 rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-950 disabled:opacity-50"
-                        disabled={items.length === 0}
                     >
-                        Publish to Suppliers
+                        {publishing ? 'Publishing...' : 'Publish to Suppliers'}
                     </button>
                 )}
             </div>

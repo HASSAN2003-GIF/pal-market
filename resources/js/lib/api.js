@@ -108,3 +108,9 @@ export function addItemToRequest(requestId, payload) {
         body: JSON.stringify(payload),
     });
 }
+
+export function publishBuyerRequest(id) {
+    return request(`/buyer-requests/${id}/publish`, {
+        method: 'POST',
+    });
+}
