@@ -33,12 +33,15 @@ export default function RegisterPage() {
         setError('');
         setLoading(true);
 try {
-    await register(form);
-
-    navigate('/dashboard', {
-        replace: true,
-    });
-}
+            await register(form);
+            
+            // Route them based on the role they just selected
+            if (form.role === 'supplier') {
+                navigate('/supplier', { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
+        }
         catch (err) {
             if (err.data?.errors) {
                 const firstError = Object.values(err.data.errors)

@@ -187,4 +187,22 @@ class BuyerRequestController extends Controller
             ], 422);
         }
     }
+
+    public function marketFeed(): JsonResponse
+    {
+        // We do not use the BuyerRequestPolicy here because Suppliers need to see this.
+        // We simply fetch all requests that have been published to the open market.
+        
+        $openRequests = BuyerRequest::with([
+                'buyerProfile', 
+                'items.product'
+            ])
+            ->where('status', 'open') // Fetch only published requests
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'buyer_requests' => $openRequests,
+        ]);
+    }
 }

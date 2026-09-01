@@ -29,6 +29,8 @@ Route::get('/products/{product}', [
 ]);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Supplier Market Feed
+    Route::get('/market-requests', [BuyerRequestController::class, 'marketFeed']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 

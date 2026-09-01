@@ -11,6 +11,7 @@ import GoogleAuthSuccessPage from '../pages/GoogleAuthSuccessPage';
 import BuyerDashboardPage from '../pages/BuyerDashboardPage';
 import CreateRequestPage from '../pages/CreateRequestPage';
 import RequestDetailPage from '../pages/RequestDetailPage';
+import SupplierDashboardPage from '../pages/SupplierDashboardPage';
 
 export default function AppRouter() {
     return (
@@ -48,20 +49,7 @@ export default function AppRouter() {
 
                         <Route path="/requests/:requestId" element={<RequestDetailPage />} />
 
-                        <Route
-                            path="/supplier"
-                            element={
-                                <div className="mx-auto max-w-7xl px-6 py-16">
-                                    <h1 className="text-3xl font-semibold text-ink-950">
-                                        Supplier workspace
-                                    </h1>
-
-                                    <p className="mt-2 text-sm text-ink-600">
-                                        Your supplier tools will appear here.
-                                    </p>
-                                </div>
-                            }
-                        />
+                        <Route path="/supplier" element={<SupplierDashboardPage />} />
 
                         <Route
                             path="/admin"

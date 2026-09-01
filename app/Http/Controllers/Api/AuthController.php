@@ -33,14 +33,15 @@ class AuthController extends Controller
                 'email_verified_at' => now(),
             ]);
 
-            // 2. Create the role-specific profile
+                      // 2. Create the role-specific profile
             if ($validated['role'] === 'buyer') {
                 $newUser->buyerProfile()->create([
                     'business_name' => $newUser->name,
                 ]);
             } else {
                 $newUser->supplier()->create([
-                    'company_name' => $newUser->name . ' Hardware',
+                    'business_name' => $newUser->name . ' Hardware',
+                    'tin_number' => (string) random_int(100000000, 999999999), // Generates a unique 9-digit TIN
                     'status' => 'pending',
                 ]);
             }

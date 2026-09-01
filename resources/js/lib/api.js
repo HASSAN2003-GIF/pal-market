@@ -114,3 +114,7 @@ export function publishBuyerRequest(id) {
         method: 'POST',
     });
 }
+
+export function getMarketRequests() {
+    return request('/market-requests');
+}
