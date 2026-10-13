@@ -67,7 +67,7 @@ class PurchaseOrderController extends Controller
         $this->audit->record('purchase_order.created', "Raised {$purchaseOrder->order_number} from {$quotation->quotation_number}.", $purchaseOrder);
 
         return response()->json([
-            'message' => 'Purchase order created successfully.',
+            'message' => __('Purchase order created successfully.'),
             'purchase_order' => $purchaseOrder->load(['buyerProfile', 'supplier', 'supplierQuotation', 'items.product']),
         ], 201);
     }

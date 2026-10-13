@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,7 +30,7 @@ use Laravel\Sanctum\HasApiTokens;
     'remember_token',
     'google_id',
 ])]
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -47,6 +48,12 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /** Language for emails and notifications; null uses the current request's language. */
+    public function preferredLocale(): ?string
+    {
+        return $this->locale;
     }
 
     public function supplier(): HasOne

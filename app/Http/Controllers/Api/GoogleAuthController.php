@@ -105,12 +105,12 @@ class GoogleAuthController extends Controller
 
         if (! $user || $user->isSuspended()) {
             throw ValidationException::withMessages([
-                'code' => 'This sign-in link has expired. Please sign in with Google again.',
+                'code' => __('This sign-in link has expired. Please sign in with Google again.'),
             ]);
         }
 
         return response()->json([
-            'message' => 'Login successful.',
+            'message' => __('Login successful.'),
             'user' => UserPresenter::present($user),
             'token' => $user->createToken('api-token')->plainTextToken,
         ]);

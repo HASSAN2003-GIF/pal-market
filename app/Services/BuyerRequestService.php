@@ -77,13 +77,13 @@ class BuyerRequestService
 
         if (! $product) {
             throw ValidationException::withMessages([
-                'product_id' => 'The selected product does not exist or is no longer available.',
+                'product_id' => __('The selected product does not exist or is no longer available.'),
             ]);
         }
 
         if ($buyerRequest->items()->where('product_id', $productId)->exists()) {
             throw ValidationException::withMessages([
-                'product_id' => 'This product has already been added to the buyer request.',
+                'product_id' => __('This product has already been added to the buyer request.'),
             ]);
         }
 
@@ -134,7 +134,7 @@ class BuyerRequestService
     {
         if ($quantity <= 0) {
             throw ValidationException::withMessages([
-                'quantity' => 'Quantity must be greater than zero.',
+                'quantity' => __('Quantity must be greater than zero.'),
             ]);
         }
     }

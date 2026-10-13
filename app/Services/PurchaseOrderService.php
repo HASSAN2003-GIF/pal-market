@@ -19,7 +19,7 @@ class PurchaseOrderService
 
             if ($quotation->status !== 'accepted') {
                 throw ValidationException::withMessages([
-                    'status' => 'Only accepted quotations can create purchase orders.',
+                    'status' => __('Only accepted quotations can create purchase orders.'),
                 ]);
             }
 
@@ -27,13 +27,13 @@ class PurchaseOrderService
 
             if ($quotation->items->isEmpty()) {
                 throw ValidationException::withMessages([
-                    'items' => 'A quotation must contain at least one item before a purchase order can be created.',
+                    'items' => __('A quotation must contain at least one item before a purchase order can be created.'),
                 ]);
             }
 
             if (PurchaseOrder::query()->where('supplier_quotation_id', $quotation->id)->exists()) {
                 throw ValidationException::withMessages([
-                    'supplier_quotation_id' => 'A purchase order already exists for this quotation.',
+                    'supplier_quotation_id' => __('A purchase order already exists for this quotation.'),
                 ]);
             }
 

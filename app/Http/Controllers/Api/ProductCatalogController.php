@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Services\ProductCatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +23,9 @@ class ProductCatalogController extends Controller
                 'category_id',
                 'brand_id',
                 'per_page',
+                'sort',
+                'region',
+                'only_local',
             ])
         );
 
@@ -51,19 +56,19 @@ class ProductCatalogController extends Controller
     public function filters(): JsonResponse
     {
         return response()->json([
-            'categories' => \App\Models\Category::query()
+            'categories' => Category::query()
                 ->where('is_active', true)
                 ->withCount(['products' => fn ($q) => $q->where('is_active', true)])
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug']),
-            'brands' => \App\Models\Brand::query()
+            'brands' => Brand::query()
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug']),
         ]);
     }
 
-    public function show(int $product): JsonResponse
+    public function show(Request $request, int $product): JsonResponse
     {
         $product = $this->productCatalogService->find($product);
 
@@ -86,7 +91,7 @@ class ProductCatalogController extends Controller
                 ] : null,
                 'supplier_offerings' => $this
                     ->productCatalogService
-                    ->supplierOfferings($product),
+                    ->supplierOfferings($product, $request->query('region')),
             ],
         ]);
     }

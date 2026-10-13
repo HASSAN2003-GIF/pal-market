@@ -75,7 +75,7 @@ class BuyerRequestController extends Controller
         );
 
         return response()->json([
-            'message' => 'Buyer request created successfully.',
+            'message' => __('Buyer request created successfully.'),
             'buyer_request' => $buyerRequest->load(['buyerProfile', 'items.product']),
         ], 201);
     }
@@ -114,7 +114,7 @@ class BuyerRequestController extends Controller
         );
 
         return response()->json([
-            'message' => 'Buyer request updated successfully.',
+            'message' => __('Buyer request updated successfully.'),
             'buyer_request' => $buyerRequest->load(['buyerProfile', 'items.product']),
         ]);
     }
@@ -125,7 +125,7 @@ class BuyerRequestController extends Controller
 
         $this->buyerRequestService->delete($buyerRequest);
 
-        return response()->json(['message' => 'Draft request deleted.']);
+        return response()->json(['message' => __('Draft request deleted.')]);
     }
 
     public function addItem(Request $request, BuyerRequest $buyerRequest): JsonResponse
@@ -148,7 +148,7 @@ class BuyerRequestController extends Controller
         );
 
         return response()->json([
-            'message' => 'Buyer request item added successfully.',
+            'message' => __('Buyer request item added successfully.'),
             'item' => $item->load('product'),
             'buyer_request' => $buyerRequest->fresh()->load('items.product'),
         ], 201);
@@ -173,7 +173,7 @@ class BuyerRequestController extends Controller
         );
 
         return response()->json([
-            'message' => 'Item updated.',
+            'message' => __('Item updated.'),
             'item' => $item->load('product'),
         ]);
     }
@@ -186,7 +186,7 @@ class BuyerRequestController extends Controller
         $this->buyerRequestService->removeItem($item->setRelation('buyerRequest', $buyerRequest));
 
         return response()->json([
-            'message' => 'Item removed.',
+            'message' => __('Item removed.'),
             'buyer_request' => $buyerRequest->fresh()->load('items.product'),
         ]);
     }
@@ -205,7 +205,7 @@ class BuyerRequestController extends Controller
         );
 
         return response()->json([
-            'message' => 'Buyer request published successfully.',
+            'message' => __('Buyer request published successfully.'),
             'buyer_request' => $buyerRequest->load(['buyerProfile', 'items.product']),
         ]);
     }
@@ -217,7 +217,7 @@ class BuyerRequestController extends Controller
         $buyerRequest = $this->buyerRequestStatusService->cancel($buyerRequest);
 
         return response()->json([
-            'message' => 'Buyer request cancelled successfully.',
+            'message' => __('Buyer request cancelled successfully.'),
             'buyer_request' => $buyerRequest->load(['buyerProfile', 'items.product']),
         ]);
     }

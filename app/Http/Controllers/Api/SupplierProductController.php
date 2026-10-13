@@ -56,7 +56,7 @@ class SupplierProductController extends Controller
             );
 
             return response()->json([
-                'message' => 'Product added to supplier catalog successfully.',
+                'message' => __('Product added to supplier catalog successfully.'),
                 'supplier_product' => $supplierProduct->load([
                     'product.category',
                     'product.brand',
@@ -64,7 +64,7 @@ class SupplierProductController extends Controller
             ], 201);
         } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Unable to add product.',
+                'message' => __('Unable to add product.'),
                 'errors' => $exception->errors(),
             ], 422);
         }
@@ -105,7 +105,7 @@ class SupplierProductController extends Controller
         );
 
         return response()->json([
-            'message' => 'Supplier product updated successfully.',
+            'message' => __('Supplier product updated successfully.'),
             'supplier_product' => $supplierProduct->load([
                 'product.category',
                 'product.brand',
@@ -121,7 +121,7 @@ class SupplierProductController extends Controller
         $supplierProduct->delete();
 
         return response()->json([
-            'message' => 'Supplier product removed successfully.',
+            'message' => __('Supplier product removed successfully.'),
         ]);
     }
 }

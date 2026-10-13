@@ -66,13 +66,13 @@ class SupplierQuotationController extends Controller
 
         if (! $supplier) {
             return response()->json([
-                'message' => 'You do not have a supplier profile.',
+                'message' => __('You do not have a supplier profile.'),
             ], 403);
         }
 
         if ($supplier->status !== 'approved') {
             return response()->json([
-                'message' => 'Unable to create quotation.',
+                'message' => __('Unable to create quotation.'),
                 'errors' => [
                     'supplier_id' => [
                         'Your supplier account must be approved before creating a quotation.',
@@ -130,7 +130,7 @@ class SupplierQuotationController extends Controller
         $quotation = $this->quotationService->updateTerms($quotation, $validated);
 
         return response()->json([
-            'message' => 'Quotation updated.',
+            'message' => __('Quotation updated.'),
             'quotation' => $quotation->load(self::RELATIONS),
         ]);
     }
@@ -157,7 +157,7 @@ class SupplierQuotationController extends Controller
         );
 
         return response()->json([
-            'message' => 'Quotation item added successfully.',
+            'message' => __('Quotation item added successfully.'),
             'item' => $item->load('product'),
             'quotation' => $quotation->fresh()->load('items'),
         ], 201);
@@ -171,7 +171,7 @@ class SupplierQuotationController extends Controller
         $quotation = $this->quotationService->removeItem($item->setRelation('supplierQuotation', $quotation));
 
         return response()->json([
-            'message' => 'Item removed from the quotation.',
+            'message' => __('Item removed from the quotation.'),
             'quotation' => $quotation->load(self::RELATIONS),
         ]);
     }
@@ -183,7 +183,7 @@ class SupplierQuotationController extends Controller
         $quotation = $this->quotationStatusService->submit($quotation);
 
         return response()->json([
-            'message' => 'Quotation submitted successfully.',
+            'message' => __('Quotation submitted successfully.'),
             'quotation' => $quotation->load(['buyerRequest', 'supplier', 'items']),
         ]);
     }
@@ -195,7 +195,7 @@ class SupplierQuotationController extends Controller
         $quotation = $this->quotationStatusService->withdraw($quotation);
 
         return response()->json([
-            'message' => 'Quotation withdrawn.',
+            'message' => __('Quotation withdrawn.'),
             'quotation' => $quotation->load(self::RELATIONS),
         ]);
     }
@@ -246,7 +246,7 @@ class SupplierQuotationController extends Controller
         $quotation = $this->quotationStatusService->reject($quotation);
 
         return response()->json([
-            'message' => 'Quotation declined.',
+            'message' => __('Quotation declined.'),
             'quotation' => $quotation->load(self::RELATIONS),
         ]);
     }

@@ -22,7 +22,7 @@ class SecurityHeaders
         $headers->set('X-Content-Type-Options', 'nosniff');
         $headers->set('X-Frame-Options', 'DENY');
         $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=()');
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin');
 
         if ($request->isSecure()) {

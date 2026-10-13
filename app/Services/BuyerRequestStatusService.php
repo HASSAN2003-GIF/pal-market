@@ -17,13 +17,13 @@ class BuyerRequestStatusService
     {
         if ($request->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'Only draft buyer requests can be published.',
+                'status' => __('Only draft buyer requests can be published.'),
             ]);
         }
 
         if (! $request->items()->exists()) {
             throw ValidationException::withMessages([
-                'items' => 'Add at least one item before publishing the request to suppliers.',
+                'items' => __('Add at least one item before publishing the request to suppliers.'),
             ]);
         }
 
@@ -46,7 +46,7 @@ class BuyerRequestStatusService
     {
         if (! in_array($request->status, ['draft', 'open'], true)) {
             throw ValidationException::withMessages([
-                'status' => 'Only draft or open buyer requests can be cancelled.',
+                'status' => __('Only draft or open buyer requests can be cancelled.'),
             ]);
         }
 
@@ -65,13 +65,13 @@ class BuyerRequestStatusService
     {
         if ($request->status !== 'open') {
             throw ValidationException::withMessages([
-                'status' => 'Only open buyer requests can expire.',
+                'status' => __('Only open buyer requests can expire.'),
             ]);
         }
 
         if ($request->expires_at === null || $request->expires_at->isFuture()) {
             throw ValidationException::withMessages([
-                'status' => 'Only buyer requests whose expiration time has passed can expire.',
+                'status' => __('Only buyer requests whose expiration time has passed can expire.'),
             ]);
         }
 

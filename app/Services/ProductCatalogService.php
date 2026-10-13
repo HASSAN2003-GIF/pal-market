@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\SupplierPrice;
 use App\Support\Paginated;
+use App\Support\Regions;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -23,12 +24,20 @@ class ProductCatalogService
             ->where('supplier_products.is_active', true)
             ->whereHas('supplier', fn ($s) => $s->where('status', 'approved'));
 
+        // Same offers, limited to stock held at an active location in the region.
+        $region = Regions::normalise($filters['region'] ?? null);
+        $localOffers = fn ($q) => $activeOffers($q)->whereHas('inventories', fn ($i) => $i
+            ->where('is_available', true)
+            ->where('quantity', '>', 0)
+            ->whereHas('supplierLocation', fn ($l) => $l->where('status', 'active')->where('region', $region)));
+
         $query = Product::query()
             ->with([
                 'category',
                 'brand',
             ])
             ->withCount(['supplierProducts as offers_count' => $activeOffers])
+            ->when($region, fn ($q) => $q->withCount(['supplierProducts as local_offers_count' => $localOffers]))
             ->addSelect([
                 // Lowest currently effective price across those offers.
                 'from_price' => SupplierPrice::query()
@@ -68,8 +77,22 @@ class ProductCatalogService
             );
         }
 
+        if ($region && filter_var($filters['only_local'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereHas('supplierProducts', $localOffers);
+        }
+
+        match ($filters['sort'] ?? null) {
+            // Unpriced products last in both directions.
+            'price_asc' => $query->orderByRaw('from_price is null')->orderBy('from_price'),
+            'price_desc' => $query->orderByRaw('from_price is null')->orderByDesc('from_price'),
+            'name' => null,
+            // Default: products stocked in the person's region first.
+            default => $region ? $query->orderByDesc('local_offers_count') : null,
+        };
+
         return $query
             ->orderBy('name')
+            ->orderBy('id')
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -137,16 +160,20 @@ class ProductCatalogService
         return $product;
     }
 
-    public function supplierOfferings(Product $product): Collection
+    public function supplierOfferings(Product $product, ?string $region = null): Collection
     {
+        $region = Regions::normalise($region);
+
         return $product->supplierProducts
             ->filter(function ($supplierProduct) {
                 return $supplierProduct->prices->isNotEmpty()
                     && $supplierProduct->inventories->isNotEmpty();
             })
-            ->map(function ($supplierProduct) {
+            ->map(function ($supplierProduct) use ($region) {
                 $price = $supplierProduct->prices->first();
-                $inventory = $supplierProduct->inventories->first();
+                $inventory = ($region
+                    ? $supplierProduct->inventories->first(fn ($i) => $i->supplierLocation->region === $region)
+                    : null) ?? $supplierProduct->inventories->first();
 
                 return [
                     'supplier_product_id' => $supplierProduct->id,
@@ -181,8 +208,11 @@ class ProductCatalogService
                             ->supplierLocation
                             ->ward,
                     ],
+                    'in_region' => $region !== null && $inventory->supplierLocation->region === $region,
                 ];
             })
+            // Offers in the person's region first, then cheapest.
+            ->sortBy([['in_region', 'desc'], fn ($a, $b) => $a['price'] <=> $b['price']])
             ->values();
     }
 }

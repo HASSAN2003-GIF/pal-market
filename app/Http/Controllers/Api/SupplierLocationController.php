@@ -65,12 +65,12 @@ class SupplierLocationController extends Controller
             );
 
             return response()->json([
-                'message' => 'Supplier location created successfully.',
+                'message' => __('Supplier location created successfully.'),
                 'supplier_location' => $location,
             ], 201);
         } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Unable to create supplier location.',
+                'message' => __('Unable to create supplier location.'),
                 'errors' => $exception->errors(),
             ], 422);
         }
@@ -124,7 +124,7 @@ class SupplierLocationController extends Controller
         );
 
         return response()->json([
-            'message' => 'Supplier location updated successfully.',
+            'message' => __('Supplier location updated successfully.'),
             'supplier_location' => $location,
         ]);
     }
@@ -137,7 +137,7 @@ class SupplierLocationController extends Controller
         $supplierLocation->delete();
 
         return response()->json([
-            'message' => 'Supplier location removed successfully.',
+            'message' => __('Supplier location removed successfully.'),
         ]);
     }
 }

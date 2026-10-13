@@ -51,7 +51,7 @@ class AdminCatalogController extends Controller
         $product = Product::create([...$validated, 'slug' => $this->uniqueSlug(Product::class, $validated['name'])]);
         $this->audit->record('catalog.product_created', "Added product {$product->name}.", $product);
 
-        return response()->json(['message' => 'Product added.', 'product' => $product->load(['category', 'brand'])], 201);
+        return response()->json(['message' => __('Product added.'), 'product' => $product->load(['category', 'brand'])], 201);
     }
 
     public function updateProduct(Request $request, Product $product): JsonResponse
@@ -61,7 +61,7 @@ class AdminCatalogController extends Controller
         $product->update($validated);
         $this->audit->record('catalog.product_updated', "Updated product {$product->name}.", $product, ['changes' => $product->getChanges()]);
 
-        return response()->json(['message' => 'Product updated.', 'product' => $product->load(['category', 'brand'])]);
+        return response()->json(['message' => __('Product updated.'), 'product' => $product->load(['category', 'brand'])]);
     }
 
     public function categories(): JsonResponse

@@ -53,14 +53,14 @@ class AdminBuyerController extends Controller
     public function suspend(BuyerProfile $buyer): JsonResponse
     {
         if ($buyer->status !== 'active') {
-            return response()->json(['message' => 'Only active buyers can be suspended.'], 422);
+            return response()->json(['message' => __('Only active buyers can be suspended.')], 422);
         }
 
         $buyer->update(['status' => 'suspended']);
         $this->audit->record('buyer.suspended', "Suspended buyer {$buyer->business_name}.", $buyer);
 
         return response()->json([
-            'message' => 'Buyer suspended successfully.',
+            'message' => __('Buyer suspended successfully.'),
             'buyer' => $buyer->load('user:id,name,email'),
         ]);
     }
@@ -68,14 +68,14 @@ class AdminBuyerController extends Controller
     public function reactivate(BuyerProfile $buyer): JsonResponse
     {
         if ($buyer->status !== 'suspended') {
-            return response()->json(['message' => 'Only suspended buyers can be reactivated.'], 422);
+            return response()->json(['message' => __('Only suspended buyers can be reactivated.')], 422);
         }
 
         $buyer->update(['status' => 'active']);
         $this->audit->record('buyer.reactivated', "Reactivated buyer {$buyer->business_name}.", $buyer);
 
         return response()->json([
-            'message' => 'Buyer reactivated successfully.',
+            'message' => __('Buyer reactivated successfully.'),
             'buyer' => $buyer->load('user:id,name,email'),
         ]);
     }

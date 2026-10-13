@@ -113,7 +113,7 @@ class MarketRequestController extends Controller
     {
         $supplier = $request->user()->supplier;
 
-        abort_if($supplier === null, 403, 'Only supplier accounts can browse market requests.');
+        abort_if($supplier === null, 403, __('Only supplier accounts can browse market requests.'));
 
         return $supplier;
     }

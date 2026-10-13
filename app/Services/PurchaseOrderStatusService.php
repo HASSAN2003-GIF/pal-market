@@ -96,7 +96,7 @@ class PurchaseOrderStatusService
             'processing',
         ], true)) {
             throw ValidationException::withMessages([
-                'status' => 'Only pending, confirmed, or processing purchase orders can be cancelled.',
+                'status' => __('Only pending, confirmed, or processing purchase orders can be cancelled.'),
             ]);
         }
 

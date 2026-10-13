@@ -13,31 +13,31 @@ class SupplierQuotationStatusService
     {
         if ($quotation->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'Only draft quotations can be submitted.',
+                'status' => __('Only draft quotations can be submitted.'),
             ]);
         }
 
         if ($quotation->buyerRequest->status !== 'open') {
             throw ValidationException::withMessages([
-                'status' => 'Quotations can only be submitted for open buyer requests.',
+                'status' => __('Quotations can only be submitted for open buyer requests.'),
             ]);
         }
 
         if ($quotation->buyerRequest->expires_at !== null && $quotation->buyerRequest->expires_at->isPast()) {
             throw ValidationException::withMessages([
-                'status' => 'Quotations cannot be submitted for expired buyer requests.',
+                'status' => __('Quotations cannot be submitted for expired buyer requests.'),
             ]);
         }
 
         if (! $quotation->items()->exists()) {
             throw ValidationException::withMessages([
-                'items' => 'Price at least one requested item before submitting the quotation.',
+                'items' => __('Price at least one requested item before submitting the quotation.'),
             ]);
         }
 
         if ($quotation->valid_until !== null && $quotation->valid_until->isPast()) {
             throw ValidationException::withMessages([
-                'valid_until' => 'The quotation validity date must be in the future.',
+                'valid_until' => __('The quotation validity date must be in the future.'),
             ]);
         }
 
@@ -56,7 +56,7 @@ class SupplierQuotationStatusService
     {
         if (! in_array($quotation->status, ['draft', 'submitted'], true)) {
             throw ValidationException::withMessages([
-                'status' => 'Only draft or submitted quotations can be withdrawn.',
+                'status' => __('Only draft or submitted quotations can be withdrawn.'),
             ]);
         }
 
@@ -69,7 +69,7 @@ class SupplierQuotationStatusService
     {
         if ($quotation->status !== 'submitted') {
             throw ValidationException::withMessages([
-                'status' => 'Only submitted quotations can be declined.',
+                'status' => __('Only submitted quotations can be declined.'),
             ]);
         }
 
@@ -92,13 +92,13 @@ class SupplierQuotationStatusService
 
             if ($quotation->status !== 'submitted') {
                 throw ValidationException::withMessages([
-                    'status' => 'Only submitted quotations can be accepted.',
+                    'status' => __('Only submitted quotations can be accepted.'),
                 ]);
             }
 
             if ($quotation->valid_until !== null && $quotation->valid_until->isPast()) {
                 throw ValidationException::withMessages([
-                    'status' => 'Expired quotations cannot be accepted.',
+                    'status' => __('Expired quotations cannot be accepted.'),
                 ]);
             }
 
@@ -108,13 +108,13 @@ class SupplierQuotationStatusService
                 ->whereKeyNot($quotation->id)
                 ->exists()) {
                 throw ValidationException::withMessages([
-                    'status' => 'Another quotation has already been accepted for this buyer request.',
+                    'status' => __('Another quotation has already been accepted for this buyer request.'),
                 ]);
             }
 
             if ($buyerRequest->status !== 'open') {
                 throw ValidationException::withMessages([
-                    'status' => "Quotations cannot be accepted on a {$buyerRequest->status} request.",
+                    'status' => __('Quotations cannot be accepted on a :status request.', ['status' => $buyerRequest->status]),
                 ]);
             }
 
@@ -135,13 +135,13 @@ class SupplierQuotationStatusService
     {
         if ($quotation->status !== 'submitted') {
             throw ValidationException::withMessages([
-                'status' => 'Only submitted quotations can expire.',
+                'status' => __('Only submitted quotations can expire.'),
             ]);
         }
 
         if ($quotation->valid_until === null || $quotation->valid_until->isFuture()) {
             throw ValidationException::withMessages([
-                'status' => 'Only quotations whose expiration time has passed can expire.',
+                'status' => __('Only quotations whose expiration time has passed can expire.'),
             ]);
         }
 

@@ -73,10 +73,10 @@ class AdminUserController extends Controller
             'role' => ['required', Rule::in(User::ROLES)],
         ]);
 
-        $this->guardSelf($request, $user, 'change your own role');
+        $this->guardSelf($request, $user, 'You cannot change your own role.');
 
         if ($user->isAdmin() && $validated['role'] !== 'admin') {
-            $this->guardLastAdmin($user, 'demote the last active administrator');
+            $this->guardLastAdmin($user, 'You cannot demote the last active administrator.');
         }
 
         $previous = $user->role;
@@ -96,7 +96,7 @@ class AdminUserController extends Controller
         }
 
         return response()->json([
-            'message' => 'Role updated.',
+            'message' => __('Role updated.'),
             'user' => $user->only(self::FIELDS),
         ]);
     }
@@ -105,14 +105,14 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate(['reason' => ['nullable', 'string', 'max:500']]);
 
-        $this->guardSelf($request, $user, 'suspend your own account');
+        $this->guardSelf($request, $user, 'You cannot suspend your own account.');
 
         if ($user->isSuspended()) {
-            return response()->json(['message' => 'This account is already suspended.'], 422);
+            return response()->json(['message' => __('This account is already suspended.')], 422);
         }
 
         if ($user->isAdmin()) {
-            $this->guardLastAdmin($user, 'suspend the last active administrator');
+            $this->guardLastAdmin($user, 'You cannot suspend the last active administrator.');
         }
 
         $user->forceFill(['suspended_at' => now()])->save();
@@ -123,7 +123,7 @@ class AdminUserController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Account suspended and signed out everywhere.',
+            'message' => __('Account suspended and signed out everywhere.'),
             'user' => $user->only(self::FIELDS),
         ]);
     }
@@ -131,7 +131,7 @@ class AdminUserController extends Controller
     public function reactivate(User $user): JsonResponse
     {
         if (! $user->isSuspended()) {
-            return response()->json(['message' => 'This account is not suspended.'], 422);
+            return response()->json(['message' => __('This account is not suspended.')], 422);
         }
 
         $user->forceFill(['suspended_at' => null])->save();
@@ -139,7 +139,7 @@ class AdminUserController extends Controller
         $this->audit->record('user.reactivated', "Reactivated {$user->email}.", $user);
 
         return response()->json([
-            'message' => 'Account reactivated.',
+            'message' => __('Account reactivated.'),
             'user' => $user->only(self::FIELDS),
         ]);
     }
@@ -150,10 +150,10 @@ class AdminUserController extends Controller
      */
     public function destroy(Request $request, User $user): JsonResponse
     {
-        $this->guardSelf($request, $user, 'delete your own account');
+        $this->guardSelf($request, $user, 'You cannot delete your own account.');
 
         if ($user->isAdmin()) {
-            $this->guardLastAdmin($user, 'delete the last active administrator');
+            $this->guardLastAdmin($user, 'You cannot delete the last active administrator.');
         }
 
         $user->load(['buyerProfile', 'supplier']);
@@ -172,7 +172,7 @@ class AdminUserController extends Controller
 
         if ($hasHistory) {
             return response()->json([
-                'message' => 'This account has trading history and cannot be deleted. Suspend it instead.',
+                'message' => __('This account has trading history and cannot be deleted. Suspend it instead.'),
             ], 409);
         }
 
@@ -183,23 +183,23 @@ class AdminUserController extends Controller
         $this->audit->record('user.deleted', "Deleted account {$email}.", null, ['user_id' => $user->id]);
 
         return response()->json([
-            'message' => 'User deleted successfully.',
+            'message' => __('User deleted successfully.'),
         ]);
     }
 
-    private function guardSelf(Request $request, User $user, string $action): void
+    private function guardSelf(Request $request, User $user, string $message): void
     {
-        abort_if($request->user()->is($user), 422, "You cannot {$action}.");
+        abort_if($request->user()->is($user), 422, __($message));
     }
 
-    private function guardLastAdmin(User $user, string $action): void
+    private function guardLastAdmin(User $user, string $message): void
     {
         $otherActiveAdmins = User::where('role', 'admin')
             ->whereNull('suspended_at')
             ->whereKeyNot($user->id)
             ->exists();
 
-        abort_unless($otherActiveAdmins, 422, "You cannot {$action}.");
+        abort_unless($otherActiveAdmins, 422, __($message));
     }
 
     private function meta($paginator): array

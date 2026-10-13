@@ -56,7 +56,7 @@ class AuthController extends Controller
         $user->forceFill(['last_login_at' => now()])->save();
 
         return response()->json([
-            'message' => 'Account created successfully.',
+            'message' => __('Account created successfully.'),
             'user' => UserPresenter::present($user),
             'token' => $this->issueToken($user),
         ], 201);
@@ -73,7 +73,7 @@ class AuthController extends Controller
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_LOGIN_ATTEMPTS)) {
             throw ValidationException::withMessages([
-                'login' => 'Too many sign-in attempts. Please try again in '.RateLimiter::availableIn($throttleKey).' seconds.',
+                'login' => __('Too many sign-in attempts. Please try again in :seconds seconds.', ['seconds' => RateLimiter::availableIn($throttleKey)]),
             ])->status(429);
         }
 
@@ -88,7 +88,7 @@ class AuthController extends Controller
             logger()->notice('Failed sign-in attempt', ['ip' => $request->ip()]);
 
             throw ValidationException::withMessages([
-                'login' => 'The provided credentials are incorrect.',
+                'login' => __('The provided credentials are incorrect.'),
             ]);
         }
 
@@ -98,7 +98,7 @@ class AuthController extends Controller
         // revealed to someone who does not know the credentials.
         if ($user->isSuspended()) {
             return response()->json([
-                'message' => 'This account has been suspended. Please contact PAL Market support.',
+                'message' => __('This account has been suspended. Please contact PAL Market support.'),
             ], 403);
         }
 
@@ -106,7 +106,7 @@ class AuthController extends Controller
         $user->forceFill(['last_login_at' => now()])->save();
 
         return response()->json([
-            'message' => 'Login successful.',
+            'message' => __('Login successful.'),
             'user' => UserPresenter::present($user),
             'token' => $this->issueToken($user),
         ]);
@@ -157,7 +157,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Profile updated.',
+            'message' => __('Profile updated.'),
             'user' => UserPresenter::present($user->fresh()),
         ]);
     }
@@ -177,7 +177,7 @@ class AuthController extends Controller
 
         $this->audit->record('account.password_changed', 'Changed account password and signed out other devices.', $user);
 
-        return response()->json(['message' => 'Password updated. Other devices have been signed out.']);
+        return response()->json(['message' => __('Password updated. Other devices have been signed out.')]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -185,7 +185,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()?->delete();
 
         return response()->json([
-            'message' => 'Logout successful.',
+            'message' => __('Logout successful.'),
         ]);
     }
 
@@ -198,7 +198,7 @@ class AuthController extends Controller
         Password::sendResetLink(['email' => Str::lower($validated['email'])]);
 
         return response()->json([
-            'message' => 'If an account exists for that email, a password reset link has been sent.',
+            'message' => __('If an account exists for that email, a password reset link has been sent.'),
         ]);
     }
 
@@ -230,7 +230,7 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => __($status)]);
         }
 
-        return response()->json(['message' => 'Your password has been reset. You can now sign in.']);
+        return response()->json(['message' => __('Your password has been reset. You can now sign in.')]);
     }
 
     private function issueToken(User $user): string

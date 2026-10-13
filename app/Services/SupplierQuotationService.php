@@ -23,25 +23,25 @@ class SupplierQuotationService
     ): SupplierQuotation {
         if ($buyerRequest->status !== 'open') {
             throw ValidationException::withMessages([
-                'buyer_request_id' => 'Quotations can only be created for open buyer requests.',
+                'buyer_request_id' => __('Quotations can only be created for open buyer requests.'),
             ]);
         }
 
         if ($buyerRequest->expires_at !== null && $buyerRequest->expires_at->isPast()) {
             throw ValidationException::withMessages([
-                'buyer_request_id' => 'Quotations cannot be created for expired buyer requests.',
+                'buyer_request_id' => __('Quotations cannot be created for expired buyer requests.'),
             ]);
         }
 
         if ($supplier->status !== 'approved') {
             throw ValidationException::withMessages([
-                'supplier_id' => 'Only approved suppliers can create quotations.',
+                'supplier_id' => __('Only approved suppliers can create quotations.'),
             ]);
         }
 
         if ($supplier->quotations()->where('buyer_request_id', $buyerRequest->id)->exists()) {
             throw ValidationException::withMessages([
-                'buyer_request_id' => 'This supplier has already created a quotation for this buyer request.',
+                'buyer_request_id' => __('This supplier has already created a quotation for this buyer request.'),
             ]);
         }
 
@@ -124,19 +124,19 @@ class SupplierQuotationService
 
         if ($quantity <= 0) {
             throw ValidationException::withMessages([
-                'quantity' => 'Quantity must be greater than zero.',
+                'quantity' => __('Quantity must be greater than zero.'),
             ]);
         }
 
         if ($unitPrice < 0) {
             throw ValidationException::withMessages([
-                'unit_price' => 'Unit price cannot be negative.',
+                'unit_price' => __('Unit price cannot be negative.'),
             ]);
         }
 
         if (! $quotation->buyerRequest->items()->where('product_id', $productId)->exists()) {
             throw ValidationException::withMessages([
-                'product_id' => 'This product was not requested by the buyer.',
+                'product_id' => __('This product was not requested by the buyer.'),
             ]);
         }
 
@@ -148,13 +148,13 @@ class SupplierQuotationService
 
         if (! $supplierOffersProduct) {
             throw ValidationException::withMessages([
-                'product_id' => 'This product is not in your active supplier catalog. Add it under My catalog first.',
+                'product_id' => __('This product is not in your active supplier catalog. Add it under My catalog first.'),
             ]);
         }
 
         if ($quotation->items()->where('product_id', $productId)->exists()) {
             throw ValidationException::withMessages([
-                'product_id' => 'This product is already priced on the quotation.',
+                'product_id' => __('This product is already priced on the quotation.'),
             ]);
         }
 
@@ -201,7 +201,7 @@ class SupplierQuotationService
     {
         if ($quotation->status !== 'draft') {
             throw ValidationException::withMessages([
-                'status' => 'Only draft quotations can be modified.',
+                'status' => __('Only draft quotations can be modified.'),
             ]);
         }
     }

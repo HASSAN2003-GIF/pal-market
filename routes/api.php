@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BuyerRequestController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MarketRequestController;
+use App\Http\Controllers\Api\PreferencesController;
 use App\Http\Controllers\Api\ProductCatalogController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierInventoryController;
@@ -51,6 +52,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/me', [AuthController::class, 'updateProfile']);
     Route::put('/me/password', [AuthController::class, 'updatePassword']);
+    Route::put('/me/preferences', [PreferencesController::class, 'update']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/workspace/summary', WorkspaceSummaryController::class);
 

@@ -16,7 +16,7 @@ class EnsureAccountIsActive
     {
         if ($request->user()?->isSuspended()) {
             return response()->json([
-                'message' => 'This account has been suspended. Please contact PAL Market support.',
+                'message' => __('This account has been suspended. Please contact PAL Market support.'),
                 'code' => 'account_suspended',
             ], 403);
         }
