@@ -30,7 +30,7 @@ export default function AdminRequestsPage() {
         { key: 'buyer', label: 'Buyer', render: (r) => r.buyer_profile?.business_name },
         { key: 'region', label: 'Delivery', render: (r) => r.delivery_region || 'Not given' },
         { key: 'counts', label: 'Items / quotes', render: (r) => `${r.items_count} / ${r.submitted_quotations_count}` },
-        { key: 'dates', label: 'Closes', render: (r) => (r.expires_at ? formatDate(r.expires_at) : 'Not published') },
+        { key: 'dates', label: 'Closes', render: (r) => (r.expires_at ? formatDate(r.expires_at) : r.status === 'draft' ? 'Not published' : 'No closing date') },
         { key: 'status', label: 'Status', render: (r) => <StatusBadge kind="request" status={r.status} /> },
     ];
 
