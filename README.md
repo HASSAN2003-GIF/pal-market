@@ -24,6 +24,14 @@ The SPA is served by Laravel from the same origin as the API (`resources/views/w
 
 Request: `draft → open → closed | cancelled | expired`. Quotation: `draft → submitted → accepted | rejected | expired | cancelled (withdrawn)`. Purchase order: `pending → confirmed → processing → shipped → delivered → completed`, or `cancelled` by the buyer before dispatch.
 
+## Language, theme and area
+
+- **English and Kiswahili.** Switch with EN / SW in the header. Interface text lives in `resources/js/i18n/locales/{en,sw}/*.js`; API messages, validation errors and the password-reset email in `lang/sw*`. The SPA sends `X-Locale`; the server falls back to the account's saved language, then `Accept-Language`. Text that people typed (product names, notes, business names) is never translated. Run `npm run check:i18n` after changing text.
+- **Light / dark / same as device.** Saved on the device; `public/theme-init.js` applies it before first paint. Colours are tokens in `resources/css/app.css` with a dark value for each.
+- **Your area.** A Tanzanian region chosen from a list, or suggested from the browser's location after the person allows it (nearest regional capital, computed on the device). Only the region name is stored (`localStorage` and `users.region`), never coordinates. It orders the catalog (`GET /api/products?region=…&only_local=1`), marks local offers and pre-fills new requests.
+- **Administration** is at `/admin` (also `/#admin`). There is deliberately no link to it in public navigation; access is enforced by the API (`auth:sanctum`, `active`, `admin` middleware), not by hiding the link.
+- **Brand assets**: see `scripts/brand/README.md`.
+
 ## Local development (Sail)
 
 Prerequisites: Docker Desktop (with WSL 2 integration on Windows), PHP 8.3+ and Composer on the host for the first install, Node 22+.
@@ -56,6 +64,7 @@ Set `DB_CONNECTION=sqlite` and `DB_DATABASE=/absolute/path/database.sqlite` (cre
 php artisan test                    # whole suite, SQLite in memory (see phpunit.xml)
 DB_CONNECTION=mysql DB_DATABASE=testing php artisan test   # against MySQL
 ./vendor/bin/pint --test <files>    # code style
+npm run check:i18n                  # English/Kiswahili dictionaries complete and consistent
 npm run build                       # production frontend build
 ```
 
@@ -67,8 +76,8 @@ All endpoints are under `/api` and return JSON. Authenticated endpoints need `Au
 
 | Area | Endpoints |
 | --- | --- |
-| Account | `POST register, login, logout, forgot-password, reset-password, auth/google/exchange`; `GET/PUT me`; `PUT me/password`; `GET workspace/summary` |
-| Catalog (public) | `GET products`, `GET products/{id}`, `GET catalog/filters` |
+| Account | `POST register, login, logout, forgot-password, reset-password, auth/google/exchange`; `GET/PUT me`; `PUT me/password`; `PUT me/preferences` (`locale`, `region`); `GET workspace/summary` |
+| Catalog (public) | `GET products` (`search`, `category_id`, `brand_id`, `sort=price_asc\|price_desc\|name`, `region`, `only_local`), `GET products/{id}` (`region` marks `in_region` offers), `GET catalog/filters` |
 | Buyer requests | `GET/POST buyer-requests`; `GET/PUT/DELETE buyer-requests/{id}`; `POST/PUT/DELETE buyer-requests/{id}/items[/{item}]`; `POST buyer-requests/{id}/publish`, `/cancel` |
 | Market (suppliers) | `GET market-requests`, `GET market-requests/{id}` |
 | Quotations | `POST buyer-requests/{id}/quotations` (optionally with `items` and `submit: true` for one atomic call); `GET quotations`, `GET/PUT quotations/{id}`; `POST quotations/{id}/items`, `DELETE …/items/{item}`; `POST quotations/{id}/submit`, `/withdraw`, `/accept` (`create_purchase_order: true` raises the order in the same transaction), `/reject` |
@@ -98,4 +107,4 @@ Administrators cannot change their own role, suspend or delete themselves, or re
 - Security headers and a strict Content Security Policy outside local development.
 - Tokens are kept in `localStorage`; the CSP is the main defence against script injection, so keep it strict.
 
-See `docs/DEPLOYMENT.md` for production setup and `docs/DECISIONS.md` for design decisions and known limitations.
+See `docs/DEPLOYMENT.md` for production setup, `docs/DECISIONS.md` for design decisions and known limitations, and `docs/UX-RESEARCH.md` for the marketplace patterns that were reviewed.

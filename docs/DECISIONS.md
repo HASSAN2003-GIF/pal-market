@@ -27,6 +27,20 @@ Decisions taken during the production-readiness pass (October 2026), with the re
 - **Lazy-loaded workspaces**: public visitors do not download buyer/supplier/admin code.
 - **`Model::preventLazyLoading()` and `preventSilentlyDiscardingAttributes()`** outside production, to surface N+1 queries and typos in tests.
 
+## Language, theme, area and brand (second pass, October 2026)
+
+| Decision | Why |
+| --- | --- |
+| Language order: `X-Locale` from the SPA, then the account's saved language, then `Accept-Language`, then English. | What the person just picked must win; a saved choice beats a browser default. |
+| Only interface text is translated. Product, category and business names, notes and audit-log entries are shown as entered. | Translating what people typed changes its meaning, and the brief forbids it. |
+| Emails use the account's saved language (`User::preferredLocale()`), otherwise the language of the request. | Password-reset emails are sent before sign-in. |
+| The area is a region name, chosen from a list or suggested from a one-off, low-accuracy browser position. The nearest regional capital is computed in the browser; coordinates never leave the device and are never stored. | Matches the data (supplier locations and delivery are recorded by region) and the brief's privacy rule. Near borders the suggestion can be wrong, so the person always confirms it. |
+| "Near me first" sorts by the number of approved sellers with stock at an active location in that region; "only my area" filters to those. Unknown region values are ignored. | Uses real stock data; a typo never hides the whole catalog. |
+| The theme is stored per device, not on the account. | Light/dark is usually a property of the screen and time of day. |
+| `/admin` stays a normal SPA route with no public link; `/#admin` forwards to it; a signed-in non-admin sees a "no access" page instead of a silent redirect. | All protection is the API; the page shell holds no data. Covered by `AdminEntryTest`. |
+| The logo was redrawn from the supplied photo using Manrope ExtraBold outlines; headings moved to Manrope 800 to match it. | The photo is small (103×61 px), so tracing it would be blurry; the logo's letterforms are geometric and match that typeface closely. |
+| English UI says "seller", "price offer" and "order" instead of "supplier", "quotation" and "purchase order". API field names are unchanged. | Plain words for people new to online buying; no API break. |
+
 ## Known limitations
 
 - No email/SMS notifications for new quotations or order updates. Users see changes when they open the app. `VerificationService` (OTP) and the empty `app/Services/Sms` driver stubs are left unused from earlier work.
@@ -34,3 +48,7 @@ Decisions taken during the production-readiness pass (October 2026), with the re
 - Quotation currency is fixed to TZS.
 - `TRUSTED_PROXIES` is read in `bootstrap/app.php` and therefore must be a real environment variable when configuration is cached.
 - No browser end-to-end test suite; flows were verified with feature tests and a manual browser walkthrough.
+- The Kiswahili text was written for this release and has not been reviewed by a native-speaking editor. Have it reviewed before launch (files under `resources/js/i18n/locales/sw/`, `lang/sw/`, `lang/sw.json`).
+- Validation rules not listed in `lang/sw/validation.php` fall back to English.
+- Supplier locations created before this release may use region spellings outside the 31-region list; they still display, but do not count as "in your area" unless they match.
+- The Amazon "Deliver to" pattern was studied from third-party documentation, because amazon.com could not be fetched (see `docs/UX-RESEARCH.md`).

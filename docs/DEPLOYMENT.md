@@ -41,6 +41,10 @@ php artisan storage:link
 
 Remove `public/hot` if it exists: its presence makes Laravel load assets from a Vite dev server.
 
+Serve `public/theme-init.js` as a normal static file (it is loaded in `<head>` and allowed by the CSP as `'self'`). Do not inline it: inline scripts are blocked by the CSP. `Permissions-Policy` allows geolocation for the site's own origin only; it is requested only when a person presses "Use my location".
+
+The release adding language and area preferences includes one additive migration (`users.locale`, `users.region`). CI runs `npm run check:i18n`; a failing check means interface text is missing in one language.
+
 First release only:
 
 ```bash
@@ -89,4 +93,6 @@ It expires requests and quotations whose window has passed, prunes expired API t
 - [ ] Cron running (`php artisan schedule:list` shows the jobs)
 - [ ] First admin created; demo accounts absent
 - [ ] Backups configured and a restore tested
+- [ ] Kiswahili text reviewed by a native speaker
+- [ ] `/admin` checked with a non-admin account (should show "no access") and with an admin account
 - [ ] Suppliers created before this release reviewed: older registrations stored a randomly generated TIN and a "<name> Hardware" business name that the supplier never provided
