@@ -6,6 +6,7 @@
         <meta name="description" content="PAL Market connects buyers of construction materials in Tanzania with approved suppliers. Post a materials list, compare quotations, and raise purchase orders.">
         <meta name="theme-color" content="#1A2430">
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         <title>PAL Market — construction materials, quoted</title>
         @viteReactRefresh
