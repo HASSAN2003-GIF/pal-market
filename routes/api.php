@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\SupplierLocationController;
 use App\Http\Controllers\Api\SupplierPriceController;
 use App\Http\Controllers\Api\SupplierProductController;
 use App\Http\Controllers\Api\SupplierQuotationController;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,6 +32,7 @@ Route::get('/products/{product}', [
 Route::middleware('auth:sanctum')->group(function () {
     // Supplier Market Feed
     Route::get('/market-requests', [BuyerRequestController::class, 'marketFeed']);
+    Route::get('/market-requests/{id}', [BuyerRequestController::class, 'marketShow']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -42,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supplier-inventory', [
         SupplierInventoryController::class,
         'index',
+
     ]);
 
     Route::post('/supplier-inventory', [
@@ -194,7 +197,6 @@ Route::middleware('auth:sanctum')->group(function () {
         'supplier-prices',
         SupplierPriceController::class
     );
-
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {

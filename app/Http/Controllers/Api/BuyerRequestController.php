@@ -205,4 +205,19 @@ class BuyerRequestController extends Controller
             'buyer_requests' => $openRequests,
         ]);
     }
+
+    public function marketShow(int $id): JsonResponse
+    {
+        $buyerRequest = BuyerRequest::with([
+                'buyerProfile', 
+                'items.product'
+            ])
+            ->where('status', 'open')
+            ->findOrFail($id);
+
+        return response()->json([
+            'buyer_request' => $buyerRequest,
+        ]);
+    }
 }
+

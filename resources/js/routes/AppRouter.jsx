@@ -10,8 +10,9 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import GoogleAuthSuccessPage from '../pages/GoogleAuthSuccessPage';
 import BuyerDashboardPage from '../pages/BuyerDashboardPage';
 import CreateRequestPage from '../pages/CreateRequestPage';
-import RequestDetailPage from '../pages/RequestDetailPage';
+import BuyerRequestDetailPage from '../pages/BuyerRequestDetailPage';
 import SupplierDashboardPage from '../pages/SupplierDashboardPage';
+import SupplierQuotationPage from '../pages/SupplierQuotationPage';
 
 export default function AppRouter() {
     return (
@@ -36,20 +37,23 @@ export default function AppRouter() {
                         path="/register"
                         element={<RegisterPage />}
                     />
-                    
+
                     <Route
-    path="/auth/google/success"
-    element={<GoogleAuthSuccessPage />}
-/>
+                        path="/auth/google/success"
+                        element={<GoogleAuthSuccessPage />}
+                    />
 
                     <Route element={<ProtectedRoute />}>
                         <Route path="/dashboard" element={<BuyerDashboardPage />} />
 
                         <Route path="/requests/new" element={<CreateRequestPage />} />
 
-                        <Route path="/requests/:requestId" element={<RequestDetailPage />} />
+                        {/* This is the new route we added! */}
+                        <Route path="/requests/:id" element={<BuyerRequestDetailPage />} />
 
                         <Route path="/supplier" element={<SupplierDashboardPage />} />
+
+                        <Route path="/supplier/requests/:requestId" element={<SupplierQuotationPage />} />
 
                         <Route
                             path="/admin"

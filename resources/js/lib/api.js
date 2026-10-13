@@ -4,7 +4,7 @@ function getAuthToken() {
     return localStorage.getItem('pal_market_token');
 }
 
-async function request(endpoint, options = {}) {
+export async function request(endpoint, options = {}) {
     const token = getAuthToken();
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -117,4 +117,21 @@ export function publishBuyerRequest(id) {
 
 export function getMarketRequests() {
     return request('/market-requests');
+}
+
+export function getMarketRequestDetail(id) {
+    return request(`/market-requests/${id}`);
+}
+
+export function submitQuotation(requestId, payload) {
+    return request(`/buyer-requests/${requestId}/quotations`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export function acceptQuotation(id) {
+    return request(`/quotations/${id}/accept`, {
+        method: 'POST',
+    });
 }

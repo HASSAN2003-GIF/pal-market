@@ -1,10 +1,11 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMarketRequests } from '../hooks/useMarketRequests';
 
 export default function SupplierDashboardPage() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const { data, isLoading } = useMarketRequests();
 
     const requests = data?.buyer_requests || [];
@@ -59,7 +60,8 @@ export default function SupplierDashboardPage() {
                                     </div>
                                     <button
                                         type="button"
-                                        className="rounded-xl bg-pal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-pal-700"
+                                        onClick={() => navigate(`/supplier/requests/${req.id}`)}
+                                        className="rounded-xl bg-pal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-pal-700 cursor-pointer"
                                     >
                                         Submit Quotation
                                     </button>
