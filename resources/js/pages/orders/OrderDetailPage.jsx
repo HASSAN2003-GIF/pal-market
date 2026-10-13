@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
+import LineItemList from '../../components/LineItemList';
 import { Button, ConfirmDialog, DocNumber, Money, Notice, PageHeader, Panel, QueryBoundary, StatusBadge, cx, useToast } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n';
@@ -55,7 +56,11 @@ function OrderBody({ order }) {
                                 {t('orders.cancel')}
                             </Button>
                         )}
-                        {myTurn && <Button onClick={() => setConfirming(next.action)}>{orderActionLabel(next.action)}</Button>}
+                        {myTurn && (
+                            <Button className="w-full sm:w-auto" onClick={() => setConfirming(next.action)}>
+                                {orderActionLabel(next.action)}
+                            </Button>
+                        )}
                     </>
                 }
             />
@@ -81,8 +86,34 @@ function OrderBody({ order }) {
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_20rem]">
                 <Panel title={t('orders.items')} bodyClassName="p-0 sm:p-0">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[30rem] text-sm">
+                    <LineItemList
+                        className="sm:hidden"
+                        currency={order.currency}
+                        rows={order.items.map((item) => ({
+                            key: item.id,
+                            name: item.product?.name,
+                            quantity: formatNumber(item.quantity),
+                            unit: item.unit,
+                            unitPrice: item.unit_price,
+                            total: item.total_price,
+                        }))}
+                    />
+                    <dl className="space-y-1 border-t border-rule px-4 py-3 text-sm sm:hidden">
+                        <div className="flex justify-between">
+                            <dt className="text-muted">{t('orders.subtotal')}</dt>
+                            <dd><Money amount={order.subtotal} currency={order.currency} /></dd>
+                        </div>
+                        <div className="flex justify-between">
+                            <dt className="text-muted">{t('orders.delivery')}</dt>
+                            <dd><Money amount={order.delivery_fee} currency={order.currency} /></dd>
+                        </div>
+                        <div className="flex items-baseline justify-between border-t border-rule pt-2">
+                            <dt className="font-semibold">{t('orders.total')}</dt>
+                            <dd><Money amount={order.total_amount} currency={order.currency} className="text-[1.2rem] font-extrabold" /></dd>
+                        </div>
+                    </dl>
+                    <div className="hidden overflow-x-auto sm:block">
+                        <table className="w-full text-sm">
                             <thead className="bg-concrete text-left text-muted">
                                 <tr>
                                     <th scope="col" className="px-4 py-2 font-semibold sm:px-5">

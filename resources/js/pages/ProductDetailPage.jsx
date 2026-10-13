@@ -32,8 +32,8 @@ export default function ProductDetailPage() {
     });
 
     return (
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-            <Link to="/materials" className="text-sm font-semibold text-pal-700 hover:underline">
+        <div className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+            <Link to="/materials" className="tap text-sm font-semibold text-pal-700 hover:underline">
                 ‹ {t('materials.allMaterials')}
             </Link>
             <QueryBoundary query={product}>{({ data }) => <ProductBody product={data} />}</QueryBoundary>
@@ -227,7 +227,7 @@ function AddToRequest({ product }) {
                         {t('product.addCta')}
                     </Button>
                     <p className="text-center text-sm">
-                        <Link className="font-semibold text-pal-700 hover:underline" to={`/buyer/requests/new?product=${product.id}`}>
+                        <Link className="tap font-semibold text-pal-700 hover:underline" to={`/buyer/requests/new?product=${product.id}`}>
                             {t('product.orStartNew')}
                         </Link>
                     </p>

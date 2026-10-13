@@ -17,7 +17,7 @@ const BUTTON_VARIANTS = {
 };
 
 const BUTTON_SIZES = {
-    sm: 'h-9 px-3 text-sm',
+    sm: 'h-10 px-3 text-sm lg:h-9',
     md: 'h-11 px-4 text-[0.95rem]',
     lg: 'h-12 px-5 text-base',
 };
@@ -161,11 +161,11 @@ export function PageHeader({ title, description, actions, back }) {
         <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
                 {back && (
-                    <Link to={back.to} className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-pal-700 hover:underline">
+                    <Link to={back.to} className="tap mb-1 inline-flex items-center gap-1 text-sm font-semibold text-pal-700 hover:underline">
                         <span aria-hidden="true">‹</span> {back.label}
                     </Link>
                 )}
-                <h1 className="text-[2rem] sm:text-[2.4rem]">{title}</h1>
+                <h1 className="text-[1.75rem] break-words sm:text-[2.2rem] lg:text-[2.4rem]">{title}</h1>
                 {description && <p className="mt-1.5 max-w-2xl text-muted">{description}</p>}
             </div>
             {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -373,12 +373,12 @@ export function ToastProvider({ children }) {
     return (
         <ToastContext.Provider value={notify}>
             {children}
-            <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4">
+            <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 md:bottom-4 flex flex-col items-center gap-2 px-4">
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
                         className={cx(
-                            'pointer-events-auto rounded-[var(--radius-control)] px-4 py-2.5 text-sm font-semibold shadow-lg',
+                            'pointer-events-auto max-w-md rounded-[var(--radius-control)] px-4 py-2.5 text-center text-sm font-semibold shadow-lg',
                             toast.tone === 'bad' ? 'bg-danger-solid text-white' : 'bg-inverse text-on-inverse',
                         )}
                     >

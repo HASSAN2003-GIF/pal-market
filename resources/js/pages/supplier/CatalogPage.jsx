@@ -123,7 +123,7 @@ function CatalogRow({ item, locations }) {
         <li className="overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-rule px-4 py-3 sm:px-5">
                 <div>
-                    <Link to={`/materials/${item.product_id}`} className="text-[1.2rem] leading-tight font-extrabold hover:text-pal-700">
+                    <Link to={`/materials/${item.product_id}`} className="inline-block py-2 text-[1.2rem] leading-tight font-extrabold hover:text-pal-700">
                         {item.product.name}
                     </Link>
                     <p className="text-sm text-muted">

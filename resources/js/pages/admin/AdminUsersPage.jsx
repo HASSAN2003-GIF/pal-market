@@ -76,7 +76,7 @@ export default function AdminUsersPage() {
             render: (u) => (
                 <label>
                     <span className="sr-only">{t('admin.roleFor', { name: u.name })}</span>
-                    <select className="field-input min-h-0 py-1 text-sm" value={u.role} disabled={u.id === me.id} onChange={(e) => changeRole(u, e.target.value)}>
+                    <select className="field-input min-h-10 py-1.5 text-sm lg:min-h-0 lg:py-1" value={u.role} disabled={u.id === me.id} onChange={(e) => changeRole(u, e.target.value)}>
                         {ROLES.map((value) => (
                             <option key={value} value={value}>
                                 {roleLabel(value)}
@@ -168,7 +168,7 @@ export default function AdminUsersPage() {
     return (
         <>
             <PageHeader title={t('nav.adminUsers')} description={t('admin.usersDescription')} />
-            <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_12rem_12rem]">
+            <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_12rem_12rem]">
                 <SearchInput label={t('admin.searchUsers')} placeholder={t('admin.searchUsersPlaceholder')} value={params.search ?? ''} onChange={(search) => update({ search })} />
                 <label>
                     <span className="sr-only">{t('admin.colRole')}</span>

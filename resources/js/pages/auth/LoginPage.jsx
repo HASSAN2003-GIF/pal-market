@@ -43,7 +43,7 @@ export default function LoginPage() {
             footer={
                 <>
                     {t('auth.newHere')}{' '}
-                    <Link to="/register" className="font-semibold text-pal-700 hover:underline">
+                    <Link to="/register" className="tap px-1 font-semibold text-pal-700 hover:underline">
                         {t('layout.createAccount')}
                     </Link>
                 </>
@@ -71,7 +71,7 @@ export default function LoginPage() {
                     error={fieldErrors.password}
                 />
                 <div className="flex justify-end">
-                    <Link to="/forgot-password" className="text-sm font-semibold text-pal-700 hover:underline">
+                    <Link to="/forgot-password" className="tap text-sm font-semibold text-pal-700 hover:underline">
                         {t('auth.forgot')}
                     </Link>
                 </div>

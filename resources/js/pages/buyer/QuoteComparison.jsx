@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import LineItemList from '../../components/LineItemList';
 import { Button, ConfirmDialog, DocNumber, EmptyState, Money, StatusBadge, cx, useToast } from '../../components/ui';
 import { useT } from '../../i18n';
 import { api } from '../../lib/api';
@@ -80,8 +81,25 @@ export default function QuoteComparison({ request }) {
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto border-t border-rule">
-                                <table className="w-full min-w-[30rem] text-sm">
+                            <LineItemList
+                                className="border-t border-rule sm:hidden"
+                                currency={quote.currency}
+                                rows={requested.map((item) => {
+                                    const line = quote.items.find((l) => l.product_id === item.product_id);
+                                    return {
+                                        key: item.id,
+                                        name: item.product?.name,
+                                        missing: !line,
+                                        quantity: line && formatNumber(line.quantity),
+                                        unit: line?.unit,
+                                        unitPrice: line?.unit_price,
+                                        total: line?.total_price,
+                                        note: line && line.quantity !== item.quantity ? t('buyer.youAskedFor', { n: formatNumber(item.quantity) }) : null,
+                                    };
+                                })}
+                            />
+                            <div className="hidden overflow-x-auto border-t border-rule sm:block">
+                                <table className="w-full text-sm">
                                     <caption className="sr-only">{t('buyer.pricesFrom', { name: quote.supplier?.business_name })}</caption>
                                     <thead className="bg-concrete text-left text-muted">
                                         <tr>
@@ -137,17 +155,17 @@ export default function QuoteComparison({ request }) {
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-rule bg-concrete/60 px-4 py-2.5 sm:px-5">
                                 <StatusBadge kind="quotation" status={quote.status} />
                                 {canDecide && (
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="secondary" onClick={() => setDecision({ quote, kind: 'reject' })}>
+                                    <div className="flex w-full gap-2 sm:w-auto">
+                                        <Button size="sm" variant="secondary" className="flex-1 sm:flex-none" onClick={() => setDecision({ quote, kind: 'reject' })}>
                                             {t('buyer.decline')}
                                         </Button>
-                                        <Button size="sm" onClick={() => setDecision({ quote, kind: 'accept' })}>
+                                        <Button size="sm" className="flex-1 sm:flex-none" onClick={() => setDecision({ quote, kind: 'accept' })}>
                                             {t('buyer.accept')}
                                         </Button>
                                     </div>
                                 )}
                                 {quote.purchase_order && (
-                                    <Link to={`/orders/${quote.purchase_order.id}`} className="text-sm font-semibold text-pal-700 hover:underline">
+                                    <Link to={`/orders/${quote.purchase_order.id}`} className="tap text-sm font-semibold text-pal-700 hover:underline">
                                         {t('buyer.viewOrder', { number: quote.purchase_order.order_number })}
                                     </Link>
                                 )}

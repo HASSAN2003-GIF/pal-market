@@ -109,7 +109,7 @@ function RequestedItems({ request }) {
                                 {formatNumber(item.quantity)} {item.unit}
                             </span>
                             {!offered.has(item.product_id) && (
-                                <Link to={`/supplier/catalog?add=${item.product_id}`} className="block text-sm font-semibold text-pal-700 hover:underline">
+                                <Link to={`/supplier/catalog?add=${item.product_id}`} className="tap text-sm font-semibold text-pal-700 hover:underline">
                                     {t('supplier.addToMyProducts')}
                                 </Link>
                             )}
@@ -285,7 +285,7 @@ function QuoteForm({ request }) {
                 </div>
             </Panel>
 
-            <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-[var(--radius-panel)] sm:border">
+            <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] -mx-4 flex md:bottom-0 flex-wrap items-center justify-between gap-3 border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-[var(--radius-panel)] sm:border">
                 <div>
                     <p className="text-sm text-muted">{t('supplier.offerTotal', { included: included.length, total: request.items.length })}</p>
                     <Money amount={total} className="text-[1.6rem] leading-none font-extrabold" />

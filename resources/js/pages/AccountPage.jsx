@@ -52,7 +52,7 @@ function PreferencesPanel() {
                                 aria-checked={choice === value}
                                 onClick={() => setChoice(value)}
                                 className={cx(
-                                    'rounded-[var(--radius-control)] border px-3 py-2 text-sm font-semibold',
+                                    'min-h-11 rounded-[var(--radius-control)] border px-3 py-2 text-sm font-semibold lg:min-h-10',
                                     choice === value ? 'border-pal-600 bg-pal-50 text-pal-700' : 'border-rule hover:border-ink-soft',
                                 )}
                             >

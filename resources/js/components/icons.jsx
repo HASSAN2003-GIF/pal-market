@@ -85,6 +85,61 @@ export const CheckIcon = (props) => (
     </Icon>
 );
 
+export const HomeIcon = (props) => (
+    <Icon {...props}>
+        <path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" />
+    </Icon>
+);
+
+export const PlusIcon = (props) => (
+    <Icon {...props}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 8v8M8 12h8" />
+    </Icon>
+);
+
+export const ListIcon = (props) => (
+    <Icon {...props}>
+        <rect x="5" y="4" width="14" height="17" rx="2" />
+        <path d="M9 4.5V3h6v1.5M9 10h6M9 14h6M9 18h3" />
+    </Icon>
+);
+
+export const BoxIcon = (props) => (
+    <Icon {...props}>
+        <path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z" />
+        <path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" />
+    </Icon>
+);
+
+export const TagIcon = (props) => (
+    <Icon {...props}>
+        <path d="M3 12V4h8l9 9-8 8z" />
+        <circle cx="7.5" cy="8.5" r="1.5" />
+    </Icon>
+);
+
+export const StoreIcon = (props) => (
+    <Icon {...props}>
+        <path d="M4 9.5 5.5 4h13L20 9.5M4 9.5V20h16V9.5M4 9.5h16M9.5 20v-6h5v6" />
+    </Icon>
+);
+
+export const UsersIcon = (props) => (
+    <Icon {...props}>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
+    </Icon>
+);
+
+export const MoreIcon = (props) => (
+    <Icon {...props}>
+        <circle cx="5" cy="12" r="1.5" />
+        <circle cx="12" cy="12" r="1.5" />
+        <circle cx="19" cy="12" r="1.5" />
+    </Icon>
+);
+
 export const HelpIcon = (props) => (
     <Icon {...props}>
         <circle cx="12" cy="12" r="9" />

@@ -19,7 +19,7 @@ export function useAdminHashShortcut() {
 }
 
 const navLinkClass = ({ isActive }) =>
-    cx('whitespace-nowrap rounded-[6px] px-2.5 py-1.5 text-sm font-semibold', isActive ? 'bg-pal-50 text-pal-700' : 'text-ink-soft hover:bg-concrete hover:text-ink');
+    cx('inline-flex min-h-10 items-center whitespace-nowrap rounded-[6px] px-2.5 py-1.5 text-sm font-semibold', isActive ? 'bg-pal-50 text-pal-700' : 'text-ink-soft hover:bg-concrete hover:text-ink');
 
 export default function PublicLayout() {
     const t = useT();
@@ -29,6 +29,9 @@ export default function PublicLayout() {
     useAdminHashShortcut();
 
     useEffect(() => setMenuOpen(false), [location.pathname]);
+
+    // Links with a query (/register?role=…) are only "current" when the query matches too.
+    const isCurrent = (to, isActive) => (to.includes('?') ? location.pathname + location.search === to : isActive);
 
     const accountLinks = user ? (
         <ButtonLink to={homePathFor(user)} size="sm">
@@ -58,9 +61,9 @@ export default function PublicLayout() {
                 {t('layout.skipToContent')}
             </a>
 
-            <header className="sticky top-0 z-30 border-b border-rule bg-paper/95 backdrop-blur">
-                <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6 lg:gap-5">
-                    <Link to="/" aria-label={t('layout.home')} className="shrink-0 py-1">
+            <header className="sticky top-0 z-30 border-b border-rule bg-paper/95 backdrop-blur [@media(max-height:500px)]:static">
+                <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 sm:gap-3 sm:px-6 lg:gap-5 2xl:max-w-7xl">
+                    <Link to="/" aria-label={t('layout.home')} className="shrink-0 py-2">
                         <Logo className="h-6 sm:h-7" />
                     </Link>
                     <div className="hidden max-w-[11rem] shrink-0 lg:block">
@@ -69,13 +72,13 @@ export default function PublicLayout() {
                     <div className="hidden min-w-0 flex-1 md:block">
                         <HeaderSearch />
                     </div>
-                    <div className="ml-auto flex items-center gap-2 md:ml-0">
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 md:ml-0">
                         <LanguageSwitch />
                         <ThemeMenu />
                         <div className="hidden items-center gap-2 lg:flex">{accountLinks}</div>
                         <button
                             type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-rule lg:hidden"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] border border-rule lg:hidden"
                             aria-expanded={menuOpen}
                             aria-controls="public-menu"
                             onClick={() => setMenuOpen((open) => !open)}
@@ -95,9 +98,9 @@ export default function PublicLayout() {
                 </div>
 
                 <nav aria-label={t('layout.mainNav')} className="hidden border-t border-rule lg:block">
-                    <div className="mx-auto flex max-w-6xl items-center gap-1 px-4 py-1.5 sm:px-6">
+                    <div className="mx-auto flex max-w-6xl items-center gap-1 px-4 py-1.5 sm:px-6 2xl:max-w-7xl">
                         {links.map(([to, label]) => (
-                            <NavLink key={label} to={to} end={to === '/materials'} className={navLinkClass}>
+                            <NavLink key={label} to={to} end={to === '/materials'} className={({ isActive }) => navLinkClass({ isActive: isCurrent(to, isActive) })}>
                                 {t(label)}
                             </NavLink>
                         ))}
@@ -110,7 +113,7 @@ export default function PublicLayout() {
                             <ul className="space-y-1">
                                 {links.map(([to, label]) => (
                                     <li key={label}>
-                                        <NavLink to={to} className={({ isActive }) => cx(navLinkClass({ isActive }), 'block py-2.5 text-base')}>
+                                        <NavLink to={to} className={({ isActive }) => cx(navLinkClass({ isActive: isCurrent(to, isActive) }), 'flex py-2.5 text-base')}>
                                             {t(label)}
                                         </NavLink>
                                     </li>
@@ -128,7 +131,7 @@ export default function PublicLayout() {
                         tone="attention"
                         title={t(sessionNotice)}
                         action={
-                            <button type="button" className="text-sm font-semibold text-pal-700 hover:underline" onClick={dismissSessionNotice}>
+                            <button type="button" className="tap text-sm font-semibold text-pal-700 hover:underline" onClick={dismissSessionNotice}>
                                 {t('common.dismiss')}
                             </button>
                         }

@@ -41,6 +41,17 @@ Decisions taken during the production-readiness pass (October 2026), with the re
 | The logo was redrawn from the supplied photo using Manrope ExtraBold outlines; headings moved to Manrope 800 to match it. | The photo is small (103×61 px), so tracing it would be blurry; the logo's letterforms are geometric and match that typeface closely. |
 | English UI says "seller", "price offer" and "order" instead of "supplier", "quotation" and "purchase order". API field names are unchanged. | Plain words for people new to online buying; no API break. |
 
+## Responsive layout (October 2026)
+
+| Decision | Why |
+| --- | --- |
+| A bottom tab bar on phones for signed-in pages only (four most used pages + "More"); public pages keep a header menu. | Buyers and sellers move between the same four pages many times a day; visitors mostly search, which stays at the top. |
+| Admin tables are cards below 1024px, not horizontally scrolled tables. | At tablet width the users table squeezed its role menu to 30px; cards keep every field and action usable. |
+| Price tables (offers, orders) become stacked lines below 640px. | Scrolling sideways hid the prices, which are the point of the page. |
+| Minimum 44px controls on touch screens (`pointer: coarse`) and below 1024px; denser controls only with a mouse on wide screens. | Comfortable tapping without making desktop look oversized. |
+| Headers stop sticking when the screen is shorter than 500px. | Phones in landscape otherwise lose a third of the screen to fixed bars. |
+| Only the Barlow Condensed weight actually used (600) is loaded. | Two unused font files removed from every page load. |
+
 ## Known limitations
 
 - No email/SMS notifications for new quotations or order updates. Users see changes when they open the app. `VerificationService` (OTP) and the empty `app/Services/Sms` driver stubs are left unused from earlier work.

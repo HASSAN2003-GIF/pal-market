@@ -121,7 +121,7 @@ function TaxonomyList({ title, newLabel, items, create, updateItem }) {
                             {item.name} <span className="text-muted">({item.products_count})</span>
                             {!item.is_active && <span className="ml-1 font-semibold text-warn">{t('admin.hidden')}</span>}
                         </span>
-                        <button type="button" className="font-semibold text-pal-700 hover:underline" onClick={() => toggle.mutate({ id: item.id, is_active: !item.is_active })}>
+                        <button type="button" className="tap px-1 font-semibold text-pal-700 hover:underline" onClick={() => toggle.mutate({ id: item.id, is_active: !item.is_active })}>
                             {item.is_active ? t('common.hide') : t('common.show')}
                         </button>
                     </li>

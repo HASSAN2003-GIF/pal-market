@@ -88,7 +88,7 @@ export default function HomePage() {
     return (
         <>
             <section className="border-b border-rule">
-                <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
+                <div className="mx-auto grid max-w-6xl 2xl:max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
                     <div>
                         <h1 className="brand-dot text-[2.6rem] leading-[1.02] sm:text-[3.6rem] lg:text-[4.2rem]">{t('home.title')}</h1>
                         <p className="mt-5 max-w-xl text-lg text-ink-soft">{t('home.lead')}</p>
@@ -111,7 +111,7 @@ export default function HomePage() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6" aria-labelledby="how-it-works">
+            <section className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 py-12 sm:px-6" aria-labelledby="how-it-works">
                 <h2 id="how-it-works" className="text-[2rem]">
                     {t('home.howTitle')}
                 </h2>
@@ -136,16 +136,16 @@ export default function HomePage() {
 
             {categories.length > 0 && (
                 <section className="border-y border-rule bg-paper" aria-labelledby="categories">
-                    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+                    <div className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 py-12 sm:px-6">
                         <div className="flex flex-wrap items-end justify-between gap-3">
                             <h2 id="categories" className="text-[2rem]">
                                 {t('home.categoriesTitle')}
                             </h2>
-                            <Link to="/materials" className="font-semibold text-pal-700 hover:underline">
+                            <Link to="/materials" className="tap font-semibold text-pal-700 hover:underline">
                                 {t('home.seeAll')}
                             </Link>
                         </div>
-                        <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                             {categories.map((category) => (
                                 <li key={category.id}>
                                     <Link
@@ -162,7 +162,7 @@ export default function HomePage() {
                 </section>
             )}
 
-            <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+            <section className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 py-12 sm:px-6">
                 <div className="grid gap-6 rounded-[var(--radius-panel)] bg-inverse px-6 py-8 text-on-inverse sm:px-10 md:grid-cols-[1fr_auto] md:items-center">
                     <div>
                         <h2 className="text-[1.9rem] text-on-inverse">{t('home.sellTitle')}</h2>

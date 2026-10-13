@@ -25,7 +25,7 @@ export function LanguageSwitch({ className }) {
                     title={name}
                     onClick={() => setLocale(code)}
                     className={cx(
-                        'h-8 min-w-10 rounded-[6px] px-2 text-sm font-bold',
+                        'h-10 min-w-10 rounded-[6px] px-2 text-sm font-bold lg:h-8',
                         locale === code ? 'bg-inverse text-on-inverse' : 'text-ink-soft hover:text-ink',
                     )}
                 >
@@ -77,7 +77,7 @@ export function ThemeMenu({ className }) {
                 aria-expanded={open}
                 aria-controls={menuId}
                 onClick={() => setOpen((value) => !value)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-rule bg-paper text-ink-soft hover:text-ink"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] border border-rule bg-paper text-ink-soft hover:text-ink lg:h-9 lg:w-9"
             >
                 <CurrentIcon />
                 <span className="sr-only">{t('layout.theme')}</span>
@@ -100,7 +100,7 @@ export function ThemeMenu({ className }) {
                                 setOpen(false);
                             }}
                             className={cx(
-                                'flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left font-semibold',
+                                'flex min-h-11 w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left font-semibold',
                                 choice === value ? 'bg-pal-50 text-pal-700' : 'text-ink hover:bg-concrete',
                             )}
                         >
@@ -129,14 +129,14 @@ export function AreaButton({ className, compact = false }) {
                 type="button"
                 onClick={() => setOpen(true)}
                 className={cx(
-                    'group inline-flex min-w-0 items-center gap-2 rounded-[var(--radius-control)] text-left hover:bg-concrete',
+                    'group inline-flex min-h-10 min-w-0 items-center gap-2 rounded-[var(--radius-control)] text-left hover:bg-concrete',
                     compact ? 'px-1 py-1' : 'px-2 py-1',
                     className,
                 )}
             >
                 <PinIcon className="h-5 w-5 shrink-0 text-pal-600" />
                 <span className="min-w-0 leading-tight">
-                    <span className="block text-xs text-muted">{t('location.yourArea')}</span>
+                    <span className={cx('block text-xs text-muted', compact && 'sr-only sm:not-sr-only')}>{t('location.yourArea')}</span>
                     <span className="block truncate text-sm font-bold text-ink group-hover:underline">
                         {region ? regionLabel(region, locale) : t('location.choose')}
                     </span>
@@ -214,7 +214,7 @@ export function AreaDialog({ open, onClose }) {
                         </h2>
                         <p className="mt-1 text-sm text-muted">{t('location.why')}</p>
                     </div>
-                    <button type="button" onClick={onClose} className="rounded-[6px] p-1.5 text-muted hover:bg-concrete hover:text-ink">
+                    <button type="button" onClick={onClose} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] text-muted hover:bg-concrete hover:text-ink">
                         <CloseIcon />
                         <span className="sr-only">{t('common.close')}</span>
                     </button>
@@ -268,7 +268,7 @@ export function AreaDialog({ open, onClose }) {
                                         aria-pressed={region === r.name}
                                         onClick={() => choose(r.name)}
                                         className={cx(
-                                            'flex w-full items-center justify-between gap-2 rounded-[6px] px-3 py-2 text-left text-sm font-semibold',
+                                            'flex min-h-11 w-full items-center justify-between gap-2 rounded-[6px] px-3 py-2 text-left text-sm font-semibold',
                                             region === r.name ? 'bg-pal-50 text-pal-700' : 'hover:bg-concrete',
                                         )}
                                     >

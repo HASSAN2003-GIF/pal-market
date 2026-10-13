@@ -31,8 +31,6 @@ export default function AdminAuditLogPage() {
     });
 
     const columns = [
-        { key: 'when', label: t('admin.colWhen'), render: (l) => <span className="whitespace-nowrap">{formatDateTime(l.created_at)}</span> },
-        { key: 'who', label: t('admin.colBy'), render: (l) => l.actor_label },
         {
             key: 'what',
             label: t('admin.colWhat'),
@@ -43,6 +41,8 @@ export default function AdminAuditLogPage() {
                 </span>
             ),
         },
+        { key: 'who', label: t('admin.colBy'), render: (l) => l.actor_label },
+        { key: 'when', label: t('admin.colWhen'), render: (l) => <span className="whitespace-nowrap">{formatDateTime(l.created_at)}</span> },
         { key: 'ip', label: t('admin.colIp'), render: (l) => l.ip_address ?? t('admin.commandLine') },
     ];
 

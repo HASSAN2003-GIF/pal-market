@@ -58,7 +58,7 @@ export default function RegisterPage() {
             footer={
                 <>
                     {t('auth.haveAccount')}{' '}
-                    <Link to="/login" className="font-semibold text-pal-700 hover:underline">
+                    <Link to="/login" className="tap px-1 font-semibold text-pal-700 hover:underline">
                         {t('layout.signIn')}
                     </Link>
                 </>

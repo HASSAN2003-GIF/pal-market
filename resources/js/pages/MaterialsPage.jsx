@@ -71,7 +71,7 @@ export default function MaterialsPage() {
                                         setFiltersOpen(false);
                                     }}
                                     className={cx(
-                                        'w-full rounded-[var(--radius-control)] px-3 py-2 text-left font-medium',
+                                        'min-h-11 w-full rounded-[var(--radius-control)] px-3 py-2 text-left font-medium lg:min-h-10',
                                         active ? 'bg-inverse text-on-inverse' : 'text-ink-soft hover:bg-concrete-deep hover:text-ink',
                                     )}
                                 >
@@ -105,8 +105,8 @@ export default function MaterialsPage() {
     );
 
     return (
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-            <h1 className="text-[2.3rem] sm:text-[2.9rem]">{t('materials.title')}</h1>
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 2xl:max-w-7xl">
+            <h1 className="text-[1.9rem] sm:text-[2.5rem] lg:text-[2.9rem]">{t('materials.title')}</h1>
             <p className="mt-2 max-w-2xl text-ink-soft">{t('materials.lead')}</p>
 
             <div className="mt-7 grid gap-6 lg:grid-cols-[15rem_1fr]">
@@ -154,7 +154,7 @@ export default function MaterialsPage() {
                                     <button
                                         type="button"
                                         onClick={() => update(filter.clear)}
-                                        className="inline-flex items-center gap-1.5 rounded-full border border-pal-200 bg-pal-50 py-1 pr-2 pl-3 text-sm font-semibold text-pal-700 hover:border-pal-500"
+                                        className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-pal-200 bg-pal-50 py-1.5 pr-2.5 pl-3.5 text-sm font-semibold text-pal-700 hover:border-pal-500 lg:min-h-0"
                                         aria-label={t('common.removeFilter', { name: filter.label })}
                                     >
                                         {filter.label}
@@ -165,7 +165,7 @@ export default function MaterialsPage() {
                             <li>
                                 <button
                                     type="button"
-                                    className="text-sm font-semibold text-ink-soft underline hover:text-ink"
+                                    className="tap text-sm font-semibold text-ink-soft underline hover:text-ink"
                                     onClick={() => update({ search: '', category_id: '', only_local: '', sort: '' })}
                                 >
                                     {t('common.clearAll')}

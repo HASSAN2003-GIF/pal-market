@@ -15,7 +15,7 @@ function Breakdown({ kind, counts, to }) {
                 const value = Number(counts?.[key] ?? 0);
                 return (
                     <li key={key}>
-                        <Link to={`${to}?status=${key}`} className="group block">
+                        <Link to={`${to}?status=${key}`} className="group block py-1.5">
                             <span className="flex justify-between text-sm">
                                 <span className="text-ink-soft group-hover:text-ink">{statusLabel(kind, key)}</span>
                                 <span className="tabular font-semibold">{formatNumber(value)}</span>
@@ -85,7 +85,7 @@ export default function AdminOverviewPage() {
                             <Panel
                                 title={t('admin.recentActivity')}
                                 actions={
-                                    <Link to="/admin/audit-log" className="text-sm font-semibold text-pal-700 hover:underline">
+                                    <Link to="/admin/audit-log" className="tap text-sm font-semibold text-pal-700 hover:underline">
                                         {t('nav.adminActivity')}
                                     </Link>
                                 }

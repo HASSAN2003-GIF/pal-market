@@ -11,7 +11,7 @@ export function StatusTabs({ kind, value, onChange, include }) {
     const t = useT();
     const keys = Object.keys(STATUS[kind]).filter((key) => !include || include.includes(key));
     return (
-        <div role="group" aria-label={t('buyer.filterByStatus')} className="flex gap-1.5 overflow-x-auto pb-1">
+        <div role="group" aria-label={t('buyer.filterByStatus')} className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-wrap">
             {['', ...keys].map((key) => (
                 <button
                     key={key || 'all'}
@@ -19,7 +19,7 @@ export function StatusTabs({ kind, value, onChange, include }) {
                     aria-pressed={(value ?? '') === key}
                     onClick={() => onChange(key)}
                     className={cx(
-                        'shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap',
+                        'min-h-10 shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold whitespace-nowrap lg:min-h-0 lg:py-1.5',
                         (value ?? '') === key ? 'bg-inverse text-on-inverse' : 'bg-paper text-ink-soft ring-1 ring-rule hover:text-ink',
                     )}
                 >

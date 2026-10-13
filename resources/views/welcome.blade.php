@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="description" content="PAL Market connects buyers of construction materials in Tanzania with approved sellers. List what you need, compare price offers and track your order. Kiswahili and English.">
         <meta name="theme-color" content="#FFFFFF">
         <meta name="color-scheme" content="light dark">

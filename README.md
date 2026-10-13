@@ -32,6 +32,19 @@ Request: `draft → open → closed | cancelled | expired`. Quotation: `draft �
 - **Administration** is at `/admin` (also `/#admin`). There is deliberately no link to it in public navigation; access is enforced by the API (`auth:sanctum`, `active`, `admin` middleware), not by hiding the link.
 - **Brand assets**: see `scripts/brand/README.md`.
 
+## Screen sizes
+
+Layouts follow the available width (Tailwind breakpoints `sm` 640, `md` 768, `lg` 1024, `2xl` 1536 px), never the device name or user agent.
+
+| Width | Public pages | Signed-in pages |
+| --- | --- | --- |
+| Phones (< 768) | Header: logo, EN/SW, theme, menu; search and area on their own rows; filters in a panel | Top bar with area, language and theme; a bottom tab bar with the four most used pages and "More"; tables become cards; price tables become stacked lines |
+| Tablets (768–1023) | Same header with inline search | Side navigation; admin tables still shown as cards |
+| Laptops and desktops (≥ 1024) | Area chip, search, account and navigation in the header; filters in a side column; sign-in pages gain an explainer column | Full tables, multi-column dashboards and forms |
+| Large screens (≥ 1536) | Content widens to 80rem instead of stretching edge to edge | Same |
+
+On short landscape screens the headers stop sticking and the tab bar gets shorter. Touch screens get 44px minimum controls. Zoom is never disabled.
+
 ## Local development (Sail)
 
 Prerequisites: Docker Desktop (with WSL 2 integration on Windows), PHP 8.3+ and Composer on the host for the first install, Node 22+.

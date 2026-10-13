@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
             title={t('auth.forgotTitle')}
             intro={t('auth.forgotIntro')}
             footer={
-                <Link to="/login" className="font-semibold text-pal-700 hover:underline">
+                <Link to="/login" className="tap px-1 font-semibold text-pal-700 hover:underline">
                     {t('auth.backToSignIn')}
                 </Link>
             }

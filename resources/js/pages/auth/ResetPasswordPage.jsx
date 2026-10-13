@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
                         {t('auth.saveNewPassword')}
                     </Button>
                     <p className="text-center text-sm">
-                        <Link to="/forgot-password" className="font-semibold text-pal-700 hover:underline">
+                        <Link to="/forgot-password" className="tap px-1 font-semibold text-pal-700 hover:underline">
                             {t('auth.requestNewLink')}
                         </Link>
                     </p>

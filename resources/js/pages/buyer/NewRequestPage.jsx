@@ -47,9 +47,12 @@ export default function NewRequestPage() {
     return (
         <>
             <PageHeader title={t('buyer.newTitle')} description={t('buyer.newDescription')} back={{ to: '/buyer/requests', label: t('nav.myRequests') }} />
-            <ol className="mb-6 grid gap-2 text-sm sm:grid-cols-3" aria-label={t('buyer.stepsLabel')}>
+            <ol className="mb-6 grid grid-cols-3 gap-2 text-[0.8rem] leading-tight sm:text-sm" aria-label={t('buyer.stepsLabel')}>
                 {['buyer.step1', 'buyer.step2', 'buyer.step3'].map((key, index) => (
-                    <li key={key} className="flex items-center gap-2 rounded-[var(--radius-control)] border border-rule bg-paper px-3 py-2">
+                    <li
+                        key={key}
+                        className="flex flex-col items-start gap-1.5 rounded-[var(--radius-control)] border border-rule bg-paper px-2.5 py-2 sm:flex-row sm:items-center sm:gap-2 sm:px-3"
+                    >
                         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-action text-xs font-bold text-on-action">{index + 1}</span>
                         {t(key)}
                     </li>

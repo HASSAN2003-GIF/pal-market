@@ -45,7 +45,7 @@ export default function BuyerOverviewPage() {
                 className="mt-6"
                 bodyClassName="p-0 sm:p-0"
                 actions={
-                    <Link to="/buyer/requests" className="text-sm font-semibold text-pal-700 hover:underline">
+                    <Link to="/buyer/requests" className="tap text-sm font-semibold text-pal-700 hover:underline">
                         {t('buyer.allRequests')}
                     </Link>
                 }

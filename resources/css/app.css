@@ -1,7 +1,5 @@
 @import '@fontsource-variable/manrope';
-@import '@fontsource/barlow-condensed/500.css';
 @import '@fontsource/barlow-condensed/600.css';
-@import '@fontsource/barlow-condensed/700.css';
 @import 'tailwindcss';
 
 @source '../js/**/*.{js,jsx}';
@@ -141,6 +139,21 @@
         background: var(--color-pal-200);
     }
 
+    /* Touch screens: no control smaller than a fingertip. */
+    @media (pointer: coarse) {
+        button,
+        select,
+        summary,
+        [role='radio'] {
+            min-height: 2.75rem;
+        }
+    }
+
+    /* Long Kiswahili words and e-mail addresses wrap instead of pushing the layout wider. */
+    h1, h2, h3, p, dd, li, td, th, label, legend {
+        overflow-wrap: break-word;
+    }
+
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {
             animation-duration: 0.01ms !important;
@@ -206,6 +219,21 @@
     .field-input:disabled {
         background: var(--color-concrete);
         color: var(--color-muted);
+    }
+
+    /*
+     * Stand-alone text links and small buttons get a finger-sized hit area
+     * on phones, tablets and any touch screen, without changing how they look.
+     */
+    .tap {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    @media (max-width: 1023.98px), (pointer: coarse) {
+        .tap {
+            min-height: 2.75rem;
+        }
     }
 
     /* Hazard-tape edge marking the example docket on the home page. */
