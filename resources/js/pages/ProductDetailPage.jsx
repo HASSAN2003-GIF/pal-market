@@ -1,179 +1,222 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useProduct } from '../hooks/useProduct';
-import { useBuyerRequests } from '../hooks/useBuyerRequests';
-import { addItemToRequest } from '../lib/api';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+    Button,
+    ButtonLink,
+    EmptyState,
+    FormError,
+    Money,
+    Panel,
+    QueryBoundary,
+    SelectField,
+    TextAreaField,
+    TextField,
+    useToast,
+} from '../components/ui';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
+import { formatNumber } from '../lib/format';
 
 export default function ProductDetailPage() {
     const { productId } = useParams();
-    const navigate = useNavigate();
-    
-    // Fetch Product Data
-    const { data: productData, isLoading: loadingProduct } = useProduct(productId);
-    const product = productData?.data;
-
-    // Fetch User's Requests for the Dropdown
-    const { data: requestsData } = useBuyerRequests();
-    const activeRequests = requestsData?.buyer_requests?.filter(req => req.status === 'draft') || [];
-
-    // Form State
-    const [form, setForm] = useState({
-        request_id: '',
-        quantity: 1,
-        notes: '',
-    });
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState('');
-
-    function handleChange(e) {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    }
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        
-        if (!form.request_id) {
-            setError('Please select a quotation request.');
-            return;
-        }
-
-        setSubmitting(true);
-        setError('');
-
-        try {
-            await addItemToRequest(form.request_id, {
-                product_id: product.id,
-                quantity: form.quantity,
-                unit: product.unit,
-                notes: form.notes,
-            });
-            // Route the user back to the specific request so they can see the item added
-            navigate(`/requests/${form.request_id}`);
-        } catch (err) {
-            setError(err.data?.message || 'Failed to add item to request.');
-        } finally {
-            setSubmitting(false);
-        }
-    }
-
-    if (loadingProduct) {
-        return (
-            <div className="mx-auto max-w-7xl px-6 py-16 text-center">
-                <p className="text-sm text-ink-500">Loading product details...</p>
-            </div>
-        );
-    }
-
-    if (!product) {
-        return (
-            <div className="mx-auto max-w-7xl px-6 py-16 text-center">
-                <p className="text-sm text-red-500">Product not found.</p>
-                <Link to="/marketplace" className="text-pal-600 hover:underline">Back to Marketplace</Link>
-            </div>
-        );
-    }
+    const product = useQuery({ queryKey: ['product', productId], queryFn: () => api.product(productId) });
 
     return (
-        <div className="mx-auto max-w-5xl px-6 py-16">
-            <div className="mb-8">
-                <Link to="/marketplace" className="text-sm font-medium text-ink-500 hover:text-pal-600">
-                    &larr; Back to Marketplace
-                </Link>
-            </div>
-
-            <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-                {/* Product Info */}
-                <div>
-                    <div className="mb-4 inline-flex items-center rounded-full bg-surface-soft px-3 py-1 text-xs font-medium text-ink-700 border border-border">
-                        {product.category?.name || 'Category'}
-                    </div>
-                    <h1 className="text-3xl font-semibold tracking-tight text-ink-950">
-                        {product.name}
-                    </h1>
-                    {product.brand && (
-                        <p className="mt-2 text-sm text-ink-600">
-                            Brand: <span className="font-medium text-ink-900">{product.brand.name}</span>
-                        </p>
-                    )}
-                    <div className="mt-6 border-t border-border pt-6">
-                        <p className="text-sm text-ink-600">Standard Unit</p>
-                        <p className="text-lg font-medium text-ink-900">{product.unit}</p>
-                    </div>
-                </div>
-
-                {/* Add to Request Form */}
-                <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-                    <h3 className="text-lg font-semibold text-ink-900 mb-6">Add to Quotation Request</h3>
-                    
-                    {error && (
-                        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                            {error}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-ink-800">
-                                Select Project / Request <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                name="request_id"
-                                value={form.request_id}
-                                onChange={handleChange}
-                                required
-                                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
-                            >
-                                <option value="">-- Choose a draft request --</option>
-                                {activeRequests.map(req => (
-                                    <option key={req.id} value={req.id}>{req.title}</option>
-                                ))}
-                            </select>
-                            {activeRequests.length === 0 && (
-                                <p className="mt-2 text-xs text-red-500">
-                                    You don't have any active requests. <Link to="/requests/new" className="underline">Create one first.</Link>
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-ink-800">
-                                Quantity (in {product.unit}) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="quantity"
-                                min="1"
-                                value={form.quantity}
-                                onChange={handleChange}
-                                required
-                                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-ink-800">
-                                Special Notes (Optional)
-                            </label>
-                            <textarea
-                                name="notes"
-                                rows="2"
-                                value={form.notes}
-                                onChange={handleChange}
-                                placeholder="e.g., Must be delivered by Friday"
-                                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-pal-500 focus:ring-2 focus:ring-pal-100"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={submitting || activeRequests.length === 0}
-                            className="w-full rounded-xl bg-pal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pal-700 disabled:opacity-60"
-                        >
-                            {submitting ? 'Adding...' : 'Add to Request'}
-                        </button>
-                    </form>
-                </div>
-            </div>
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+            <Link to="/materials" className="text-sm font-semibold text-pal-700 hover:underline">
+                ‹ All materials
+            </Link>
+            <QueryBoundary query={product}>
+                {({ data }) => <ProductBody product={data} />}
+            </QueryBoundary>
         </div>
+    );
+}
+
+function ProductBody({ product }) {
+    const offers = product.supplier_offerings ?? [];
+
+    return (
+        <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_22rem]">
+            <div className="min-w-0">
+                <p className="text-muted">
+                    {product.category?.name}
+                    {product.brand && `, ${product.brand.name}`}
+                </p>
+                <h1 className="mt-1 text-[2.6rem] sm:text-[3.2rem]">{product.name}</h1>
+                <p className="mt-2 text-ink-soft">Sold per {product.unit}</p>
+                {product.description && <p className="mt-4 max-w-2xl text-ink-soft">{product.description}</p>}
+
+                <h2 className="mt-10 text-[1.8rem]">Supplier offers</h2>
+                {offers.length === 0 ? (
+                    <div className="mt-3">
+                        <EmptyState title="No listed prices yet">
+                            No approved supplier has a current price and stock for this product. Add it to a request and suppliers
+                            can still quote for it.
+                        </EmptyState>
+                    </div>
+                ) : (
+                    <div className="mt-3 overflow-x-auto rounded-[var(--radius-panel)] border border-rule bg-paper">
+                        <table className="w-full min-w-[34rem] text-left text-sm">
+                            <thead className="border-b border-rule text-muted">
+                                <tr>
+                                    <th scope="col" className="px-4 py-2.5 font-semibold">Supplier</th>
+                                    <th scope="col" className="px-4 py-2.5 font-semibold">Location</th>
+                                    <th scope="col" className="px-4 py-2.5 text-right font-semibold">In stock</th>
+                                    <th scope="col" className="px-4 py-2.5 text-right font-semibold">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-rule">
+                                {offers.map((offer) => (
+                                    <tr key={offer.supplier_product_id}>
+                                        <td className="px-4 py-3 font-semibold">{offer.supplier.business_name}</td>
+                                        <td className="px-4 py-3 text-ink-soft">
+                                            {[offer.location.district, offer.location.region].filter(Boolean).join(', ')}
+                                        </td>
+                                        <td className="tabular px-4 py-3 text-right">{formatNumber(offer.quantity)}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            <Money amount={offer.price} currency={offer.currency} className="font-semibold" />
+                                            <span className="block text-xs text-muted">per {offer.unit}</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            <aside>
+                <ProductActions product={product} />
+            </aside>
+        </div>
+    );
+}
+
+function ProductActions({ product }) {
+    const { user } = useAuth();
+
+    if (!user) {
+        return (
+            <Panel title="Get quotes for this">
+                <p className="text-ink-soft">Create a free buyer account to add materials to a request and receive quotations.</p>
+                <div className="mt-4 flex flex-col gap-2">
+                    <ButtonLink to="/register" block>
+                        Create account
+                    </ButtonLink>
+                    <ButtonLink to="/login" state={{ from: `/materials/${product.id}` }} variant="secondary" block>
+                        Sign in
+                    </ButtonLink>
+                </div>
+            </Panel>
+        );
+    }
+
+    if (user.role === 'supplier') {
+        return (
+            <Panel title="Sell this product">
+                <p className="text-ink-soft">Add it to your catalog with a price and stock so it appears in offers and you can quote on it.</p>
+                <ButtonLink to={`/supplier/catalog?add=${product.id}`} className="mt-4" block>
+                    Add to my catalog
+                </ButtonLink>
+            </Panel>
+        );
+    }
+
+    if (user.role !== 'buyer') return null;
+
+    return <AddToRequest product={product} />;
+}
+
+function AddToRequest({ product }) {
+    const navigate = useNavigate();
+    const toast = useToast();
+    const queryClient = useQueryClient();
+    const drafts = useQuery({
+        queryKey: ['buyer-requests', { status: 'draft', per_page: 50 }],
+        queryFn: () => api.buyerRequests({ status: 'draft', per_page: 50 }),
+    });
+    const [form, setForm] = useState({ request_id: '', quantity: '1', notes: '' });
+
+    const add = useMutation({
+        mutationFn: () =>
+            api.addRequestItem(form.request_id, {
+                product_id: product.id,
+                quantity: Number(form.quantity),
+                notes: form.notes || null,
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['buyer-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['buyer-request', String(form.request_id)] });
+            toast(`Added ${product.name} to your request`);
+            navigate(`/buyer/requests/${form.request_id}`);
+        },
+    });
+
+    const draftList = drafts.data?.buyer_requests ?? [];
+    const errors = add.error?.fieldErrors ?? {};
+
+    return (
+        <Panel title="Add to a request">
+            {draftList.length === 0 && !drafts.isPending ? (
+                <>
+                    <p className="text-ink-soft">You have no draft requests. Start one with this product.</p>
+                    <ButtonLink to={`/buyer/requests/new?product=${product.id}`} className="mt-4" block>
+                        Start a request
+                    </ButtonLink>
+                </>
+            ) : (
+                <form
+                    className="space-y-4"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        add.mutate();
+                    }}
+                >
+                    <FormError error={add.error && !Object.keys(errors).length ? add.error.message : null} />
+                    <SelectField
+                        label="Draft request"
+                        required
+                        value={form.request_id}
+                        onChange={(e) => setForm({ ...form, request_id: e.target.value })}
+                        error={errors.product_id}
+                    >
+                        <option value="">Choose a draft</option>
+                        {draftList.map((draft) => (
+                            <option key={draft.id} value={draft.id}>
+                                {draft.title}
+                            </option>
+                        ))}
+                    </SelectField>
+                    <TextField
+                        label={`Quantity (${product.unit})`}
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        required
+                        value={form.quantity}
+                        onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                        error={errors.quantity}
+                    />
+                    <TextAreaField
+                        label="Notes for suppliers"
+                        optional
+                        rows={2}
+                        value={form.notes}
+                        onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    />
+                    <Button type="submit" block loading={add.isPending} loadingText="Adding">
+                        Add to request
+                    </Button>
+                    <p className="text-center text-sm">
+                        or{' '}
+                        <Link className="font-semibold text-pal-700 hover:underline" to={`/buyer/requests/new?product=${product.id}`}>
+                            start a new request
+                        </Link>
+                    </p>
+                </form>
+            )}
+        </Panel>
     );
 }

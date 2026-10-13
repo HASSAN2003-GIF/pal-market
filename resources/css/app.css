@@ -1,55 +1,146 @@
+@import '@fontsource-variable/manrope';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow-condensed/700.css';
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+@source '../js/**/*.{js,jsx}';
 
+/*
+ * PAL Market tokens
+ * Ink: text and structure. Concrete: page ground. Paper: dockets and panels.
+ * PAL blue: actions and links. Safety yellow: reserved for "this one needs
+ * your eye" (lowest bid, attention items). Never decorative.
+ */
 @theme {
-    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Barlow Condensed', 'Arial Narrow', ui-sans-serif, sans-serif;
 
-    /* PAL Market brand — blue */
-    --color-pal-50: #f1f8fc;
-    --color-pal-100: #eaf4fb;
-    --color-pal-200: #cce5f4;
-    --color-pal-300: #9dcae2;
-    --color-pal-400: #4d9bc7;
-    --color-pal-500: #1769aa;
-    --color-pal-600: #15527f;
-    --color-pal-700: #103e60;
+    --color-ink: #1a2430;
+    --color-ink-soft: #3c4957;
+    --color-muted: #5f6b77;
+    --color-faint: #8a949e;
 
-    /* Main text */
-    --color-ink-950: #1c2228;
-    --color-ink-900: #252b31;
-    --color-ink-800: #343b43;
-    --color-ink-700: #4b5560;
-    --color-ink-600: #626d78;
-    --color-ink-500: #7d8791;
+    --color-concrete: #eef0f1;
+    --color-concrete-deep: #e1e5e8;
+    --color-paper: #ffffff;
+    --color-rule: #d5dadf;
 
-    /* Surfaces */
-    --color-surface: #faf9f6;
-    --color-surface-soft: #f4f2ed;
-    --color-border: #e5e2da;
+    --color-pal-50: #eef5fb;
+    --color-pal-100: #dbeaf6;
+    --color-pal-200: #b6d4ec;
+    --color-pal-500: #1f78bf;
+    --color-pal-600: #1769aa;
+    --color-pal-700: #10507f;
+    --color-pal-800: #0c3d61;
+
+    --color-safety: #f2b705;
+    --color-safety-soft: #fdf3cf;
+    --color-ok: #2f7d4f;
+    --color-ok-soft: #e3f1e8;
+    --color-danger: #b42318;
+    --color-danger-soft: #fdecea;
+    --color-warn: #8a5a00;
+
+    --radius-control: 6px;
+    --radius-panel: 10px;
 }
 
-html {
-    background: #faf9f6;
+@layer base {
+    html {
+        background: var(--color-concrete);
+        color: var(--color-ink);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        margin: 0;
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.55;
+        min-height: 100vh;
+    }
+
+    h1, h2, h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        letter-spacing: 0.005em;
+        line-height: 1.08;
+        color: var(--color-ink);
+    }
+
+    button, input, textarea, select {
+        font: inherit;
+        color: inherit;
+    }
+
+    :focus-visible {
+        outline: 3px solid var(--color-pal-500);
+        outline-offset: 2px;
+        border-radius: 3px;
+    }
+
+    ::selection {
+        background: var(--color-pal-200);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
 
-body {
-    margin: 0;
-    background: #faf9f6;
-    color: #252b31;
-    font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-}
+@layer components {
+    /* Document numbers (REQ-…, QUO-…, PO-…) read like stamped dockets. */
+    .doc-number {
+        font-family: var(--font-display);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        font-variant-numeric: tabular-nums;
+    }
 
-button,
-input,
-textarea,
-select {
-    font: inherit;
-}
+    .tabular {
+        font-variant-numeric: tabular-nums;
+    }
 
-::selection {
-    background: #cce5f4;
-    color: #252b31;
+    .field-input {
+        width: 100%;
+        border: 1px solid var(--color-rule);
+        border-radius: var(--radius-control);
+        background: var(--color-paper);
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+        transition: border-color 120ms, box-shadow 120ms;
+    }
+
+    .field-input:hover {
+        border-color: var(--color-faint);
+    }
+
+    .field-input:focus {
+        outline: none;
+        border-color: var(--color-pal-600);
+        box-shadow: 0 0 0 3px var(--color-pal-100);
+    }
+
+    .field-input[aria-invalid='true'] {
+        border-color: var(--color-danger);
+    }
+
+    .field-input:disabled {
+        background: var(--color-concrete);
+        color: var(--color-muted);
+    }
+
+    /* Hazard-tape edge marking the example docket on the home page. */
+    .tape-edge {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            var(--color-safety) 0 10px,
+            var(--color-ink) 10px 20px
+        );
+    }
 }

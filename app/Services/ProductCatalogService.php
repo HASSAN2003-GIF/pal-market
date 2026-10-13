@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\SupplierPrice;
+use App\Support\Paginated;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -16,20 +18,39 @@ class ProductCatalogService
             50
         );
 
+        // Offers from approved suppliers with an active listing.
+        $activeOffers = fn ($q) => $q
+            ->where('supplier_products.is_active', true)
+            ->whereHas('supplier', fn ($s) => $s->where('status', 'approved'));
+
         $query = Product::query()
             ->with([
                 'category',
                 'brand',
             ])
+            ->withCount(['supplierProducts as offers_count' => $activeOffers])
+            ->addSelect([
+                // Lowest currently effective price across those offers.
+                'from_price' => SupplierPrice::query()
+                    ->selectRaw('min(supplier_prices.price)')
+                    ->join('supplier_products', 'supplier_products.id', '=', 'supplier_prices.supplier_product_id')
+                    ->join('suppliers', 'suppliers.id', '=', 'supplier_products.supplier_id')
+                    ->whereColumn('supplier_products.product_id', 'products.id')
+                    ->where('supplier_products.is_active', true)
+                    ->where('suppliers.status', 'approved')
+                    ->where('supplier_prices.is_active', true)
+                    ->where(fn ($q) => $q->whereNull('effective_from')->orWhere('effective_from', '<=', now()))
+                    ->where(fn ($q) => $q->whereNull('effective_until')->orWhere('effective_until', '>', now())),
+            ])
             ->where('is_active', true);
 
         if (! empty($filters['search'])) {
-            $search = trim($filters['search']);
+            $search = Paginated::like($filters['search']);
 
             $query->where(function ($query) use ($search) {
                 $query
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->where('name', 'like', $search)
+                    ->orWhere('description', 'like', $search);
             });
         }
 
