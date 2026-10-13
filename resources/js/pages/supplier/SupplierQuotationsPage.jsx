@@ -2,25 +2,32 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { DocNumber, EmptyState, Money, PageHeader, Pagination, QueryBoundary, StatusBadge } from '../../components/ui';
 import { useListParams } from '../../hooks/useListParams';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/format';
 import { StatusTabs } from '../buyer/BuyerRequestsPage';
 
 export default function SupplierQuotationsPage() {
+    const t = useT();
     const [params, update] = useListParams();
     const query = { status: params.status, page: params.page };
     const quotations = useQuery({ queryKey: ['quotations', query], queryFn: () => api.quotations(query), placeholderData: keepPreviousData });
 
     return (
         <>
-            <PageHeader title="My quotations" description="Every quotation you have sent, and what the buyer decided." />
+            <PageHeader title={t('nav.myOffers')} description={t('supplier.offersDescription')} />
             <div className="mb-4">
-                <StatusTabs kind="quotation" value={params.status} onChange={(status) => update({ status })} include={['submitted', 'accepted', 'rejected', 'expired', 'cancelled']} />
+                <StatusTabs
+                    kind="quotation"
+                    value={params.status}
+                    onChange={(status) => update({ status })}
+                    include={['submitted', 'accepted', 'rejected', 'expired', 'cancelled']}
+                />
             </div>
             <QueryBoundary query={quotations}>
                 {({ data: rows, meta }) =>
                     rows.length === 0 ? (
-                        <EmptyState title="No quotations here yet">Open requests are listed under Open requests. Quotations you send appear here.</EmptyState>
+                        <EmptyState title={t('supplier.offersEmptyTitle')}>{t('supplier.offersEmptyBody')}</EmptyState>
                     ) : (
                         <>
                             <ul className="divide-y divide-rule overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">
@@ -36,7 +43,9 @@ export default function SupplierQuotationsPage() {
                                                     <DocNumber className="text-sm">{quotation.quotation_number}</DocNumber>
                                                     <span>{quotation.buyer_request?.buyer_profile?.business_name}</span>
                                                     <span>{formatDate(quotation.submitted_at ?? quotation.created_at)}</span>
-                                                    {quotation.purchase_order && <span className="font-semibold text-ok">Order {quotation.purchase_order.order_number}</span>}
+                                                    {quotation.purchase_order && (
+                                                        <span className="font-semibold text-ok">{t('supplier.orderNumber', { number: quotation.purchase_order.order_number })}</span>
+                                                    )}
                                                 </span>
                                             </span>
                                             <Money amount={quotation.total_amount} currency={quotation.currency} className="font-semibold sm:text-right" />

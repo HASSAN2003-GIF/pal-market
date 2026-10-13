@@ -1,11 +1,13 @@
 import { EmptyState } from '../../components/ui';
+import { useT } from '../../i18n';
 
 /**
  * Responsive data table: a real <table> from md up, stacked rows below.
  * columns: [{ key, label, render(row), align }]
  */
-export default function AdminTable({ columns, rows, rowKey = 'id', empty = 'Nothing matches these filters.' }) {
-    if (rows.length === 0) return <EmptyState title="No results">{empty}</EmptyState>;
+export default function AdminTable({ columns, rows, rowKey = 'id', empty }) {
+    const t = useT();
+    if (rows.length === 0) return <EmptyState title={t('admin.noResults')}>{empty ?? t('admin.noResultsBody')}</EmptyState>;
 
     return (
         <div className="overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">

@@ -1,3 +1,5 @@
+import { getLocale, translate } from '../i18n';
+
 const API_BASE_URL = '/api';
 export const TOKEN_KEY = 'pal_market_token';
 
@@ -48,6 +50,8 @@ export async function request(endpoint, { method = 'GET', body, query, signal } 
             signal,
             headers: {
                 Accept: 'application/json',
+                // Server messages and validation errors come back in this language.
+                'X-Locale': getLocale(),
                 ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
@@ -55,7 +59,7 @@ export async function request(endpoint, { method = 'GET', body, query, signal } 
         });
     } catch (error) {
         if (error.name === 'AbortError') throw error;
-        throw new ApiError('Could not reach PAL Market. Check your connection and try again.', 0, null);
+        throw new ApiError(translate('common.errorOffline'), 0, null);
     }
 
     const isJson = (response.headers.get('content-type') || '').includes('application/json');
@@ -77,11 +81,11 @@ export async function request(endpoint, { method = 'GET', body, query, signal } 
 
 function messageFor(status, data) {
     if (data?.message && status !== 500) return data.message;
-    if (status === 429) return 'Too many attempts. Please wait a moment and try again.';
-    if (status === 404) return 'This item could not be found. It may have been removed.';
-    if (status === 403) return 'You do not have permission to do that.';
-    if (status >= 500) return 'Something went wrong on our side. Please try again shortly.';
-    return 'The request could not be completed.';
+    if (status === 429) return translate('common.errorTooMany');
+    if (status === 404) return translate('common.errorNotFound');
+    if (status === 403) return translate('common.errorForbidden');
+    if (status >= 500) return translate('common.errorServer');
+    return translate('common.errorGeneric');
 }
 
 function toQueryString(params) {
@@ -106,6 +110,7 @@ export const api = {
     me: () => request('/me'),
     updateProfile: (payload) => put('/me', payload),
     updatePassword: (payload) => put('/me/password', payload),
+    updatePreferences: (payload) => put('/me/preferences', payload),
     forgotPassword: (email) => post('/forgot-password', { email }),
     resetPassword: (payload) => post('/reset-password', payload),
     exchangeGoogleCode: (code) => post('/auth/google/exchange', { code }),
@@ -113,7 +118,7 @@ export const api = {
 
     // Catalog
     products: (query) => request('/products', { query }),
-    product: (id) => request(`/products/${id}`),
+    product: (id, query) => request(`/products/${id}`, { query }),
     catalogFilters: () => request('/catalog/filters'),
 
     // Buyer requests

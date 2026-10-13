@@ -1,56 +1,57 @@
+import { translate } from '../i18n';
+
 /**
- * Plain-language names and tones for every status the API returns, so the
- * same state reads the same everywhere.
+ * Tones for every status the API returns, so the same state reads the same
+ * everywhere. Labels and hints live in the dictionaries under
+ * status.<kind>.<status> and status.<kind>.<status>Hint.
  * tone: neutral | info | progress | good | bad | attention
  */
 export const STATUS = {
-    request: {
-        draft: { label: 'Draft', tone: 'neutral', hint: 'Only you can see this request.' },
-        open: { label: 'Open for quotes', tone: 'info', hint: 'Approved suppliers can send quotations.' },
-        closed: { label: 'Quote accepted', tone: 'good', hint: 'You accepted a quotation.' },
-        cancelled: { label: 'Cancelled', tone: 'bad', hint: 'Withdrawn from the market.' },
-        expired: { label: 'Expired', tone: 'neutral', hint: 'The quoting window ended.' },
-    },
-    quotation: {
-        draft: { label: 'Draft', tone: 'neutral' },
-        submitted: { label: 'Awaiting decision', tone: 'info' },
-        accepted: { label: 'Accepted', tone: 'good' },
-        rejected: { label: 'Declined', tone: 'bad' },
-        expired: { label: 'Expired', tone: 'neutral' },
-        cancelled: { label: 'Withdrawn', tone: 'neutral' },
-    },
+    request: { draft: 'neutral', open: 'info', closed: 'good', cancelled: 'bad', expired: 'neutral' },
+    quotation: { draft: 'neutral', submitted: 'info', accepted: 'good', rejected: 'bad', expired: 'neutral', cancelled: 'neutral' },
     order: {
-        pending: { label: 'Awaiting supplier', tone: 'attention' },
-        confirmed: { label: 'Confirmed', tone: 'info' },
-        processing: { label: 'Being prepared', tone: 'progress' },
-        shipped: { label: 'On the way', tone: 'progress' },
-        delivered: { label: 'Delivered', tone: 'good' },
-        completed: { label: 'Completed', tone: 'good' },
-        cancelled: { label: 'Cancelled', tone: 'bad' },
+        pending: 'attention',
+        confirmed: 'info',
+        processing: 'progress',
+        shipped: 'progress',
+        delivered: 'good',
+        completed: 'good',
+        cancelled: 'bad',
     },
-    supplier: {
-        pending: { label: 'Awaiting approval', tone: 'attention' },
-        approved: { label: 'Approved', tone: 'good' },
-        suspended: { label: 'Suspended', tone: 'bad' },
-    },
-    buyer: {
-        active: { label: 'Active', tone: 'good' },
-        suspended: { label: 'Suspended', tone: 'bad' },
-    },
+    supplier: { pending: 'attention', approved: 'good', suspended: 'bad' },
+    buyer: { active: 'good', suspended: 'bad' },
 };
 
+/** Statuses that have a hint line in the dictionary. */
+const HINTS = { request: ['draft', 'open', 'closed', 'cancelled', 'expired'] };
+
 export function statusInfo(kind, status) {
-    return STATUS[kind]?.[status] ?? { label: status ?? 'Unknown', tone: 'neutral' };
+    const tone = STATUS[kind]?.[status];
+    if (!tone) return { label: status ?? translate('common.unknown'), tone: 'neutral' };
+    return {
+        label: translate(`status.${kind}.${status}`),
+        tone,
+        hint: HINTS[kind]?.includes(status) ? translate(`status.${kind}.${status}Hint`) : undefined,
+    };
+}
+
+/** Label for a status used in filters and selects. */
+export function statusLabel(kind, status) {
+    return statusInfo(kind, status).label;
 }
 
 /** The steps an order moves through, in order (cancelled sits outside). */
 export const ORDER_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'completed'];
 
-/** Which side acts next on an order, and what the action is called. */
+/** Which side acts next on an order. Labels: status.action.<action>. */
 export const ORDER_ACTIONS = {
-    pending: { actor: 'supplier', action: 'confirm', label: 'Confirm order' },
-    confirmed: { actor: 'supplier', action: 'process', label: 'Start preparing' },
-    processing: { actor: 'supplier', action: 'ship', label: 'Mark as dispatched' },
-    shipped: { actor: 'buyer', action: 'deliver', label: 'Confirm delivery' },
-    delivered: { actor: 'buyer', action: 'complete', label: 'Complete order' },
+    pending: { actor: 'supplier', action: 'confirm' },
+    confirmed: { actor: 'supplier', action: 'process' },
+    processing: { actor: 'supplier', action: 'ship' },
+    shipped: { actor: 'buyer', action: 'deliver' },
+    delivered: { actor: 'buyer', action: 'complete' },
 };
+
+export function orderActionLabel(action) {
+    return translate(`status.action.${action}`);
+}

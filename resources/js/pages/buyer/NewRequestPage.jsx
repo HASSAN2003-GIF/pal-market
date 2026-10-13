@@ -3,15 +3,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProductPicker from '../../components/ProductPicker';
 import { Button, ButtonLink, FormError, PageHeader, Panel, useToast } from '../../components/ui';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
+import { useArea } from '../../location/LocationContext';
 import RequestDetailsFields, { detailsPayload } from './RequestDetailsFields';
 
 export default function NewRequestPage() {
+    const t = useT();
     const navigate = useNavigate();
     const toast = useToast();
     const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
-    const [form, setForm] = useState({ title: '', description: '', delivery_region: '', delivery_address: '', needed_by: '' });
+    const { region } = useArea();
+    // The person's area is a sensible default delivery region; they can change it.
+    const [form, setForm] = useState({ title: '', description: '', delivery_region: region ?? '', delivery_address: '', needed_by: '' });
     const [items, setItems] = useState([]);
 
     // Pre-fill from "Start a request" on a product page.
@@ -31,7 +36,7 @@ export default function NewRequestPage() {
         onSuccess: ({ buyer_request: created }) => {
             queryClient.invalidateQueries({ queryKey: ['buyer-requests'] });
             queryClient.invalidateQueries({ queryKey: ['summary'] });
-            toast('Draft saved. Review it, then publish to suppliers.');
+            toast(t('buyer.draftSavedToast'));
             navigate(`/buyer/requests/${created.id}`);
         },
     });
@@ -41,11 +46,15 @@ export default function NewRequestPage() {
 
     return (
         <>
-            <PageHeader
-                title="New request"
-                description="Saved as a draft first. Nothing goes to suppliers until you publish."
-                back={{ to: '/buyer/requests', label: 'My requests' }}
-            />
+            <PageHeader title={t('buyer.newTitle')} description={t('buyer.newDescription')} back={{ to: '/buyer/requests', label: t('nav.myRequests') }} />
+            <ol className="mb-6 grid gap-2 text-sm sm:grid-cols-3" aria-label={t('buyer.stepsLabel')}>
+                {['buyer.step1', 'buyer.step2', 'buyer.step3'].map((key, index) => (
+                    <li key={key} className="flex items-center gap-2 rounded-[var(--radius-control)] border border-rule bg-paper px-3 py-2">
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-action text-xs font-bold text-on-action">{index + 1}</span>
+                        {t(key)}
+                    </li>
+                ))}
+            </ol>
             <form
                 className="grid gap-6 lg:grid-cols-[1fr_20rem]"
                 onSubmit={(event) => {
@@ -54,20 +63,18 @@ export default function NewRequestPage() {
                 }}
             >
                 <div className="space-y-6">
-                    <Panel title="Job and delivery">
+                    <Panel title={t('buyer.panelDetails')}>
                         <RequestDetailsFields form={form} setForm={setForm} errors={errors} />
                     </Panel>
 
-                    <Panel title="Materials" status={<span className="text-sm text-muted">{items.length} added</span>}>
+                    <Panel title={t('buyer.panelMaterials')} status={<span className="text-sm text-muted">{t('buyer.addedCount', { count: items.length })}</span>}>
                         <ProductPicker
                             excludeIds={items.map((item) => item.product.id)}
                             onPick={(product) => setItems((current) => [...current, { product, quantity: '1', notes: '' }])}
                         />
                         {errors.items && <p className="mt-2 text-sm font-medium text-danger">{errors.items}</p>}
                         {items.length === 0 ? (
-                            <p className="mt-4 rounded-[var(--radius-control)] bg-concrete px-3 py-3 text-sm text-muted">
-                                Search above and pick each product you need. You can also add items later.
-                            </p>
+                            <p className="mt-4 rounded-[var(--radius-control)] bg-concrete px-3 py-3 text-sm text-muted">{t('buyer.noItemsYet')}</p>
                         ) : (
                             <ul className="mt-4 divide-y divide-rule border-y border-rule">
                                 {items.map((item, index) => (
@@ -75,20 +82,18 @@ export default function NewRequestPage() {
                                         <div>
                                             <p className="font-semibold">{item.product.name}</p>
                                             <label className="mt-1.5 block">
-                                                <span className="sr-only">Notes for {item.product.name}</span>
+                                                <span className="sr-only">{t('buyer.itemNotesFor', { name: item.product.name })}</span>
                                                 <input
                                                     className="field-input py-1.5 text-sm"
-                                                    placeholder="Notes for this item (optional)"
+                                                    placeholder={t('buyer.itemNotesPlaceholder')}
                                                     value={item.notes}
                                                     onChange={(e) => updateItem(index, { notes: e.target.value })}
                                                 />
                                             </label>
-                                            {errors[`items.${index}.quantity`] && (
-                                                <p className="mt-1 text-sm text-danger">{errors[`items.${index}.quantity`]}</p>
-                                            )}
+                                            {errors[`items.${index}.quantity`] && <p className="mt-1 text-sm text-danger">{errors[`items.${index}.quantity`]}</p>}
                                         </div>
                                         <label>
-                                            <span className="block text-xs text-muted">Quantity ({item.product.unit})</span>
+                                            <span className="block text-xs text-muted">{t('product.howMany', { unit: item.product.unit })}</span>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -104,7 +109,8 @@ export default function NewRequestPage() {
                                             className="self-center text-sm font-semibold text-danger hover:underline"
                                             onClick={() => setItems((current) => current.filter((_, i) => i !== index))}
                                         >
-                                            Remove<span className="sr-only"> {item.product.name}</span>
+                                            {t('common.remove')}
+                                            <span className="sr-only"> {item.product.name}</span>
                                         </button>
                                     </li>
                                 ))}
@@ -113,19 +119,16 @@ export default function NewRequestPage() {
                     </Panel>
                 </div>
 
-                <aside className="space-y-3 lg:sticky lg:top-6 lg:self-start">
-                    <Panel title="Save draft">
-                        <p className="text-sm text-ink-soft">
-                            After saving, check the list and publish it. Approved suppliers then have up to the closing date you choose
-                            to quote.
-                        </p>
+                <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
+                    <Panel title={t('buyer.saveTitle')}>
+                        <p className="text-sm text-ink-soft">{t('buyer.saveBody')}</p>
                         <div className="mt-4 space-y-2">
                             <FormError error={create.error && !Object.keys(errors).length ? create.error.message : null} />
-                            <Button type="submit" block loading={create.isPending} loadingText="Saving draft">
-                                Save draft
+                            <Button type="submit" block loading={create.isPending} loadingText={t('auth.saving')}>
+                                {t('buyer.saveDraft')}
                             </Button>
                             <ButtonLink to="/buyer/requests" variant="ghost" block>
-                                Cancel
+                                {t('common.cancel')}
                             </ButtonLink>
                         </div>
                     </Panel>

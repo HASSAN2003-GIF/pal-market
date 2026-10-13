@@ -1,8 +1,10 @@
 import { SelectField, TextAreaField, TextField } from '../../components/ui';
-import { TANZANIA_REGIONS } from '../../lib/format';
+import { useI18n } from '../../i18n';
+import { REGION_NAMES, regionLabel } from '../../location/regions';
 
 /** Title, notes and delivery fields shared by create and edit. */
 export default function RequestDetailsFields({ form, setForm, errors = {} }) {
+    const { t, locale } = useI18n();
     const set = (field) => (event) => setForm({ ...form, [field]: event.target.value });
     const today = new Date().toISOString().slice(0, 10);
 
@@ -10,23 +12,25 @@ export default function RequestDetailsFields({ form, setForm, errors = {} }) {
         <div className="grid gap-4 sm:grid-cols-2">
             <TextField
                 className="sm:col-span-2"
-                label="Request title"
-                hint="Name the job so suppliers know what they are quoting for."
-                placeholder="Ground floor slab, Kibamba"
+                label={t('buyer.fieldTitle')}
+                hint={t('buyer.fieldTitleHint')}
+                placeholder={t('buyer.fieldTitlePlaceholder')}
                 required
                 maxLength={255}
                 value={form.title}
                 onChange={set('title')}
                 error={errors.title}
             />
-            <SelectField label="Delivery region" optional value={form.delivery_region ?? ''} onChange={set('delivery_region')} error={errors.delivery_region}>
-                <option value="">Choose a region</option>
-                {TANZANIA_REGIONS.map((region) => (
-                    <option key={region}>{region}</option>
+            <SelectField label={t('buyer.fieldRegion')} optional value={form.delivery_region ?? ''} onChange={set('delivery_region')} error={errors.delivery_region}>
+                <option value="">{t('buyer.chooseRegion')}</option>
+                {REGION_NAMES.map((region) => (
+                    <option key={region} value={region}>
+                        {regionLabel(region, locale)}
+                    </option>
                 ))}
             </SelectField>
             <TextField
-                label="Needed on site by"
+                label={t('buyer.fieldNeededBy')}
                 optional
                 type="date"
                 min={today}
@@ -36,9 +40,9 @@ export default function RequestDetailsFields({ form, setForm, errors = {} }) {
             />
             <TextField
                 className="sm:col-span-2"
-                label="Delivery address"
+                label={t('buyer.fieldAddress')}
                 optional
-                placeholder="Street, area or landmark"
+                placeholder={t('buyer.fieldAddressPlaceholder')}
                 maxLength={500}
                 value={form.delivery_address ?? ''}
                 onChange={set('delivery_address')}
@@ -46,9 +50,9 @@ export default function RequestDetailsFields({ form, setForm, errors = {} }) {
             />
             <TextAreaField
                 className="sm:col-span-2"
-                label="Notes for suppliers"
+                label={t('product.notesForSellers')}
                 optional
-                placeholder="Access to site, offloading, payment terms you prefer"
+                placeholder={t('buyer.fieldNotesPlaceholder')}
                 value={form.description ?? ''}
                 onChange={set('description')}
                 error={errors.description}

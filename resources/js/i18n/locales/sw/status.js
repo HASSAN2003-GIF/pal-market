@@ -1,0 +1,40 @@
+export default {
+    'request.draft': 'Bado halijatumwa',
+    'request.draftHint': 'Ni wewe tu unayeona ombi hili.',
+    'request.open': 'Linasubiri ofa',
+    'request.openHint': 'Wauzaji walioidhinishwa wanaweza kukutumia ofa za bei.',
+    'request.closed': 'Ofa imekubaliwa',
+    'request.closedHint': 'Umekubali ofa ya bei.',
+    'request.cancelled': 'Limeghairiwa',
+    'request.cancelledHint': 'Umeliondoa ombi hili.',
+    'request.expired': 'Muda umeisha',
+    'request.expiredHint': 'Muda wa kupokea ofa umeisha.',
+
+    'quotation.draft': 'Bado haijatumwa',
+    'quotation.submitted': 'Inasubiri mnunuzi',
+    'quotation.accepted': 'Imekubaliwa',
+    'quotation.rejected': 'Imekataliwa',
+    'quotation.expired': 'Muda umeisha',
+    'quotation.cancelled': 'Imeondolewa',
+
+    'order.pending': 'Inasubiri muuzaji',
+    'order.confirmed': 'Imethibitishwa',
+    'order.processing': 'Inaandaliwa',
+    'order.shipped': 'Iko njiani',
+    'order.delivered': 'Imefika',
+    'order.completed': 'Imekamilika',
+    'order.cancelled': 'Imeghairiwa',
+
+    'supplier.pending': 'Inasubiri kuidhinishwa',
+    'supplier.approved': 'Imeidhinishwa',
+    'supplier.suspended': 'Imesimamishwa',
+
+    'buyer.active': 'Hai',
+    'buyer.suspended': 'Imesimamishwa',
+
+    'action.confirm': 'Thibitisha oda',
+    'action.process': 'Anza kuandaa',
+    'action.ship': 'Weka kuwa imetumwa',
+    'action.deliver': 'Nimeipokea',
+    'action.complete': 'Maliza oda',
+};

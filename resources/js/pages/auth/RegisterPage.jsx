@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, FormError, TextField, cx } from '../../components/ui';
 import { homePathFor, useAuth } from '../../context/AuthContext';
+import { useT } from '../../i18n';
 import AuthShell, { GoogleButton, OrDivider } from './AuthShell';
 
 const ROLES = [
-    { value: 'buyer', title: 'I buy materials', body: 'Contractors, builders and project owners requesting quotes.' },
-    { value: 'supplier', title: 'I supply materials', body: 'Hardware stores and distributors quoting on requests.' },
+    { value: 'buyer', title: 'auth.roleBuyerTitle', body: 'auth.roleBuyerBody' },
+    { value: 'supplier', title: 'auth.roleSellerTitle', body: 'auth.roleSellerBody' },
 ];
 
 export default function RegisterPage() {
+    const t = useT();
     const { user, register } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -51,20 +53,20 @@ export default function RegisterPage() {
 
     return (
         <AuthShell
-            title="Create your account"
-            intro="Free for buyers and suppliers."
+            title={t('auth.registerTitle')}
+            intro={t('auth.registerIntro')}
             footer={
                 <>
-                    Already registered?{' '}
+                    {t('auth.haveAccount')}{' '}
                     <Link to="/login" className="font-semibold text-pal-700 hover:underline">
-                        Sign in
+                        {t('layout.signIn')}
                     </Link>
                 </>
             }
         >
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <fieldset>
-                    <legend className="mb-2 text-sm font-semibold">How will you use PAL Market?</legend>
+                    <legend className="mb-2 text-sm font-semibold">{t('auth.roleQuestion')}</legend>
                     <div className="grid gap-2 sm:grid-cols-2">
                         {ROLES.map((role) => (
                             <label
@@ -75,8 +77,8 @@ export default function RegisterPage() {
                                 )}
                             >
                                 <input type="radio" name="role" value={role.value} checked={form.role === role.value} onChange={set('role')} className="sr-only" />
-                                <span className="block font-semibold">{role.title}</span>
-                                <span className="block text-sm text-muted">{role.body}</span>
+                                <span className="block font-bold">{t(role.title)}</span>
+                                <span className="block text-sm text-muted">{t(role.body)}</span>
                             </label>
                         ))}
                     </div>
@@ -85,14 +87,14 @@ export default function RegisterPage() {
                 <FormError error={error} />
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <TextField label="First name" autoComplete="given-name" required value={form.first_name} onChange={set('first_name')} error={errors.first_name} />
-                    <TextField label="Last name" autoComplete="family-name" required value={form.last_name} onChange={set('last_name')} error={errors.last_name} />
+                    <TextField label={t('auth.firstName')} autoComplete="given-name" required value={form.first_name} onChange={set('first_name')} error={errors.first_name} />
+                    <TextField label={t('auth.lastName')} autoComplete="family-name" required value={form.last_name} onChange={set('last_name')} error={errors.last_name} />
                 </div>
                 <TextField
-                    label="Business name"
+                    label={t('auth.businessName')}
                     optional={!isSupplier}
                     autoComplete="organization"
-                    hint={isSupplier ? 'As registered. Buyers see this on your quotations.' : 'Leave blank to use your own name.'}
+                    hint={isSupplier ? t('auth.businessNameSellerHint') : t('auth.businessNameBuyerHint')}
                     value={form.business_name}
                     onChange={set('business_name')}
                     error={errors.business_name}
@@ -100,49 +102,49 @@ export default function RegisterPage() {
                 />
                 {isSupplier && (
                     <TextField
-                        label="TIN"
+                        label={t('auth.tin')}
                         optional
                         inputMode="numeric"
-                        hint="Your Tax Identification Number speeds up approval. You can add it later."
+                        hint={t('auth.tinHint')}
                         value={form.tin_number}
                         onChange={set('tin_number')}
                         error={errors.tin_number}
                     />
                 )}
-                <TextField label="Email" type="email" autoComplete="email" required value={form.email} onChange={set('email')} error={errors.email} />
+                <TextField label={t('auth.email')} type="email" autoComplete="email" required value={form.email} onChange={set('email')} error={errors.email} />
                 <TextField
-                    label="Phone number"
+                    label={t('auth.phone')}
                     optional
                     type="tel"
                     autoComplete="tel"
                     placeholder="+255 7xx xxx xxx"
-                    hint="You can also sign in with this number."
+                    hint={t('auth.phoneHint')}
                     value={form.phone}
                     onChange={set('phone')}
                     error={errors.phone}
                 />
                 <TextField
-                    label="Password"
+                    label={t('auth.password')}
                     type="password"
                     autoComplete="new-password"
                     required
-                    hint="At least 8 characters, with letters and numbers."
+                    hint={t('auth.passwordHint')}
                     value={form.password}
                     onChange={set('password')}
                     error={errors.password}
                 />
                 <TextField
-                    label="Confirm password"
+                    label={t('auth.confirmPassword')}
                     type="password"
                     autoComplete="new-password"
                     required
                     value={form.password_confirmation}
                     onChange={set('password_confirmation')}
                 />
-                <Button type="submit" block size="lg" loading={busy} loadingText="Creating account">
-                    {isSupplier ? 'Create supplier account' : 'Create buyer account'}
+                <Button type="submit" block size="lg" loading={busy} loadingText={t('auth.creating')}>
+                    {isSupplier ? t('auth.createSeller') : t('auth.createBuyer')}
                 </Button>
-                {isSupplier && <p className="text-sm text-muted">Supplier accounts are reviewed by our team before you can send quotations.</p>}
+                {isSupplier && <p className="text-sm text-muted">{t('auth.sellerReview')}</p>}
             </form>
             <OrDivider />
             <GoogleButton role={form.role} />

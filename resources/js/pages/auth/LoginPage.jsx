@@ -2,15 +2,19 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, FormError, TextField } from '../../components/ui';
 import { homePathFor, useAuth } from '../../context/AuthContext';
+import { useT } from '../../i18n';
 import AuthShell, { GoogleButton, OrDivider } from './AuthShell';
 
 export default function LoginPage() {
+    const t = useT();
     const { user, login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
     const [form, setForm] = useState({ login: '', password: '' });
-    const [error, setError] = useState(searchParams.get('error'));
+    // Errors handed over from the Google flow come as router state; a bare
+    // ?error= (from the server redirect) only ever shows our own fixed text.
+    const [error, setError] = useState(location.state?.error ?? (searchParams.get('error') ? t('auth.googleFailed') : null));
     const [fieldErrors, setFieldErrors] = useState({});
     const [busy, setBusy] = useState(false);
 
@@ -34,13 +38,13 @@ export default function LoginPage() {
 
     return (
         <AuthShell
-            title="Sign in"
-            intro="Use the email address or phone number on your PAL Market account."
+            title={t('auth.signInTitle')}
+            intro={t('auth.signInIntro')}
             footer={
                 <>
-                    New to PAL Market?{' '}
+                    {t('auth.newHere')}{' '}
                     <Link to="/register" className="font-semibold text-pal-700 hover:underline">
-                        Create an account
+                        {t('layout.createAccount')}
                     </Link>
                 </>
             }
@@ -48,7 +52,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <FormError error={error} />
                 <TextField
-                    label="Email or phone number"
+                    label={t('auth.emailOrPhone')}
                     name="login"
                     autoComplete="username"
                     required
@@ -57,7 +61,7 @@ export default function LoginPage() {
                     error={fieldErrors.login}
                 />
                 <TextField
-                    label="Password"
+                    label={t('auth.password')}
                     name="password"
                     type="password"
                     autoComplete="current-password"
@@ -68,11 +72,11 @@ export default function LoginPage() {
                 />
                 <div className="flex justify-end">
                     <Link to="/forgot-password" className="text-sm font-semibold text-pal-700 hover:underline">
-                        Forgot your password?
+                        {t('auth.forgot')}
                     </Link>
                 </div>
-                <Button type="submit" block size="lg" loading={busy} loadingText="Signing in">
-                    Sign in
+                <Button type="submit" block size="lg" loading={busy} loadingText={t('auth.signingIn')}>
+                    {t('layout.signIn')}
                 </Button>
             </form>
             <OrDivider />

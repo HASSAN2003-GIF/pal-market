@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import SearchInput from '../../components/SearchInput';
 import { Button, FormError, PageHeader, Pagination, Panel, QueryBoundary, SelectField, TextAreaField, TextField, useToast } from '../../components/ui';
 import { useListParams } from '../../hooks/useListParams';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import AdminTable from './AdminTable';
 
@@ -22,6 +23,7 @@ function useCatalogSave(fn, message, after) {
 }
 
 function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
+    const t = useT();
     const [form, setForm] = useState({
         name: initial?.name ?? '',
         category_id: initial?.category_id ? String(initial.category_id) : '',
@@ -40,7 +42,7 @@ function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
             };
             return initial ? api.admin.updateProduct(initial.id, data) : api.admin.createProduct(data);
         },
-        initial ? 'Product updated' : 'Product added',
+        initial ? t('admin.productUpdatedToast') : t('admin.productAddedToast'),
         onDone,
     );
     const errors = save.error?.fieldErrors ?? {};
@@ -56,41 +58,43 @@ function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
             <div className="sm:col-span-2">
                 <FormError error={save.error && !Object.keys(errors).length ? save.error.message : null} />
             </div>
-            <TextField label="Product name" required value={form.name} onChange={set('name')} error={errors.name} placeholder="Simba Cement 42.5R" />
-            <TextField label="Selling unit" required value={form.unit} onChange={set('unit')} error={errors.unit} placeholder="Bag (50kg)" />
-            <SelectField label="Category" required value={form.category_id} onChange={set('category_id')} error={errors.category_id}>
-                <option value="">Choose a category</option>
+            <p className="text-sm text-muted sm:col-span-2">{t('admin.productNamesNote')}</p>
+            <TextField label={t('admin.productName')} required value={form.name} onChange={set('name')} error={errors.name} placeholder="Simba Cement 42.5R" />
+            <TextField label={t('admin.sellingUnit')} required value={form.unit} onChange={set('unit')} error={errors.unit} placeholder={t('admin.sellingUnitPlaceholder')} />
+            <SelectField label={t('search.category')} required value={form.category_id} onChange={set('category_id')} error={errors.category_id}>
+                <option value="">{t('admin.chooseCategory')}</option>
                 {taxonomy.categories.map((c) => (
                     <option key={c.id} value={c.id}>
                         {c.name}
                     </option>
                 ))}
             </SelectField>
-            <SelectField label="Brand" optional value={form.brand_id} onChange={set('brand_id')} error={errors.brand_id}>
-                <option value="">No brand</option>
+            <SelectField label={t('admin.brand')} optional value={form.brand_id} onChange={set('brand_id')} error={errors.brand_id}>
+                <option value="">{t('admin.noBrand')}</option>
                 {taxonomy.brands.map((b) => (
                     <option key={b.id} value={b.id}>
                         {b.name}
                     </option>
                 ))}
             </SelectField>
-            <TextAreaField className="sm:col-span-2" label="Description" optional value={form.description} onChange={set('description')} />
+            <TextAreaField className="sm:col-span-2" label={t('admin.description')} optional value={form.description} onChange={set('description')} />
             <div className="flex gap-2 sm:col-span-2">
                 <Button type="submit" loading={save.isPending}>
                     {submitLabel}
                 </Button>
                 <Button variant="secondary" onClick={onDone}>
-                    Cancel
+                    {t('common.cancel')}
                 </Button>
             </div>
         </form>
     );
 }
 
-function TaxonomyList({ title, singular, items, create, updateItem }) {
+function TaxonomyList({ title, newLabel, items, create, updateItem }) {
+    const t = useT();
     const [name, setName] = useState('');
-    const add = useCatalogSave(() => create({ name }), `${singular} added`, () => setName(''));
-    const toggle = useCatalogSave(({ id, is_active }) => updateItem(id, { is_active }), `${singular} updated`);
+    const add = useCatalogSave(() => create({ name }), t('admin.addedToast'), () => setName(''));
+    const toggle = useCatalogSave(({ id, is_active }) => updateItem(id, { is_active }), t('admin.updatedToast'));
 
     return (
         <Panel title={title}>
@@ -102,11 +106,11 @@ function TaxonomyList({ title, singular, items, create, updateItem }) {
                 }}
             >
                 <label className="flex-1">
-                    <span className="sr-only">New {singular.toLowerCase()} name</span>
-                    <input className="field-input" placeholder={`New ${singular.toLowerCase()}`} required value={name} onChange={(e) => setName(e.target.value)} />
+                    <span className="sr-only">{newLabel}</span>
+                    <input className="field-input" placeholder={newLabel} required value={name} onChange={(e) => setName(e.target.value)} />
                 </label>
                 <Button type="submit" variant="secondary" loading={add.isPending}>
-                    Add
+                    {t('common.add')}
                 </Button>
             </form>
             {add.error && <p className="mt-1 text-sm text-danger">{add.error.fieldErrors?.name ?? add.error.message}</p>}
@@ -115,14 +119,10 @@ function TaxonomyList({ title, singular, items, create, updateItem }) {
                     <li key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                         <span className={item.is_active ? '' : 'text-muted'}>
                             {item.name} <span className="text-muted">({item.products_count})</span>
-                            {!item.is_active && <span className="ml-1 font-semibold text-warn">hidden</span>}
+                            {!item.is_active && <span className="ml-1 font-semibold text-warn">{t('admin.hidden')}</span>}
                         </span>
-                        <button
-                            type="button"
-                            className="font-semibold text-pal-700 hover:underline"
-                            onClick={() => toggle.mutate({ id: item.id, is_active: !item.is_active })}
-                        >
-                            {item.is_active ? 'Hide' : 'Show'}
+                        <button type="button" className="font-semibold text-pal-700 hover:underline" onClick={() => toggle.mutate({ id: item.id, is_active: !item.is_active })}>
+                            {item.is_active ? t('common.hide') : t('common.show')}
                         </button>
                     </li>
                 ))}
@@ -132,6 +132,7 @@ function TaxonomyList({ title, singular, items, create, updateItem }) {
 }
 
 export default function AdminCatalogPage() {
+    const t = useT();
     const [params, update] = useListParams();
     const [editing, setEditing] = useState(null); // 'new' | product
     const taxonomy = useQuery({ queryKey: ['admin', 'catalog', 'taxonomy'], queryFn: api.admin.taxonomy });
@@ -141,39 +142,39 @@ export default function AdminCatalogPage() {
         queryFn: () => api.admin.products(query),
         placeholderData: keepPreviousData,
     });
-    const toggle = useCatalogSave((product) => api.admin.updateProduct(product.id, { is_active: !product.is_active }), 'Product updated');
+    const toggle = useCatalogSave((product) => api.admin.updateProduct(product.id, { is_active: !product.is_active }), t('admin.productUpdatedToast'));
 
     const columns = [
         {
             key: 'name',
-            label: 'Product',
+            label: t('admin.colProduct'),
             render: (p) => (
                 <span>
                     <span className="block font-semibold">{p.name}</span>
                     <span className="block text-muted">
                         {p.category?.name}
-                        {p.brand && `, ${p.brand.name}`}. Per {p.unit}
+                        {p.brand && `, ${p.brand.name}`} · {t('common.perUnit', { unit: p.unit })}
                     </span>
                 </span>
             ),
         },
-        { key: 'offers', label: 'Suppliers listing', render: (p) => p.supplier_products_count },
+        { key: 'offers', label: t('admin.colSellersListing'), render: (p) => p.supplier_products_count },
         {
             key: 'status',
-            label: 'Status',
-            render: (p) => <span className={p.is_active ? 'font-semibold text-ok' : 'font-semibold text-muted'}>{p.is_active ? 'Active' : 'Hidden'}</span>,
+            label: t('common.status'),
+            render: (p) => <span className={p.is_active ? 'font-semibold text-ok' : 'font-semibold text-muted'}>{p.is_active ? t('admin.visible') : t('admin.hiddenStatus')}</span>,
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t('common.actions'),
             align: 'right',
             render: (p) => (
                 <span className="inline-flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setEditing(p)}>
-                        Edit
+                        {t('common.edit')}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => toggle.mutate(p)}>
-                        {p.is_active ? 'Hide' : 'Show'}
+                        {p.is_active ? t('common.hide') : t('common.show')}
                     </Button>
                 </span>
             ),
@@ -183,17 +184,17 @@ export default function AdminCatalogPage() {
     return (
         <>
             <PageHeader
-                title="Product catalog"
-                description="The shared list buyers request from and suppliers price against. Hidden products stay on past requests and orders."
-                actions={!editing && taxonomy.data && <Button onClick={() => setEditing('new')}>Add product</Button>}
+                title={t('nav.adminCatalog')}
+                description={t('admin.catalogDescription')}
+                actions={!editing && taxonomy.data && <Button onClick={() => setEditing('new')}>{t('admin.addProduct')}</Button>}
             />
             {editing && taxonomy.data && (
-                <Panel title={editing === 'new' ? 'New product' : `Edit ${editing.name}`} className="mb-6">
+                <Panel title={editing === 'new' ? t('admin.newProduct') : t('admin.editProduct', { name: editing.name })} className="mb-6">
                     <ProductForm
                         key={editing === 'new' ? 'new' : editing.id}
                         initial={editing === 'new' ? null : editing}
                         taxonomy={taxonomy.data}
-                        submitLabel={editing === 'new' ? 'Add product' : 'Save product'}
+                        submitLabel={editing === 'new' ? t('admin.addProduct') : t('common.saveChanges')}
                         onDone={() => setEditing(null)}
                     />
                 </Panel>
@@ -201,11 +202,11 @@ export default function AdminCatalogPage() {
             <div className="grid gap-6 xl:grid-cols-[1fr_18rem]">
                 <div className="min-w-0">
                     <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_12rem_10rem]">
-                        <SearchInput label="Search products" placeholder="Product name" value={params.search ?? ''} onChange={(search) => update({ search })} />
+                        <SearchInput label={t('admin.searchProducts')} placeholder={t('admin.productName')} value={params.search ?? ''} onChange={(search) => update({ search })} />
                         <label>
-                            <span className="sr-only">Category</span>
+                            <span className="sr-only">{t('search.category')}</span>
                             <select className="field-input" value={params.category_id ?? ''} onChange={(e) => update({ category_id: e.target.value })}>
-                                <option value="">All categories</option>
+                                <option value="">{t('search.allCategories')}</option>
                                 {(taxonomy.data?.categories ?? []).map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.name}
@@ -214,11 +215,11 @@ export default function AdminCatalogPage() {
                             </select>
                         </label>
                         <label>
-                            <span className="sr-only">Status</span>
+                            <span className="sr-only">{t('common.status')}</span>
                             <select className="field-input" value={params.status ?? ''} onChange={(e) => update({ status: e.target.value })}>
-                                <option value="">All</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Hidden</option>
+                                <option value="">{t('common.all')}</option>
+                                <option value="active">{t('admin.visible')}</option>
+                                <option value="inactive">{t('admin.hiddenStatus')}</option>
                             </select>
                         </label>
                     </div>
@@ -234,8 +235,20 @@ export default function AdminCatalogPage() {
                 <QueryBoundary query={taxonomy}>
                     {(data) => (
                         <div className="space-y-6">
-                            <TaxonomyList title="Categories" singular="Category" items={data.categories} create={api.admin.createCategory} updateItem={api.admin.updateCategory} />
-                            <TaxonomyList title="Brands" singular="Brand" items={data.brands} create={api.admin.createBrand} updateItem={api.admin.updateBrand} />
+                            <TaxonomyList
+                                title={t('admin.categories')}
+                                newLabel={t('admin.newCategory')}
+                                items={data.categories}
+                                create={api.admin.createCategory}
+                                updateItem={api.admin.updateCategory}
+                            />
+                            <TaxonomyList
+                                title={t('admin.brands')}
+                                newLabel={t('admin.newBrand')}
+                                items={data.brands}
+                                create={api.admin.createBrand}
+                                updateItem={api.admin.updateBrand}
+                            />
                         </div>
                     )}
                 </QueryBoundary>

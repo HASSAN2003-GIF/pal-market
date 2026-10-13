@@ -29,7 +29,7 @@ export default function Logo({ variant = 'wordmark', tone = 'auto', label = 'PAL
             role="img"
             aria-label={label}
             focusable="false"
-            className={`block w-auto ${variant === 'mark' ? 'h-7' : 'h-6'} ${className}`}
+            className={`block w-auto shrink-0 ${className || (variant === 'mark' ? 'h-7' : 'h-6')}`}
         >
             <path fill={ink} d={shape.d} />
             <circle fill={dot} cx={shape.cx} cy={-DOT_R} r={DOT_R} />

@@ -4,19 +4,21 @@ import SearchInput from '../../components/SearchInput';
 import { Button, PageHeader, Pagination, QueryBoundary, cx } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useListParams } from '../../hooks/useListParams';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import { formatDate, formatDateTime } from '../../lib/format';
 import AdminActionDialog from './AdminActionDialog';
 import AdminTable from './AdminTable';
 import { useAdminAction } from './useAdminAction';
 
-const ROLE_LABELS = { buyer: 'Buyer', supplier: 'Supplier', admin: 'Administrator' };
+const ROLES = ['buyer', 'supplier', 'admin'];
 
 function SuspendReason({ onChange }) {
+    const t = useT();
     const [reason, setReason] = useState('');
     return (
         <label className="mt-3 block">
-            <span className="mb-1.5 block text-sm font-semibold text-ink">Reason (kept in the audit log)</span>
+            <span className="mb-1.5 block text-sm font-semibold text-ink">{t('admin.reasonLabel')}</span>
             <textarea
                 className="field-input"
                 rows={2}
@@ -32,40 +34,37 @@ function SuspendReason({ onChange }) {
 }
 
 export default function AdminUsersPage() {
+    const t = useT();
     const { user: me } = useAuth();
     const [params, update] = useListParams();
     const query = { role: params.role, status: params.status, search: params.search, sort: params.sort, page: params.page };
     const users = useQuery({ queryKey: ['admin', 'users', query], queryFn: () => api.admin.users(query), placeholderData: keepPreviousData });
     const action = useAdminAction();
+    const roleLabel = (role) => t(`nav.role.${role}`);
 
     function changeRole(user, role) {
         action.ask({
-            title: `Make ${user.name} ${role === 'admin' ? 'an administrator' : `a ${ROLE_LABELS[role].toLowerCase()}`}?`,
+            title: t('admin.roleTitle', { name: user.name, role: roleLabel(role) }),
             body: (
                 <p>
-                    {role === 'admin'
-                        ? 'Administrators can approve suppliers, suspend accounts and change the catalog.'
-                        : role === 'supplier'
-                          ? 'A pending supplier profile is created if they do not have one. They must be approved before trading.'
-                          : 'A buyer profile is created if they do not have one.'}{' '}
-                    They will be signed out so the change takes effect.
+                    {t(role === 'admin' ? 'admin.roleAdminBody' : role === 'supplier' ? 'admin.roleSellerBody' : 'admin.roleBuyerBody')} {t('admin.roleSignOut')}
                 </p>
             ),
-            label: 'Change role',
+            label: t('admin.changeRole'),
             danger: user.role === 'admin',
             run: () => api.admin.setRole(user.id, role),
-            success: 'Role changed',
+            success: t('admin.roleChangedToast'),
         });
     }
 
     const columns = [
         {
             key: 'name',
-            label: 'Account',
+            label: t('admin.colAccount'),
             render: (u) => (
                 <span>
                     <span className="block font-semibold">
-                        {u.name} {u.id === me.id && <span className="font-normal text-muted">(you)</span>}
+                        {u.name} {u.id === me.id && <span className="font-normal text-muted">{t('admin.you')}</span>}
                     </span>
                     <span className="block text-muted">{u.email}</span>
                 </span>
@@ -73,36 +72,38 @@ export default function AdminUsersPage() {
         },
         {
             key: 'role',
-            label: 'Role',
+            label: t('admin.colRole'),
             render: (u) => (
                 <label>
-                    <span className="sr-only">Role for {u.name}</span>
-                    <select className="field-input py-1 text-sm" value={u.role} disabled={u.id === me.id} onChange={(e) => changeRole(u, e.target.value)}>
-                        {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                    <span className="sr-only">{t('admin.roleFor', { name: u.name })}</span>
+                    <select className="field-input min-h-0 py-1 text-sm" value={u.role} disabled={u.id === me.id} onChange={(e) => changeRole(u, e.target.value)}>
+                        {ROLES.map((value) => (
                             <option key={value} value={value}>
-                                {label}
+                                {roleLabel(value)}
                             </option>
                         ))}
                     </select>
                 </label>
             ),
         },
-        { key: 'joined', label: 'Joined', render: (u) => formatDate(u.created_at) },
-        { key: 'last_login', label: 'Last sign-in', render: (u) => (u.last_login_at ? formatDateTime(u.last_login_at) : 'Never') },
+        { key: 'joined', label: t('admin.colJoined'), render: (u) => formatDate(u.created_at) },
+        { key: 'last_login', label: t('admin.colLastSignIn'), render: (u) => (u.last_login_at ? formatDateTime(u.last_login_at) : t('admin.never')) },
         {
             key: 'status',
-            label: 'Status',
+            label: t('common.status'),
             render: (u) => (
-                <span className={cx('font-semibold', u.suspended_at ? 'text-danger' : 'text-ok')}>{u.suspended_at ? `Suspended ${formatDate(u.suspended_at)}` : 'Active'}</span>
+                <span className={cx('font-semibold', u.suspended_at ? 'text-danger' : 'text-ok')}>
+                    {u.suspended_at ? t('admin.suspendedOn', { date: formatDate(u.suspended_at) }) : t('status.buyer.active')}
+                </span>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t('common.actions'),
             align: 'right',
             render: (u) =>
                 u.id === me.id ? (
-                    <span className="text-muted">None</span>
+                    <span className="text-muted">{t('common.none')}</span>
                 ) : (
                     <span className="inline-flex gap-2">
                         {u.suspended_at ? (
@@ -111,14 +112,14 @@ export default function AdminUsersPage() {
                                 variant="secondary"
                                 onClick={() =>
                                     action.ask({
-                                        title: `Reactivate ${u.name}?`,
-                                        body: <p>They can sign in again straight away.</p>,
-                                        label: 'Reactivate',
+                                        title: t('admin.actionTitle', { action: t('admin.reactivate'), name: u.name }),
+                                        body: <p>{t('admin.reactivateUserBody')}</p>,
+                                        label: t('admin.reactivate'),
                                         run: () => api.admin.reactivateUser(u.id),
                                     })
                                 }
                             >
-                                Reactivate
+                                {t('admin.reactivate')}
                             </Button>
                         ) : (
                             <Button
@@ -127,20 +128,20 @@ export default function AdminUsersPage() {
                                 onClick={() => {
                                     let reason = '';
                                     action.ask({
-                                        title: `Suspend ${u.name}?`,
+                                        title: t('admin.actionTitle', { action: t('admin.suspend'), name: u.name }),
                                         body: (
                                             <>
-                                                <p>They are signed out on every device and cannot sign in until reactivated.</p>
+                                                <p>{t('admin.suspendUserBody')}</p>
                                                 <SuspendReason onChange={(value) => (reason = value)} />
                                             </>
                                         ),
-                                        label: 'Suspend account',
+                                        label: t('admin.suspendAccount'),
                                         danger: true,
                                         run: () => api.admin.suspendUser(u.id, reason || null),
                                     });
                                 }}
                             >
-                                Suspend
+                                {t('admin.suspend')}
                             </Button>
                         )}
                         <Button
@@ -149,20 +150,15 @@ export default function AdminUsersPage() {
                             className="text-danger"
                             onClick={() =>
                                 action.ask({
-                                    title: `Delete ${u.name}?`,
-                                    body: (
-                                        <p>
-                                            This permanently deletes the account and its drafts. Accounts with quotations or orders cannot be deleted; suspend them
-                                            instead.
-                                        </p>
-                                    ),
-                                    label: 'Delete account',
+                                    title: t('admin.actionTitle', { action: t('admin.delete'), name: u.name }),
+                                    body: <p>{t('admin.deleteUserBody')}</p>,
+                                    label: t('admin.deleteAccount'),
                                     danger: true,
                                     run: () => api.admin.deleteUser(u.id),
                                 })
                             }
                         >
-                            Delete
+                            {t('admin.delete')}
                         </Button>
                     </span>
                 ),
@@ -171,26 +167,26 @@ export default function AdminUsersPage() {
 
     return (
         <>
-            <PageHeader title="User accounts" description="Sign-in accounts for buyers, suppliers and administrators." />
+            <PageHeader title={t('nav.adminUsers')} description={t('admin.usersDescription')} />
             <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_12rem_12rem]">
-                <SearchInput label="Search accounts" placeholder="Name, email or phone" value={params.search ?? ''} onChange={(search) => update({ search })} />
+                <SearchInput label={t('admin.searchUsers')} placeholder={t('admin.searchUsersPlaceholder')} value={params.search ?? ''} onChange={(search) => update({ search })} />
                 <label>
-                    <span className="sr-only">Role</span>
+                    <span className="sr-only">{t('admin.colRole')}</span>
                     <select className="field-input" value={params.role ?? ''} onChange={(e) => update({ role: e.target.value })}>
-                        <option value="">All roles</option>
-                        {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                        <option value="">{t('admin.allRoles')}</option>
+                        {ROLES.map((value) => (
                             <option key={value} value={value}>
-                                {label}
+                                {roleLabel(value)}
                             </option>
                         ))}
                     </select>
                 </label>
                 <label>
-                    <span className="sr-only">Status</span>
+                    <span className="sr-only">{t('common.status')}</span>
                     <select className="field-input" value={params.status ?? ''} onChange={(e) => update({ status: e.target.value })}>
-                        <option value="">Active and suspended</option>
-                        <option value="active">Active</option>
-                        <option value="suspended">Suspended</option>
+                        <option value="">{t('admin.activeAndSuspended')}</option>
+                        <option value="active">{t('status.buyer.active')}</option>
+                        <option value="suspended">{t('status.buyer.suspended')}</option>
                     </select>
                 </label>
             </div>

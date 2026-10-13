@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, FormError, Notice, TextField } from '../../components/ui';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import AuthShell from './AuthShell';
 
 export default function ForgotPasswordPage() {
+    const t = useT();
     const [email, setEmail] = useState('');
     const [sent, setSent] = useState(null);
     const [error, setError] = useState(null);
@@ -26,24 +28,24 @@ export default function ForgotPasswordPage() {
 
     return (
         <AuthShell
-            title="Reset your password"
-            intro="Enter your account email and we will send you a link to choose a new password."
+            title={t('auth.forgotTitle')}
+            intro={t('auth.forgotIntro')}
             footer={
                 <Link to="/login" className="font-semibold text-pal-700 hover:underline">
-                    Back to sign in
+                    {t('auth.backToSignIn')}
                 </Link>
             }
         >
             {sent ? (
-                <Notice tone="good" title="Check your email">
-                    {sent} The link expires in 60 minutes.
+                <Notice tone="good" title={t('auth.checkEmail')}>
+                    {sent} {t('auth.linkExpires')}
                 </Notice>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <FormError error={error} />
-                    <TextField label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <Button type="submit" block loading={busy} loadingText="Sending link">
-                        Send reset link
+                    <TextField label={t('auth.email')} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <Button type="submit" block loading={busy} loadingText={t('auth.sending')}>
+                        {t('auth.sendLink')}
                     </Button>
                 </form>
             )}

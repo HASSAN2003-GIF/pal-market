@@ -2,21 +2,12 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import ProductPicker from '../../components/ProductPicker';
-import {
-    Button,
-    ConfirmDialog,
-    DocNumber,
-    FormError,
-    Notice,
-    PageHeader,
-    Panel,
-    QueryBoundary,
-    StatusBadge,
-    useToast,
-} from '../../components/ui';
+import { Button, ConfirmDialog, DocNumber, FormError, Notice, PageHeader, Panel, QueryBoundary, StatusBadge, useToast } from '../../components/ui';
+import { useI18n } from '../../i18n';
 import { api } from '../../lib/api';
-import { formatDate, formatNumber, relativeTime } from '../../lib/format';
+import { formatDate, formatNumber, pluralize, relativeTime } from '../../lib/format';
 import { statusInfo } from '../../lib/statuses';
+import { regionLabel } from '../../location/regions';
 import QuoteComparison from './QuoteComparison';
 import RequestDetailsFields, { detailsPayload } from './RequestDetailsFields';
 
@@ -24,11 +15,7 @@ export default function BuyerRequestDetailPage() {
     const { requestId } = useParams();
     const request = useQuery({ queryKey: ['buyer-request', requestId], queryFn: () => api.buyerRequest(requestId) });
 
-    return (
-        <QueryBoundary query={request}>
-            {({ buyer_request: data }) => <RequestBody request={data} />}
-        </QueryBoundary>
-    );
+    return <QueryBoundary query={request}>{({ buyer_request: data }) => <RequestBody request={data} />}</QueryBoundary>;
 }
 
 function useRequestMutation(request, fn, { success, onSuccess } = {}) {
@@ -47,21 +34,22 @@ function useRequestMutation(request, fn, { success, onSuccess } = {}) {
 }
 
 function RequestBody({ request }) {
+    const { t } = useI18n();
     const navigate = useNavigate();
     const [dialog, setDialog] = useState(null);
     const [openForDays, setOpenForDays] = useState('14');
     const isDraft = request.status === 'draft';
 
     const publish = useRequestMutation(request, () => api.publishBuyerRequest(request.id, Number(openForDays)), {
-        success: 'Published. Approved suppliers can now quote.',
+        success: t('buyer.sentToast'),
         onSuccess: () => setDialog(null),
     });
     const cancel = useRequestMutation(request, () => api.cancelBuyerRequest(request.id), {
-        success: 'Request cancelled',
+        success: t('buyer.cancelledToast'),
         onSuccess: () => setDialog(null),
     });
     const remove = useRequestMutation(request, () => api.deleteBuyerRequest(request.id), {
-        success: 'Draft deleted',
+        success: t('buyer.deletedToast'),
         onSuccess: () => navigate('/buyer/requests', { replace: true }),
     });
 
@@ -70,21 +58,21 @@ function RequestBody({ request }) {
     return (
         <>
             <PageHeader
-                back={{ to: '/buyer/requests', label: 'My requests' }}
+                back={{ to: '/buyer/requests', label: t('nav.myRequests') }}
                 title={request.title}
                 actions={
                     isDraft ? (
                         <>
                             <Button variant="danger" onClick={() => setDialog('delete')}>
-                                Delete draft
+                                {t('buyer.deleteDraft')}
                             </Button>
                             <Button onClick={() => setDialog('publish')} disabled={request.items.length === 0}>
-                                Publish to suppliers
+                                {t('buyer.sendToSellers')}
                             </Button>
                         </>
                     ) : request.status === 'open' ? (
                         <Button variant="danger" onClick={() => setDialog('cancel')}>
-                            Cancel request
+                            {t('buyer.cancelRequest')}
                         </Button>
                     ) : null
                 }
@@ -96,14 +84,14 @@ function RequestBody({ request }) {
                 <span className="text-sm text-muted">{info.hint}</span>
             </div>
 
-            {isDraft && request.items.length === 0 && (
-                <Notice tone="attention" title="Add at least one item to publish" className="mb-6">
-                    Use the search under Materials to add what you need.
+            {isDraft && (
+                <Notice tone={request.items.length === 0 ? 'attention' : 'info'} title={request.items.length === 0 ? t('buyer.needItemTitle') : t('buyer.readyTitle')} className="mb-6">
+                    {request.items.length === 0 ? t('buyer.needItemBody') : t('buyer.readyBody')}
                 </Notice>
             )}
             {request.status === 'open' && (
-                <Notice tone="info" className="mb-6" title={`Open for quotes until ${formatDate(request.expires_at)} (${relativeTime(request.expires_at)})`}>
-                    Quotations appear below as suppliers send them. You can accept one at any time before then.
+                <Notice tone="info" className="mb-6" title={t('buyer.openUntil', { date: formatDate(request.expires_at), relative: relativeTime(request.expires_at) })}>
+                    {t('buyer.openBody')}
                 </Notice>
             )}
 
@@ -112,8 +100,8 @@ function RequestBody({ request }) {
                     <ItemsPanel request={request} editable={isDraft} />
                     {!isDraft && (
                         <section aria-labelledby="quotes-heading">
-                            <h2 id="quotes-heading" className="mb-3 text-[1.8rem]">
-                                Quotations
+                            <h2 id="quotes-heading" className="mb-3 text-[1.7rem]">
+                                {t('buyer.offersTitle')}
                             </h2>
                             <QuoteComparison request={request} />
                         </section>
@@ -126,20 +114,20 @@ function RequestBody({ request }) {
 
             <ConfirmDialog
                 open={dialog === 'publish'}
-                title="Publish to suppliers?"
-                confirmLabel="Publish request"
+                title={t('buyer.sendDialogTitle')}
+                confirmLabel={t('buyer.sendToSellers')}
                 busy={publish.isPending}
                 error={publish.error?.message}
                 onCancel={() => setDialog(null)}
                 onConfirm={() => publish.mutate()}
             >
-                <p>Approved suppliers will see your items, quantities and delivery details. You cannot edit items after publishing.</p>
+                <p>{t('buyer.sendDialogBody')}</p>
                 <label className="mt-4 block">
-                    <span className="mb-1.5 block text-sm font-semibold text-ink">Accept quotations for</span>
+                    <span className="mb-1.5 block text-sm font-semibold text-ink">{t('buyer.acceptOffersFor')}</span>
                     <select className="field-input" value={openForDays} onChange={(e) => setOpenForDays(e.target.value)}>
                         {[3, 7, 14, 21, 30].map((days) => (
                             <option key={days} value={days}>
-                                {days} days
+                                {pluralize(days, 'common.days')}
                             </option>
                         ))}
                     </select>
@@ -147,39 +135,40 @@ function RequestBody({ request }) {
             </ConfirmDialog>
             <ConfirmDialog
                 open={dialog === 'cancel'}
-                title="Cancel this request?"
-                confirmLabel="Cancel request"
+                title={t('buyer.cancelDialogTitle')}
+                confirmLabel={t('buyer.cancelRequest')}
                 confirmVariant="danger"
                 busy={cancel.isPending}
                 error={cancel.error?.message}
                 onCancel={() => setDialog(null)}
                 onConfirm={() => cancel.mutate()}
             >
-                <p>The request is removed from the market and any quotations received are marked withdrawn. This cannot be undone.</p>
+                <p>{t('buyer.cancelDialogBody')}</p>
             </ConfirmDialog>
             <ConfirmDialog
                 open={dialog === 'delete'}
-                title="Delete this draft?"
-                confirmLabel="Delete draft"
+                title={t('buyer.deleteDialogTitle')}
+                confirmLabel={t('buyer.deleteDraft')}
                 confirmVariant="danger"
                 busy={remove.isPending}
                 error={remove.error?.message}
                 onCancel={() => setDialog(null)}
                 onConfirm={() => remove.mutate()}
             >
-                <p>The draft and its items are deleted permanently.</p>
+                <p>{t('buyer.deleteDialogBody')}</p>
             </ConfirmDialog>
         </>
     );
 }
 
 function ItemsPanel({ request, editable }) {
+    const { t } = useI18n();
     const add = useRequestMutation(request, (product) => api.addRequestItem(request.id, { product_id: product.id, quantity: 1 }), {
-        success: 'Item added',
+        success: t('buyer.itemAddedToast'),
     });
 
     return (
-        <Panel title="Materials" status={<span className="text-sm text-muted">{request.items.length} items</span>}>
+        <Panel title={t('buyer.panelMaterials')} status={<span className="text-sm text-muted">{pluralize(request.items.length, 'common.items')}</span>}>
             {editable && (
                 <div className="mb-4">
                     <ProductPicker excludeIds={request.items.map((item) => item.product_id)} onPick={(product) => add.mutate(product)} />
@@ -187,7 +176,7 @@ function ItemsPanel({ request, editable }) {
                 </div>
             )}
             {request.items.length === 0 ? (
-                <p className="text-sm text-muted">No items yet.</p>
+                <p className="text-sm text-muted">{t('buyer.noItems')}</p>
             ) : (
                 <ul className="divide-y divide-rule border-y border-rule">
                     {request.items.map((item) => (
@@ -200,11 +189,12 @@ function ItemsPanel({ request, editable }) {
 }
 
 function ItemRow({ request, item, editable }) {
+    const { t } = useI18n();
     const [quantity, setQuantity] = useState(String(item.quantity));
     const save = useRequestMutation(request, () => api.updateRequestItem(request.id, item.id, { quantity: Number(quantity), notes: item.notes }), {
-        success: 'Quantity updated',
+        success: t('buyer.quantityToast'),
     });
-    const remove = useRequestMutation(request, () => api.removeRequestItem(request.id, item.id), { success: 'Item removed' });
+    const remove = useRequestMutation(request, () => api.removeRequestItem(request.id, item.id), { success: t('buyer.itemRemovedToast') });
     const dirty = String(item.quantity) !== quantity;
 
     return (
@@ -216,14 +206,14 @@ function ItemRow({ request, item, editable }) {
             </div>
             {editable ? (
                 <form
-                    className="flex items-center gap-2"
+                    className="flex flex-wrap items-center gap-2"
                     onSubmit={(e) => {
                         e.preventDefault();
                         save.mutate();
                     }}
                 >
                     <label className="flex items-center gap-2">
-                        <span className="sr-only">Quantity of {item.product?.name}</span>
+                        <span className="sr-only">{t('buyer.quantityOf', { name: item.product?.name })}</span>
                         <input
                             type="number"
                             min="1"
@@ -236,11 +226,11 @@ function ItemRow({ request, item, editable }) {
                     </label>
                     {dirty && (
                         <Button type="submit" size="sm" loading={save.isPending}>
-                            Save
+                            {t('common.save')}
                         </Button>
                     )}
                     <Button size="sm" variant="ghost" className="text-danger" onClick={() => remove.mutate()} loading={remove.isPending}>
-                        Remove
+                        {t('common.remove')}
                     </Button>
                 </form>
             ) : (
@@ -253,16 +243,17 @@ function ItemRow({ request, item, editable }) {
 }
 
 function DetailsPanel({ request, editable }) {
+    const { t, locale } = useI18n();
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState(request);
     const save = useRequestMutation(request, () => api.updateBuyerRequest(request.id, detailsPayload(form)), {
-        success: 'Details saved',
+        success: t('buyer.detailsSavedToast'),
         onSuccess: () => setEditing(false),
     });
 
     if (editing) {
         return (
-            <Panel title="Job and delivery">
+            <Panel title={t('buyer.panelDetails')}>
                 <form
                     className="space-y-4"
                     onSubmit={(e) => {
@@ -273,10 +264,10 @@ function DetailsPanel({ request, editable }) {
                     <RequestDetailsFields form={form} setForm={setForm} errors={save.error?.fieldErrors} />
                     <div className="flex gap-2">
                         <Button type="submit" loading={save.isPending}>
-                            Save details
+                            {t('common.saveChanges')}
                         </Button>
                         <Button variant="secondary" onClick={() => setEditing(false)}>
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </form>
@@ -285,16 +276,16 @@ function DetailsPanel({ request, editable }) {
     }
 
     const rows = [
-        ['Delivery region', request.delivery_region],
-        ['Delivery address', request.delivery_address],
-        ['Needed by', request.needed_by && formatDate(request.needed_by)],
-        ['Published', request.published_at && formatDate(request.published_at)],
-        ['Closes', request.expires_at && formatDate(request.expires_at)],
+        ['buyer.fieldRegion', request.delivery_region && regionLabel(request.delivery_region, locale)],
+        ['buyer.fieldAddress', request.delivery_address],
+        ['buyer.fieldNeededBy', request.needed_by && formatDate(request.needed_by)],
+        ['buyer.sentOn', request.published_at && formatDate(request.published_at)],
+        ['buyer.closes', request.expires_at && formatDate(request.expires_at)],
     ];
 
     return (
         <Panel
-            title="Job and delivery"
+            title={t('buyer.panelDetails')}
             actions={
                 editable && (
                     <Button
@@ -305,7 +296,7 @@ function DetailsPanel({ request, editable }) {
                             setEditing(true);
                         }}
                     >
-                        Edit
+                        {t('common.edit')}
                     </Button>
                 )
             }
@@ -313,8 +304,8 @@ function DetailsPanel({ request, editable }) {
             <dl className="space-y-2.5 text-sm">
                 {rows.map(([label, value]) => (
                     <div key={label}>
-                        <dt className="text-muted">{label}</dt>
-                        <dd className="font-semibold">{value || <span className="font-normal text-faint">Not given</span>}</dd>
+                        <dt className="text-muted">{t(label)}</dt>
+                        <dd className="font-semibold">{value || <span className="font-normal text-faint">{t('buyer.notGiven')}</span>}</dd>
                     </div>
                 ))}
             </dl>

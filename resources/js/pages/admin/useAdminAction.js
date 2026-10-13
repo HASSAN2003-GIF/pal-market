@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../components/ui';
+import { translate } from '../../i18n';
 
 /**
  * Confirm-then-run for administrative actions. `pending` holds what is being
@@ -15,7 +16,7 @@ export function useAdminAction(invalidateKeys = [['admin']]) {
         mutationFn: () => pending.run(),
         onSuccess: (data) => {
             invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
-            toast(pending.success ?? data?.message ?? 'Done');
+            toast(pending.success ?? data?.message ?? translate('admin.done'));
             setPending(null);
         },
     });

@@ -23,8 +23,9 @@ export function AuthProvider({ children }) {
             setToken(null);
             setUser(null);
             queryClient.clear();
-            if (reason === 'expired') setSessionNotice('Your session has ended. Please sign in again.');
-            if (reason === 'suspended') setSessionNotice('This account has been suspended. Please contact PAL Market support.');
+            // Dictionary keys; the layouts show them in the current language.
+            if (reason === 'expired') setSessionNotice('auth.sessionEnded');
+            if (reason === 'suspended') setSessionNotice('auth.accountSuspended');
         },
         [queryClient],
     );

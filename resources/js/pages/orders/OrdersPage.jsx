@@ -4,11 +4,13 @@ import SearchInput from '../../components/SearchInput';
 import { DocNumber, EmptyState, Money, PageHeader, Pagination, QueryBoundary, StatusBadge } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useListParams } from '../../hooks/useListParams';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/format';
 import { StatusTabs } from '../buyer/BuyerRequestsPage';
 
 export default function OrdersPage() {
+    const t = useT();
     const { user } = useAuth();
     const isSupplier = user?.role === 'supplier';
     const [params, update] = useListParams();
@@ -21,21 +23,22 @@ export default function OrdersPage() {
 
     return (
         <>
-            <PageHeader
-                title="Purchase orders"
-                description={isSupplier ? 'Orders buyers have placed with you. Confirm and dispatch them here.' : 'Orders raised from accepted quotations.'}
-            />
+            <PageHeader title={t('nav.orders')} description={isSupplier ? t('orders.sellerDescription') : t('orders.buyerDescription')} />
             <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <StatusTabs kind="order" value={params.status} onChange={(status) => update({ status })} />
-                <SearchInput className="lg:w-64" label="Search orders" placeholder="Order number" value={params.search ?? ''} onChange={(search) => update({ search })} />
+                <SearchInput
+                    className="lg:w-64"
+                    label={t('orders.searchLabel')}
+                    placeholder={t('orders.searchPlaceholder')}
+                    value={params.search ?? ''}
+                    onChange={(search) => update({ search })}
+                />
             </div>
             <QueryBoundary query={orders}>
                 {({ data: rows, meta }) =>
                     rows.length === 0 ? (
-                        <EmptyState title={params.status || params.search ? 'No orders match' : 'No purchase orders yet'}>
-                            {isSupplier
-                                ? 'When a buyer accepts one of your quotations, the order appears here.'
-                                : 'Accept a quotation on one of your requests to raise a purchase order.'}
+                        <EmptyState title={params.status || params.search ? t('orders.noneMatch') : t('orders.noneYet')}>
+                            {isSupplier ? t('orders.noneYetSeller') : t('orders.noneYetBuyer')}
                         </EmptyState>
                     ) : (
                         <>
@@ -44,9 +47,7 @@ export default function OrdersPage() {
                                     <li key={order.id}>
                                         <Link to={`/orders/${order.id}`} className="grid gap-2 px-4 py-3.5 hover:bg-pal-50 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-6 sm:px-5">
                                             <span className="min-w-0">
-                                                <span className="block truncate font-semibold">
-                                                    {order.supplier_quotation?.buyer_request?.title ?? 'Purchase order'}
-                                                </span>
+                                                <span className="block truncate font-semibold">{order.supplier_quotation?.buyer_request?.title ?? t('orders.order')}</span>
                                                 <span className="flex flex-wrap gap-x-3 text-sm text-muted">
                                                     <DocNumber className="text-sm">{order.order_number}</DocNumber>
                                                     <span>{isSupplier ? order.buyer_profile?.business_name : order.supplier?.business_name}</span>

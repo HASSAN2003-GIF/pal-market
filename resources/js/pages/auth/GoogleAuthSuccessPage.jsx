@@ -2,12 +2,14 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spinner } from '../../components/ui';
 import { homePathFor, useAuth } from '../../context/AuthContext';
+import { translate, useT } from '../../i18n';
 
 /**
  * Exchanges the single-use code from the Google callback for an API token.
  * The code is removed from the address bar immediately.
  */
 export default function GoogleAuthSuccessPage() {
+    const t = useT();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { completeGoogleSignIn } = useAuth();
@@ -20,10 +22,10 @@ export default function GoogleAuthSuccessPage() {
         const code = searchParams.get('code');
         window.history.replaceState(null, '', '/auth/google/success');
 
-        const fail = (message) => navigate(`/login?error=${encodeURIComponent(message)}`, { replace: true });
+        const fail = (message) => navigate('/login', { replace: true, state: { error: message } });
 
         if (!code) {
-            fail('Google sign-in could not be completed. Please try again.');
+            fail(translate('auth.googleFailed'));
             return;
         }
 
@@ -34,7 +36,7 @@ export default function GoogleAuthSuccessPage() {
 
     return (
         <div role="status" className="flex min-h-[50vh] items-center justify-center gap-2 text-muted">
-            <Spinner /> Finishing Google sign-in
+            <Spinner /> {t('auth.googleFinishing')}
         </div>
     );
 }

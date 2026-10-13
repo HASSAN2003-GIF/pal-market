@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import SearchInput from '../../components/SearchInput';
 import { Button, PageHeader, Pagination, QueryBoundary, StatusBadge } from '../../components/ui';
 import { useListParams } from '../../hooks/useListParams';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/format';
 import { StatusTabs } from '../buyer/BuyerRequestsPage';
@@ -10,12 +11,13 @@ import AdminTable from './AdminTable';
 import { useAdminAction } from './useAdminAction';
 
 const ACTIONS = {
-    pending: { action: 'approve', label: 'Approve', body: 'They will be able to list products, record stock and send quotations.' },
-    approved: { action: 'suspend', label: 'Suspend', danger: true, body: 'They will keep read access but cannot change their catalog, quote, or move orders forward.' },
-    suspended: { action: 'reactivate', label: 'Reactivate', body: 'They can trade again immediately.' },
+    pending: { action: 'approve', label: 'admin.approve', body: 'admin.approveBody' },
+    approved: { action: 'suspend', label: 'admin.suspend', danger: true, body: 'admin.suspendSellerBody' },
+    suspended: { action: 'reactivate', label: 'admin.reactivate', body: 'admin.reactivateBody' },
 };
 
 export default function AdminSuppliersPage() {
+    const t = useT();
     const [params, update] = useListParams();
     const query = { status: params.status, search: params.search, page: params.page };
     const suppliers = useQuery({ queryKey: ['admin', 'suppliers', query], queryFn: () => api.admin.suppliers(query), placeholderData: keepPreviousData });
@@ -24,17 +26,17 @@ export default function AdminSuppliersPage() {
     const columns = [
         {
             key: 'business',
-            label: 'Business',
+            label: t('admin.colBusiness'),
             render: (s) => (
                 <span>
                     <span className="block font-semibold">{s.business_name}</span>
-                    <span className="block text-muted">TIN {s.tin_number || 'not provided'}</span>
+                    <span className="block text-muted">{s.tin_number ? t('admin.tinValue', { tin: s.tin_number }) : t('admin.tinMissing')}</span>
                 </span>
             ),
         },
         {
             key: 'contact',
-            label: 'Contact',
+            label: t('admin.colContact'),
             render: (s) => (
                 <span>
                     <span className="block">{s.user?.name}</span>
@@ -42,12 +44,16 @@ export default function AdminSuppliersPage() {
                 </span>
             ),
         },
-        { key: 'activity', label: 'Activity', render: (s) => `${s.supplier_products_count} products, ${s.quotations_count} quotes, ${s.purchase_orders_count} orders` },
-        { key: 'joined', label: 'Joined', render: (s) => formatDate(s.created_at) },
-        { key: 'status', label: 'Status', render: (s) => <StatusBadge kind="supplier" status={s.status} /> },
+        {
+            key: 'activity',
+            label: t('admin.colActivity'),
+            render: (s) => t('admin.sellerActivity', { products: s.supplier_products_count, offers: s.quotations_count, orders: s.purchase_orders_count }),
+        },
+        { key: 'joined', label: t('admin.colJoined'), render: (s) => formatDate(s.created_at) },
+        { key: 'status', label: t('common.status'), render: (s) => <StatusBadge kind="supplier" status={s.status} /> },
         {
             key: 'actions',
-            label: 'Action',
+            label: t('common.actions'),
             align: 'right',
             render: (s) => {
                 const next = ACTIONS[s.status];
@@ -57,15 +63,15 @@ export default function AdminSuppliersPage() {
                         variant={next.danger ? 'danger' : s.status === 'pending' ? 'primary' : 'secondary'}
                         onClick={() =>
                             action.ask({
-                                title: `${next.label} ${s.business_name}?`,
-                                body: <p>{next.body}</p>,
-                                label: next.label,
+                                title: t('admin.actionTitle', { action: t(next.label), name: s.business_name }),
+                                body: <p>{t(next.body)}</p>,
+                                label: t(next.label),
                                 danger: next.danger,
                                 run: () => api.admin.supplierAction(s.id, next.action),
                             })
                         }
                     >
-                        {next.label}
+                        {t(next.label)}
                     </Button>
                 );
             },
@@ -74,10 +80,16 @@ export default function AdminSuppliersPage() {
 
     return (
         <>
-            <PageHeader title="Suppliers" description="Review new suppliers before they can trade, and pause those who break the rules." />
+            <PageHeader title={t('nav.adminSellers')} description={t('admin.sellersDescription')} />
             <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <StatusTabs kind="supplier" value={params.status} onChange={(status) => update({ status })} />
-                <SearchInput className="lg:w-72" label="Search suppliers" placeholder="Business, TIN or email" value={params.search ?? ''} onChange={(search) => update({ search })} />
+                <SearchInput
+                    className="lg:w-72"
+                    label={t('admin.searchSellers')}
+                    placeholder={t('admin.searchSellersPlaceholder')}
+                    value={params.search ?? ''}
+                    onChange={(search) => update({ search })}
+                />
             </div>
             <QueryBoundary query={suppliers}>
                 {({ suppliers: rows, meta }) => (

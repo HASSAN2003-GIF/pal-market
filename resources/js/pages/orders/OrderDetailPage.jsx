@@ -3,9 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Button, ConfirmDialog, DocNumber, Money, Notice, PageHeader, Panel, QueryBoundary, StatusBadge, cx, useToast } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../i18n';
 import { api } from '../../lib/api';
 import { formatDate, formatNumber } from '../../lib/format';
-import { ORDER_ACTIONS, ORDER_STEPS, statusInfo } from '../../lib/statuses';
+import { ORDER_ACTIONS, ORDER_STEPS, orderActionLabel, statusLabel } from '../../lib/statuses';
+import { regionLabel } from '../../location/regions';
 
 export default function OrderDetailPage() {
     const { orderId } = useParams();
@@ -15,6 +17,7 @@ export default function OrderDetailPage() {
 }
 
 function OrderBody({ order }) {
+    const { t, locale } = useI18n();
     const { user } = useAuth();
     const toast = useToast();
     const queryClient = useQueryClient();
@@ -32,26 +35,27 @@ function OrderBody({ order }) {
             queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
             queryClient.invalidateQueries({ queryKey: ['summary'] });
             setConfirming(null);
-            toast(`Order ${statusInfo('order', updated.status).label.toLowerCase()}`);
+            toast(t('orders.updatedToast', { status: statusLabel('order', updated.status) }));
         },
     });
 
     const request = order.supplier_quotation?.buyer_request;
     const counterpart = side === 'supplier' ? order.buyer_profile?.business_name : order.supplier?.business_name;
+    const notGiven = t('buyer.notGiven');
 
     return (
         <>
             <PageHeader
-                back={{ to: '/orders', label: 'Purchase orders' }}
-                title={request?.title ?? 'Purchase order'}
+                back={{ to: '/orders', label: t('nav.orders') }}
+                title={request?.title ?? t('orders.order')}
                 actions={
                     <>
                         {canCancel && (
                             <Button variant="danger" onClick={() => setConfirming('cancel')}>
-                                Cancel order
+                                {t('orders.cancel')}
                             </Button>
                         )}
-                        {myTurn && <Button onClick={() => setConfirming(next.action)}>{next.label}</Button>}
+                        {myTurn && <Button onClick={() => setConfirming(next.action)}>{orderActionLabel(next.action)}</Button>}
                     </>
                 }
             />
@@ -59,27 +63,40 @@ function OrderBody({ order }) {
                 <DocNumber className="text-lg">{order.order_number}</DocNumber>
                 <StatusBadge kind="order" status={order.status} />
                 <span className="text-sm text-muted">
-                    {side === 'supplier' ? 'Buyer' : 'Supplier'}: <span className="font-semibold text-ink">{counterpart}</span>
+                    {side === 'supplier' ? t('nav.role.buyer') : t('nav.role.supplier')}: <span className="font-semibold text-ink">{counterpart}</span>
                 </span>
             </div>
 
             {next && !myTurn && order.status !== 'cancelled' && (
-                <Notice tone="info" className="mb-6" title={`Waiting for the ${next.actor} to ${next.label.toLowerCase()}`} />
+                <Notice
+                    tone="info"
+                    className="mb-6"
+                    title={next.actor === 'supplier' ? t('orders.waitingForSeller', { action: orderActionLabel(next.action) }) : t('orders.waitingForBuyer', { action: orderActionLabel(next.action) })}
+                />
             )}
+            {myTurn && <Notice tone="attention" className="mb-6" title={t('orders.yourTurn', { action: orderActionLabel(next.action) })} />}
             {transition.error && <Notice tone="bad" className="mb-6" title={transition.error.message} />}
 
             <Timeline status={order.status} />
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_20rem]">
-                <Panel title="Items" bodyClassName="p-0 sm:p-0">
+                <Panel title={t('orders.items')} bodyClassName="p-0 sm:p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[30rem] text-sm">
                             <thead className="bg-concrete text-left text-muted">
                                 <tr>
-                                    <th scope="col" className="px-4 py-2 font-semibold sm:px-5">Item</th>
-                                    <th scope="col" className="px-4 py-2 text-right font-semibold">Quantity</th>
-                                    <th scope="col" className="px-4 py-2 text-right font-semibold">Unit price</th>
-                                    <th scope="col" className="px-4 py-2 text-right font-semibold sm:px-5">Total</th>
+                                    <th scope="col" className="px-4 py-2 font-semibold sm:px-5">
+                                        {t('buyer.colItem')}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                        {t('buyer.colQuantity')}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                        {t('buyer.colUnitPrice')}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2 text-right font-semibold sm:px-5">
+                                        {t('buyer.colLineTotal')}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-rule">
@@ -89,24 +106,38 @@ function OrderBody({ order }) {
                                         <td className="tabular px-4 py-2.5 text-right">
                                             {formatNumber(item.quantity)} {item.unit}
                                         </td>
-                                        <td className="px-4 py-2.5 text-right"><Money amount={item.unit_price} currency={order.currency} /></td>
-                                        <td className="px-4 py-2.5 text-right font-semibold sm:px-5"><Money amount={item.total_price} currency={order.currency} /></td>
+                                        <td className="px-4 py-2.5 text-right">
+                                            <Money amount={item.unit_price} currency={order.currency} />
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right font-semibold sm:px-5">
+                                            <Money amount={item.total_price} currency={order.currency} />
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                             <tfoot className="border-t border-rule">
                                 <tr>
-                                    <th scope="row" colSpan={3} className="px-4 py-2 text-right font-normal text-muted">Subtotal</th>
-                                    <td className="px-4 py-2 text-right sm:px-5"><Money amount={order.subtotal} currency={order.currency} /></td>
+                                    <th scope="row" colSpan={3} className="px-4 py-2 text-right font-normal text-muted">
+                                        {t('orders.subtotal')}
+                                    </th>
+                                    <td className="px-4 py-2 text-right sm:px-5">
+                                        <Money amount={order.subtotal} currency={order.currency} />
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <th scope="row" colSpan={3} className="px-4 py-2 text-right font-normal text-muted">Delivery</th>
-                                    <td className="px-4 py-2 text-right sm:px-5"><Money amount={order.delivery_fee} currency={order.currency} /></td>
+                                    <th scope="row" colSpan={3} className="px-4 py-2 text-right font-normal text-muted">
+                                        {t('orders.delivery')}
+                                    </th>
+                                    <td className="px-4 py-2 text-right sm:px-5">
+                                        <Money amount={order.delivery_fee} currency={order.currency} />
+                                    </td>
                                 </tr>
                                 <tr className="border-t border-rule">
-                                    <th scope="row" colSpan={3} className="px-4 py-3 text-right font-semibold">Order total</th>
+                                    <th scope="row" colSpan={3} className="px-4 py-3 text-right font-semibold">
+                                        {t('orders.total')}
+                                    </th>
                                     <td className="px-4 py-3 text-right sm:px-5">
-                                        <Money amount={order.total_amount} currency={order.currency} className="font-display text-[1.4rem] font-semibold" />
+                                        <Money amount={order.total_amount} currency={order.currency} className="text-[1.3rem] font-extrabold" />
                                     </td>
                                 </tr>
                             </tfoot>
@@ -114,72 +145,73 @@ function OrderBody({ order }) {
                     </div>
                 </Panel>
 
-                <Panel title="Delivery">
+                <Panel title={t('orders.delivery')}>
                     <dl className="space-y-2.5 text-sm">
                         <div>
-                            <dt className="text-muted">Region</dt>
-                            <dd className="font-semibold">{request?.delivery_region || 'Not given'}</dd>
+                            <dt className="text-muted">{t('buyer.fieldRegion')}</dt>
+                            <dd className="font-semibold">{request?.delivery_region ? regionLabel(request.delivery_region, locale) : notGiven}</dd>
                         </div>
                         <div>
-                            <dt className="text-muted">Address</dt>
-                            <dd className="font-semibold">{request?.delivery_address || 'Not given'}</dd>
+                            <dt className="text-muted">{t('buyer.fieldAddress')}</dt>
+                            <dd className="font-semibold">{request?.delivery_address || notGiven}</dd>
                         </div>
                         <div>
-                            <dt className="text-muted">Needed by</dt>
-                            <dd className="font-semibold">{request?.needed_by ? formatDate(request.needed_by) : 'Not given'}</dd>
+                            <dt className="text-muted">{t('buyer.fieldNeededBy')}</dt>
+                            <dd className="font-semibold">{request?.needed_by ? formatDate(request.needed_by) : notGiven}</dd>
                         </div>
                         <div>
-                            <dt className="text-muted">From request</dt>
-                            <dd><DocNumber className="text-sm">{request?.request_number}</DocNumber></dd>
+                            <dt className="text-muted">{t('orders.fromRequest')}</dt>
+                            <dd>
+                                <DocNumber className="text-sm">{request?.request_number}</DocNumber>
+                            </dd>
                         </div>
                         <div>
-                            <dt className="text-muted">Quotation</dt>
-                            <dd><DocNumber className="text-sm">{order.supplier_quotation?.quotation_number}</DocNumber></dd>
+                            <dt className="text-muted">{t('orders.offerNumber')}</dt>
+                            <dd>
+                                <DocNumber className="text-sm">{order.supplier_quotation?.quotation_number}</DocNumber>
+                            </dd>
                         </div>
                     </dl>
-                    {order.notes && <p className="mt-4 border-t border-rule pt-3 text-sm text-ink-soft">Supplier terms: {order.notes}</p>}
-                    <p className="mt-4 border-t border-rule pt-3 text-xs text-muted">
-                        Payment is arranged directly between buyer and supplier. PAL Market does not process payments.
-                    </p>
+                    {order.notes && (
+                        <p className="mt-4 border-t border-rule pt-3 text-sm text-ink-soft">
+                            {t('orders.sellerTerms')} {order.notes}
+                        </p>
+                    )}
+                    <p className="mt-4 border-t border-rule pt-3 text-xs text-muted">{t('orders.paymentNote')}</p>
                 </Panel>
             </div>
 
             <ConfirmDialog
                 open={Boolean(confirming)}
-                title={confirming === 'cancel' ? 'Cancel this order?' : `${ORDER_ACTIONS[order.status]?.label ?? ''}?`}
-                confirmLabel={confirming === 'cancel' ? 'Cancel order' : ORDER_ACTIONS[order.status]?.label}
+                title={confirming === 'cancel' ? t('orders.cancelDialogTitle') : t('orders.confirmStepTitle', { action: next ? orderActionLabel(next.action) : '' })}
+                confirmLabel={confirming === 'cancel' ? t('orders.cancel') : next ? orderActionLabel(next.action) : ''}
                 confirmVariant={confirming === 'cancel' ? 'danger' : 'primary'}
                 busy={transition.isPending}
                 error={transition.error?.message}
                 onCancel={() => setConfirming(null)}
                 onConfirm={() => transition.mutate(confirming)}
             >
-                <p>
-                    {confirming === 'cancel'
-                        ? `${counterpart} will see the order as cancelled. This cannot be undone.`
-                        : `${counterpart} will see this update on the order.`}
-                </p>
+                <p>{confirming === 'cancel' ? t('orders.cancelDialogBody', { name: counterpart ?? '' }) : t('orders.confirmStepBody', { name: counterpart ?? '' })}</p>
             </ConfirmDialog>
         </>
     );
 }
 
 function Timeline({ status }) {
+    const t = useI18n().t;
     if (status === 'cancelled') {
-        return <Notice tone="bad" title="This order was cancelled" />;
+        return <Notice tone="bad" title={t('orders.wasCancelled')} />;
     }
     const current = ORDER_STEPS.indexOf(status);
 
     return (
-        <ol className="grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label="Order progress">
+        <ol className="grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label={t('orders.progress')}>
             {ORDER_STEPS.map((step, index) => {
                 const done = index <= current;
                 return (
                     <li key={step} aria-current={index === current ? 'step' : undefined}>
-                        <span className={cx('block h-1.5 rounded-full', done ? 'bg-pal-600' : 'bg-concrete-deep')} />
-                        <span className={cx('mt-1.5 block text-xs sm:text-sm', index === current ? 'font-semibold text-ink' : 'text-muted')}>
-                            {statusInfo('order', step).label}
-                        </span>
+                        <span className={cx('block h-1.5 rounded-full', done ? 'bg-action' : 'bg-concrete-deep')} />
+                        <span className={cx('mt-1.5 block text-xs sm:text-sm', index === current ? 'font-semibold text-ink' : 'text-muted')}>{statusLabel('order', step)}</span>
                     </li>
                 );
             })}

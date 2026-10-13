@@ -2,22 +2,23 @@ import { createContext, useCallback, useContext, useEffect, useId, useRef, useSt
 import { Link } from 'react-router-dom';
 import { statusInfo } from '../lib/statuses';
 import { formatMoney } from '../lib/format';
+import { useT } from '../i18n';
 
 const cx = (...classes) => classes.filter(Boolean).join(' ');
 
 /* ------------------------------------------------------------------ Buttons */
 
 const BUTTON_VARIANTS = {
-    primary: 'bg-pal-600 text-white hover:bg-pal-700 active:bg-pal-800 border border-pal-600',
+    primary: 'bg-action text-on-action hover:bg-action-hover border border-action hover:border-action-hover',
     secondary: 'bg-paper text-ink border border-rule hover:border-ink-soft',
     ghost: 'bg-transparent text-pal-700 border border-transparent hover:bg-pal-50',
     danger: 'bg-paper text-danger border border-danger/40 hover:bg-danger-soft',
-    dark: 'bg-ink text-white border border-ink hover:bg-ink-soft',
+    dark: 'bg-inverse text-on-inverse border border-inverse hover:opacity-90',
 };
 
 const BUTTON_SIZES = {
-    sm: 'h-8 px-3 text-sm',
-    md: 'h-10 px-4 text-[0.95rem]',
+    sm: 'h-9 px-3 text-sm',
+    md: 'h-11 px-4 text-[0.95rem]',
     lg: 'h-12 px-5 text-base',
 };
 
@@ -68,13 +69,14 @@ export function Spinner({ className = 'h-4 w-4' }) {
  */
 export function Field({ label, hint, error, optional, className, children }) {
     const id = useId();
+    const t = useT();
     const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined;
 
     return (
         <div className={cx('space-y-1.5', className)}>
             <label htmlFor={id} className="block text-sm font-semibold text-ink">
                 {label}
-                {optional && <span className="ml-1.5 font-normal text-muted">optional</span>}
+                {optional && <span className="ml-1.5 font-normal text-muted">{t('common.optional')}</span>}
             </label>
             {children({ id, 'aria-describedby': describedBy, 'aria-invalid': error ? 'true' : undefined })}
             {hint && !error && (
@@ -131,6 +133,7 @@ const TONES = {
 };
 
 export function StatusBadge({ kind, status, className }) {
+    useT(); // re-render on language change
     const info = statusInfo(kind, status);
     return (
         <span
@@ -193,7 +196,7 @@ export function Stat({ label, value, to, attention }) {
     const body = (
         <>
             <span className="block text-sm text-muted">{label}</span>
-            <span className={cx('mt-1 block font-display text-[2.2rem] leading-none font-semibold tabular', attention && 'text-warn')}>
+            <span className={cx('mt-1 block text-[2rem] leading-none font-extrabold tabular', attention && 'text-warn')}>
                 {value}
             </span>
         </>
@@ -224,23 +227,25 @@ export function EmptyState({ title, children, action }) {
     );
 }
 
-export function ErrorState({ error, onRetry, title = 'This could not be loaded' }) {
+export function ErrorState({ error, onRetry, title }) {
+    const t = useT();
     return (
         <div role="alert" className="rounded-[var(--radius-panel)] border border-danger/30 bg-danger-soft px-5 py-5">
-            <p className="font-semibold text-danger">{title}</p>
-            <p className="mt-1 text-sm text-ink-soft">{error?.message ?? 'Please try again.'}</p>
+            <p className="font-semibold text-danger">{title ?? t('common.loadFailed')}</p>
+            <p className="mt-1 text-sm text-ink-soft">{error?.message ?? t('common.pleaseTryAgain')}</p>
             {onRetry && (
                 <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
-                    Try again
+                    {t('common.tryAgain')}
                 </Button>
             )}
         </div>
     );
 }
 
-export function LoadingRows({ rows = 4, label = 'Loading' }) {
+export function LoadingRows({ rows = 4, label }) {
+    const t = useT();
     return (
-        <div role="status" aria-label={label} className="space-y-2">
+        <div role="status" aria-label={label ?? t('common.loading')} className="space-y-2">
             {Array.from({ length: rows }).map((_, i) => (
                 <div key={i} className="h-14 animate-pulse rounded-[var(--radius-control)] bg-concrete-deep/70" />
             ))}
@@ -276,18 +281,17 @@ export function Notice({ tone = 'info', title, children, action, className }) {
 }
 
 export function Pagination({ meta, onPage }) {
+    const t = useT();
     if (!meta || meta.last_page <= 1) return null;
     return (
-        <nav aria-label="Pagination" className="mt-4 flex items-center justify-between gap-3 text-sm">
-            <span className="text-muted">
-                Page {meta.current_page} of {meta.last_page} ({meta.total} in total)
-            </span>
+        <nav aria-label={t('common.pagination')} className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span className="text-muted">{t('common.pageOf', { page: meta.current_page, pages: meta.last_page, total: meta.total })}</span>
             <div className="flex gap-2">
                 <Button variant="secondary" size="sm" disabled={meta.current_page <= 1} onClick={() => onPage(meta.current_page - 1)}>
-                    Previous
+                    {t('common.previous')}
                 </Button>
                 <Button variant="secondary" size="sm" disabled={meta.current_page >= meta.last_page} onClick={() => onPage(meta.current_page + 1)}>
-                    Next
+                    {t('common.next')}
                 </Button>
             </div>
         </nav>
@@ -310,6 +314,8 @@ export function FormError({ error }) {
  */
 export function ConfirmDialog({ open, title, children, confirmLabel, confirmVariant = 'primary', onConfirm, onCancel, busy, error }) {
     const ref = useRef(null);
+    const titleId = useId();
+    const t = useT();
 
     useEffect(() => {
         const dialog = ref.current;
@@ -325,11 +331,11 @@ export function ConfirmDialog({ open, title, children, confirmLabel, confirmVari
                 event.preventDefault();
                 if (!busy) onCancel();
             }}
-            className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-[var(--radius-panel)] border border-rule bg-paper p-0 text-ink shadow-2xl backdrop:bg-ink/50"
-            aria-labelledby="confirm-title"
+            className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-[var(--radius-panel)] border border-rule bg-paper p-0 text-ink shadow-2xl backdrop:bg-black/60"
+            aria-labelledby={titleId}
         >
             <div className="p-5 sm:p-6">
-                <h2 id="confirm-title" className="text-[1.6rem]">
+                <h2 id={titleId} className="text-[1.6rem]">
                     {title}
                 </h2>
                 <div className="mt-2 text-ink-soft">{children}</div>
@@ -340,7 +346,7 @@ export function ConfirmDialog({ open, title, children, confirmLabel, confirmVari
                 )}
                 <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                     <Button variant="secondary" onClick={onCancel} disabled={busy}>
-                        Go back
+                        {t('common.goBack')}
                     </Button>
                     <Button variant={confirmVariant} onClick={onConfirm} loading={busy}>
                         {confirmLabel}
@@ -373,7 +379,7 @@ export function ToastProvider({ children }) {
                         key={toast.id}
                         className={cx(
                             'pointer-events-auto rounded-[var(--radius-control)] px-4 py-2.5 text-sm font-semibold shadow-lg',
-                            toast.tone === 'bad' ? 'bg-danger text-white' : 'bg-ink text-white',
+                            toast.tone === 'bad' ? 'bg-danger-solid text-white' : 'bg-inverse text-on-inverse',
                         )}
                     >
                         {toast.message}

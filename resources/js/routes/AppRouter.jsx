@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { LoadingRows } from '../components/ui';
@@ -9,6 +9,8 @@ import HomePage from '../pages/HomePage';
 import MaterialsPage from '../pages/MaterialsPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import HelpPage from '../pages/HelpPage';
+import { useT } from '../i18n';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
@@ -47,9 +49,18 @@ function WorkspaceHome() {
     return <Navigate to={homePathFor(user)} replace />;
 }
 
+function DocumentTitle() {
+    const t = useT();
+    useEffect(() => {
+        document.title = t('layout.documentTitle');
+    }, [t]);
+    return null;
+}
+
 export default function AppRouter() {
     return (
         <BrowserRouter>
+            <DocumentTitle />
             <Suspense fallback={<div className="p-6"><LoadingRows rows={3} /></div>}>
                 <Routes>
                     <Route element={<PublicLayout />}>
@@ -61,6 +72,7 @@ export default function AppRouter() {
                         <Route path="forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="reset-password" element={<ResetPasswordPage />} />
                         <Route path="auth/google/success" element={<GoogleAuthSuccessPage />} />
+                        <Route path="help" element={<HelpPage />} />
                         {/* Old URLs kept working */}
                         <Route path="marketplace" element={<Navigate to="/materials" replace />} />
                         <Route path="products/:productId" element={<LegacyProductRedirect />} />

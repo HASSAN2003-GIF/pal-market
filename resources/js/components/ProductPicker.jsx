@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useT } from '../i18n';
 import { api } from '../lib/api';
 import { useDebounced } from '../hooks/useDebounced';
 import { cx } from './ui';
@@ -8,7 +9,8 @@ import { cx } from './ui';
  * Search the catalog and pick a product. Keyboard: arrows move, Enter picks,
  * Escape closes. Products in `excludeIds` are shown as already added.
  */
-export default function ProductPicker({ onPick, excludeIds = [], label = 'Add a product', placeholder = 'Search the catalog' }) {
+export default function ProductPicker({ onPick, excludeIds = [], label, placeholder }) {
+    const t = useT();
     const id = useId();
     const [text, setText] = useState('');
     const [open, setOpen] = useState(false);
@@ -48,7 +50,7 @@ export default function ProductPicker({ onPick, excludeIds = [], label = 'Add a 
     return (
         <div className="relative">
             <label htmlFor={id} className="mb-1.5 block text-sm font-semibold">
-                {label}
+                {label ?? t('buyer.pickerLabel')}
             </label>
             <input
                 id={id}
@@ -60,7 +62,7 @@ export default function ProductPicker({ onPick, excludeIds = [], label = 'Add a 
                 aria-autocomplete="list"
                 autoComplete="off"
                 className="field-input"
-                placeholder={placeholder}
+                placeholder={placeholder ?? t('buyer.pickerPlaceholder')}
                 value={text}
                 onChange={(e) => {
                     setText(e.target.value);
@@ -77,10 +79,8 @@ export default function ProductPicker({ onPick, excludeIds = [], label = 'Add a 
                     role="listbox"
                     className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-[var(--radius-control)] border border-rule bg-paper shadow-lg"
                 >
-                    {results.isPending && <li className="px-3 py-2.5 text-sm text-muted">Searching</li>}
-                    {!results.isPending && products.length === 0 && (
-                        <li className="px-3 py-2.5 text-sm text-muted">No products match. Try another word.</li>
-                    )}
+                    {results.isPending && <li className="px-3 py-2.5 text-sm text-muted">{t('buyer.pickerSearching')}</li>}
+                    {!results.isPending && products.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">{t('buyer.pickerNone')}</li>}
                     {products.map((product, index) => {
                         const added = excludeIds.includes(product.id);
                         return (
@@ -94,7 +94,7 @@ export default function ProductPicker({ onPick, excludeIds = [], label = 'Add a 
                                 onClick={() => pick(product)}
                                 onMouseEnter={() => setActive(index)}
                                 className={cx(
-                                    'flex cursor-pointer items-center justify-between gap-3 px-3 py-2',
+                                    'flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5',
                                     index === active && 'bg-pal-50',
                                     added && 'cursor-default opacity-55',
                                 )}
@@ -102,10 +102,10 @@ export default function ProductPicker({ onPick, excludeIds = [], label = 'Add a 
                                 <span>
                                     <span className="block font-semibold">{product.name}</span>
                                     <span className="block text-xs text-muted">
-                                        {product.category?.name}, per {product.unit}
+                                        {product.category?.name} · {t('common.perUnit', { unit: product.unit })}
                                     </span>
                                 </span>
-                                {added && <span className="text-xs font-semibold text-muted">Added</span>}
+                                {added && <span className="text-xs font-semibold text-muted">{t('buyer.pickerAdded')}</span>}
                             </li>
                         );
                     })}

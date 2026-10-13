@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, ConfirmDialog, DocNumber, EmptyState, Money, StatusBadge, cx, useToast } from '../../components/ui';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
-import { formatDate, formatNumber } from '../../lib/format';
+import { formatDate, formatMoney, formatNumber } from '../../lib/format';
 
 /**
- * Quotations side by side. A quote that prices every requested line is
- * "complete"; the lowest complete total is marked as the lowest bid.
+ * Price offers side by side. An offer that prices every requested item is
+ * "complete"; the lowest complete total is marked.
  */
 export default function QuoteComparison({ request }) {
+    const t = useT();
     const quotes = request.quotations ?? [];
     const requested = request.items ?? [];
     const [decision, setDecision] = useState(null); // { quote, kind: 'accept' | 'reject' }
@@ -30,26 +32,25 @@ export default function QuoteComparison({ request }) {
             queryClient.invalidateQueries({ queryKey: ['summary'] });
             setDecision(null);
             if (kind === 'accept' && data.purchase_order) {
-                toast(`Purchase order ${data.purchase_order.order_number} created`);
+                toast(t('buyer.orderCreatedToast', { number: data.purchase_order.order_number }));
                 navigate(`/orders/${data.purchase_order.id}`);
             } else {
-                toast('Quotation declined');
+                toast(t('buyer.declinedToast'));
             }
         },
     });
 
     if (quotes.length === 0) {
         return (
-            <EmptyState title={request.status === 'open' ? 'No quotations yet' : 'No quotations were received'}>
-                {request.status === 'open'
-                    ? `Suppliers can quote until ${formatDate(request.expires_at)}. New quotations appear here.`
-                    : 'This request closed without quotations.'}
+            <EmptyState title={request.status === 'open' ? t('buyer.noOffersYet') : t('buyer.noOffersReceived')}>
+                {request.status === 'open' ? t('buyer.noOffersYetBody', { date: formatDate(request.expires_at) }) : t('buyer.noOffersReceivedBody')}
             </EmptyState>
         );
     }
 
     return (
         <>
+            {live.length > 1 && <p className="mb-3 text-sm text-muted">{t('buyer.compareTip')}</p>}
             <ul className="space-y-3">
                 {quotes.map((quote) => {
                     const lowest = quote.id === lowestId;
@@ -65,31 +66,37 @@ export default function QuoteComparison({ request }) {
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 sm:px-5">
                                 <div className="min-w-0">
-                                    <p className="font-display text-[1.45rem] leading-tight font-semibold">{quote.supplier?.business_name}</p>
+                                    <p className="text-[1.25rem] leading-tight font-extrabold">{quote.supplier?.business_name}</p>
                                     <p className="flex flex-wrap gap-x-3 text-sm text-muted">
                                         <DocNumber className="text-sm">{quote.quotation_number}</DocNumber>
-                                        {quote.valid_until && <span>Valid until {formatDate(quote.valid_until)}</span>}
-                                        {!isComplete(quote) && <span className="font-semibold text-warn">Prices some items only</span>}
+                                        {quote.valid_until && <span>{t('buyer.validUntil', { date: formatDate(quote.valid_until) })}</span>}
+                                        {!isComplete(quote) && <span className="font-semibold text-warn">{t('buyer.someItemsOnly')}</span>}
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <Money amount={quote.total_amount} currency={quote.currency} className="font-display text-[1.8rem] leading-none font-semibold" />
-                                    <p className="mt-1 text-sm text-muted">
-                                        incl. delivery <Money amount={quote.delivery_fee} currency={quote.currency} />
-                                    </p>
-                                    {lowest && <p className="mt-1 text-sm font-semibold text-warn">Lowest complete quote</p>}
+                                    <Money amount={quote.total_amount} currency={quote.currency} className="text-[1.6rem] leading-none font-extrabold" />
+                                    <p className="mt-1 text-sm text-muted">{t('buyer.inclDelivery', { amount: formatMoney(quote.delivery_fee, quote.currency) })}</p>
+                                    {lowest && <p className="mt-1 text-sm font-semibold text-warn">{t('buyer.lowestComplete')}</p>}
                                 </div>
                             </div>
 
                             <div className="overflow-x-auto border-t border-rule">
                                 <table className="w-full min-w-[30rem] text-sm">
-                                    <caption className="sr-only">Line prices from {quote.supplier?.business_name}</caption>
+                                    <caption className="sr-only">{t('buyer.pricesFrom', { name: quote.supplier?.business_name })}</caption>
                                     <thead className="bg-concrete text-left text-muted">
                                         <tr>
-                                            <th scope="col" className="px-4 py-2 font-semibold sm:px-5">Item</th>
-                                            <th scope="col" className="px-4 py-2 text-right font-semibold">Quantity</th>
-                                            <th scope="col" className="px-4 py-2 text-right font-semibold">Unit price</th>
-                                            <th scope="col" className="px-4 py-2 text-right font-semibold sm:px-5">Line total</th>
+                                            <th scope="col" className="px-4 py-2 font-semibold sm:px-5">
+                                                {t('buyer.colItem')}
+                                            </th>
+                                            <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                                {t('buyer.colQuantity')}
+                                            </th>
+                                            <th scope="col" className="px-4 py-2 text-right font-semibold">
+                                                {t('buyer.colUnitPrice')}
+                                            </th>
+                                            <th scope="col" className="px-4 py-2 text-right font-semibold sm:px-5">
+                                                {t('buyer.colLineTotal')}
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-rule">
@@ -102,13 +109,21 @@ export default function QuoteComparison({ request }) {
                                                         <>
                                                             <td className="tabular px-4 py-2 text-right">
                                                                 {formatNumber(line.quantity)} {line.unit}
-                                                                {line.quantity !== item.quantity && <span className="block text-xs text-warn">You asked for {formatNumber(item.quantity)}</span>}
+                                                                {line.quantity !== item.quantity && (
+                                                                    <span className="block text-xs text-warn">{t('buyer.youAskedFor', { n: formatNumber(item.quantity) })}</span>
+                                                                )}
                                                             </td>
-                                                            <td className="px-4 py-2 text-right"><Money amount={line.unit_price} /></td>
-                                                            <td className="px-4 py-2 text-right font-semibold sm:px-5"><Money amount={line.total_price} /></td>
+                                                            <td className="px-4 py-2 text-right">
+                                                                <Money amount={line.unit_price} />
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right font-semibold sm:px-5">
+                                                                <Money amount={line.total_price} />
+                                                            </td>
                                                         </>
                                                     ) : (
-                                                        <td colSpan={3} className="px-4 py-2 text-right text-muted sm:px-5">Not quoted</td>
+                                                        <td colSpan={3} className="px-4 py-2 text-right text-muted sm:px-5">
+                                                            {t('buyer.notPriced')}
+                                                        </td>
                                                     )}
                                                 </tr>
                                             );
@@ -124,16 +139,16 @@ export default function QuoteComparison({ request }) {
                                 {canDecide && (
                                     <div className="flex gap-2">
                                         <Button size="sm" variant="secondary" onClick={() => setDecision({ quote, kind: 'reject' })}>
-                                            Decline
+                                            {t('buyer.decline')}
                                         </Button>
                                         <Button size="sm" onClick={() => setDecision({ quote, kind: 'accept' })}>
-                                            Accept and order
+                                            {t('buyer.accept')}
                                         </Button>
                                     </div>
                                 )}
                                 {quote.purchase_order && (
                                     <Link to={`/orders/${quote.purchase_order.id}`} className="text-sm font-semibold text-pal-700 hover:underline">
-                                        View order {quote.purchase_order.order_number}
+                                        {t('buyer.viewOrder', { number: quote.purchase_order.order_number })}
                                     </Link>
                                 )}
                             </div>
@@ -144,8 +159,8 @@ export default function QuoteComparison({ request }) {
 
             <ConfirmDialog
                 open={decision?.kind === 'accept'}
-                title="Accept this quotation?"
-                confirmLabel="Accept and create order"
+                title={t('buyer.acceptDialogTitle')}
+                confirmLabel={t('buyer.acceptDialogConfirm')}
                 busy={decide.isPending}
                 error={decide.error?.message}
                 onCancel={() => {
@@ -155,15 +170,17 @@ export default function QuoteComparison({ request }) {
                 onConfirm={() => decide.mutate(decision)}
             >
                 <p>
-                    You will raise a purchase order for <Money amount={decision?.quote.total_amount} className="font-semibold" /> with{' '}
-                    {decision?.quote.supplier?.business_name}. The request closes and other quotations are declined.
+                    {t('buyer.acceptDialogBody', {
+                        amount: formatMoney(decision?.quote.total_amount, decision?.quote.currency),
+                        name: decision?.quote.supplier?.business_name ?? '',
+                    })}
                 </p>
             </ConfirmDialog>
 
             <ConfirmDialog
                 open={decision?.kind === 'reject'}
-                title="Decline this quotation?"
-                confirmLabel="Decline quotation"
+                title={t('buyer.declineDialogTitle')}
+                confirmLabel={t('buyer.declineDialogConfirm')}
                 confirmVariant="danger"
                 busy={decide.isPending}
                 error={decide.error?.message}
@@ -173,7 +190,7 @@ export default function QuoteComparison({ request }) {
                 }}
                 onConfirm={() => decide.mutate(decision)}
             >
-                <p>{decision?.quote.supplier?.business_name} will see that you declined. This cannot be undone.</p>
+                <p>{t('buyer.declineDialogBody', { name: decision?.quote.supplier?.business_name ?? '' })}</p>
             </ConfirmDialog>
         </>
     );

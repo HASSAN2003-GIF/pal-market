@@ -1,25 +1,81 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Button, FormError, PageHeader, Panel, StatusBadge, TextAreaField, TextField, useToast } from '../components/ui';
+import { AreaButton, LanguageSwitch } from '../components/PreferenceControls';
+import { Button, FormError, PageHeader, Panel, StatusBadge, TextAreaField, TextField, cx, useToast } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useT } from '../i18n';
 import { api } from '../lib/api';
+import { THEMES, useTheme } from '../theme/ThemeContext';
 
 export default function AccountPage() {
+    const t = useT();
     const { user } = useAuth();
 
     return (
         <>
-            <PageHeader title="Account settings" description={user.email} />
+            <PageHeader title={t('account.title')} description={user.email} />
             <div className="grid gap-6 lg:grid-cols-2">
                 <ProfileForm />
-                <PasswordForm />
+                <div className="space-y-6">
+                    <PreferencesPanel />
+                    <PasswordForm />
+                </div>
             </div>
         </>
     );
 }
 
+function PreferencesPanel() {
+    const t = useT();
+    const { choice, setChoice } = useTheme();
+    const themeLabel = { light: 'layout.themeLight', dark: 'layout.themeDark', system: 'layout.themeSystem' };
+
+    return (
+        <Panel title={t('account.preferences')}>
+            <dl className="space-y-5">
+                <div>
+                    <dt className="mb-1.5 text-sm font-semibold">{t('layout.language')}</dt>
+                    <dd>
+                        <LanguageSwitch />
+                        <p className="mt-1.5 text-sm text-muted">{t('account.languageHint')}</p>
+                    </dd>
+                </div>
+                <div>
+                    <dt className="mb-1.5 text-sm font-semibold">{t('layout.theme')}</dt>
+                    <dd role="radiogroup" aria-label={t('layout.theme')} className="flex flex-wrap gap-2">
+                        {THEMES.map((value) => (
+                            <button
+                                key={value}
+                                type="button"
+                                role="radio"
+                                aria-checked={choice === value}
+                                onClick={() => setChoice(value)}
+                                className={cx(
+                                    'rounded-[var(--radius-control)] border px-3 py-2 text-sm font-semibold',
+                                    choice === value ? 'border-pal-600 bg-pal-50 text-pal-700' : 'border-rule hover:border-ink-soft',
+                                )}
+                            >
+                                {t(themeLabel[value])}
+                            </button>
+                        ))}
+                    </dd>
+                    <p className="mt-1.5 text-sm text-muted">{t('account.themeHint')}</p>
+                </div>
+                <div>
+                    <dt className="mb-1.5 text-sm font-semibold">{t('location.yourArea')}</dt>
+                    <dd>
+                        <AreaButton className="border border-rule" />
+                        <p className="mt-1.5 text-sm text-muted">{t('account.areaHint')}</p>
+                    </dd>
+                </div>
+            </dl>
+        </Panel>
+    );
+}
+
 function ProfileForm() {
+    const t = useT();
     const { user, setUser } = useAuth();
     const toast = useToast();
     const business = user.supplier ?? user.buyer_profile;
@@ -44,14 +100,14 @@ function ProfileForm() {
         },
         onSuccess: ({ user: updated }) => {
             setUser(updated);
-            toast('Profile saved');
+            toast(t('account.profileSaved'));
         },
     });
     const errors = save.error?.fieldErrors ?? {};
     const tinLocked = user.supplier?.status === 'approved';
 
     return (
-        <Panel title="Profile" status={user.supplier && <StatusBadge kind="supplier" status={user.supplier.status} />}>
+        <Panel title={t('account.profile')} status={user.supplier && <StatusBadge kind="supplier" status={user.supplier.status} />}>
             <form
                 className="space-y-4"
                 onSubmit={(e) => {
@@ -60,28 +116,42 @@ function ProfileForm() {
                 }}
             >
                 <FormError error={save.error && !Object.keys(errors).length ? save.error.message : null} />
-                <TextField label="Your name" required value={form.name} onChange={set('name')} error={errors.name} />
-                <TextField label="Phone number" optional type="tel" value={form.phone} onChange={set('phone')} error={errors.phone} hint="You can sign in with this number." />
+                <TextField label={t('account.yourName')} required value={form.name} onChange={set('name')} error={errors.name} />
+                <TextField
+                    label={t('auth.phone')}
+                    optional
+                    type="tel"
+                    value={form.phone}
+                    onChange={set('phone')}
+                    error={errors.phone}
+                    hint={t('auth.phoneHint')}
+                />
                 {business && (
                     <>
-                        <TextField label="Business name" required value={form.business_name} onChange={set('business_name')} error={errors.business_name} />
+                        <TextField label={t('auth.businessName')} required value={form.business_name} onChange={set('business_name')} error={errors.business_name} />
                         {user.buyer_profile && (
-                            <TextField label="Type of business" optional placeholder="Contractor, developer, homeowner" value={form.business_type} onChange={set('business_type')} />
+                            <TextField
+                                label={t('account.businessType')}
+                                optional
+                                placeholder={t('account.businessTypePlaceholder')}
+                                value={form.business_type}
+                                onChange={set('business_type')}
+                            />
                         )}
                         <TextField
-                            label="TIN"
+                            label={t('auth.tin')}
                             optional
                             value={form.tin_number}
                             onChange={set('tin_number')}
                             error={errors.tin_number}
                             disabled={tinLocked}
-                            hint={tinLocked ? 'Verified during approval. Contact support to change it.' : undefined}
+                            hint={tinLocked ? t('account.tinLocked') : undefined}
                         />
-                        <TextAreaField label="About the business" optional value={form.description} onChange={set('description')} />
+                        <TextAreaField label={t('account.aboutBusiness')} optional value={form.description} onChange={set('description')} />
                     </>
                 )}
                 <Button type="submit" loading={save.isPending}>
-                    Save profile
+                    {t('account.saveProfile')}
                 </Button>
             </form>
         </Panel>
@@ -89,6 +159,7 @@ function ProfileForm() {
 }
 
 function PasswordForm() {
+    const t = useT();
     const { user } = useAuth();
     const toast = useToast();
     const [form, setForm] = useState({ current_password: '', password: '', password_confirmation: '' });
@@ -102,14 +173,13 @@ function PasswordForm() {
     const errors = save.error?.fieldErrors ?? {};
 
     return (
-        <Panel title="Password">
+        <Panel title={t('auth.password')}>
             {user.google_linked && (
                 <p className="mb-4 text-sm text-muted">
-                    You sign in with Google. If you have never set a password,{' '}
+                    {t('account.googleNoPassword')}{' '}
                     <Link to="/forgot-password" className="font-semibold text-pal-700 hover:underline">
-                        create one by email
+                        {t('account.createPasswordByEmail')}
                     </Link>
-                    .
                 </p>
             )}
             <form
@@ -121,7 +191,7 @@ function PasswordForm() {
             >
                 <FormError error={save.error && !Object.keys(errors).length ? save.error.message : null} />
                 <TextField
-                    label="Current password"
+                    label={t('account.currentPassword')}
                     type="password"
                     autoComplete="current-password"
                     required
@@ -130,17 +200,17 @@ function PasswordForm() {
                     error={errors.current_password}
                 />
                 <TextField
-                    label="New password"
+                    label={t('auth.newPassword')}
                     type="password"
                     autoComplete="new-password"
                     required
-                    hint="At least 8 characters, with letters and numbers."
+                    hint={t('auth.passwordHint')}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     error={errors.password}
                 />
                 <TextField
-                    label="Confirm new password"
+                    label={t('auth.confirmNewPassword')}
                     type="password"
                     autoComplete="new-password"
                     required
@@ -148,9 +218,9 @@ function PasswordForm() {
                     onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
                 />
                 <Button type="submit" loading={save.isPending}>
-                    Change password
+                    {t('account.changePassword')}
                 </Button>
-                <p className="text-sm text-muted">Changing your password signs out your other devices.</p>
+                <p className="text-sm text-muted">{t('account.changePasswordNote')}</p>
             </form>
         </Panel>
     );

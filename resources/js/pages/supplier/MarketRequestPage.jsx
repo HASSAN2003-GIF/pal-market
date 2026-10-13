@@ -18,8 +18,10 @@ import {
     useToast,
 } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../i18n';
 import { api } from '../../lib/api';
-import { formatDate, formatNumber, relativeTime } from '../../lib/format';
+import { formatDate, formatMoney, formatNumber, relativeTime } from '../../lib/format';
+import { regionLabel } from '../../location/regions';
 
 export default function MarketRequestPage() {
     const { requestId } = useParams();
@@ -29,23 +31,23 @@ export default function MarketRequestPage() {
 }
 
 function Body({ data }) {
+    const { t, locale } = useI18n();
     const { user } = useAuth();
     const request = data.buyer_request;
+    const notGiven = t('buyer.notGiven');
 
     return (
         <>
-            <PageHeader back={{ to: '/supplier/market', label: 'Open requests' }} title={request.title} />
+            <PageHeader back={{ to: '/supplier/market', label: t('nav.market') }} title={request.title} />
             <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
                 <DocNumber className="text-lg">{request.request_number}</DocNumber>
                 <span>
-                    Buyer: <span className="font-semibold text-ink">{request.buyer.business_name}</span>
+                    {t('nav.role.buyer')}: <span className="font-semibold text-ink">{request.buyer.business_name}</span>
                 </span>
                 {request.is_open_for_quotes ? (
-                    <span>
-                        Closes {formatDate(request.expires_at)} ({relativeTime(request.expires_at)})
-                    </span>
+                    <span>{t('supplier.closesOnRelative', { date: formatDate(request.expires_at), relative: relativeTime(request.expires_at) })}</span>
                 ) : (
-                    <span className="font-semibold">No longer accepting quotations</span>
+                    <span className="font-semibold">{t('supplier.closedForOffers')}</span>
                 )}
             </div>
 
@@ -58,8 +60,8 @@ function Body({ data }) {
                     ) : (
                         <>
                             {user?.supplier?.status !== 'approved' && (
-                                <Notice tone="attention" title="You can quote once your account is approved">
-                                    Meanwhile, make sure the products below are in your catalog so you are ready.
+                                <Notice tone="attention" title={t('supplier.waitApprovalTitle')}>
+                                    {t('supplier.waitApprovalBody')}
                                 </Notice>
                             )}
                             <RequestedItems request={request} />
@@ -67,19 +69,19 @@ function Body({ data }) {
                     )}
                 </div>
                 <aside>
-                    <Panel title="Delivery">
+                    <Panel title={t('orders.delivery')}>
                         <dl className="space-y-2.5 text-sm">
                             <div>
-                                <dt className="text-muted">Region</dt>
-                                <dd className="font-semibold">{request.delivery_region || 'Not given'}</dd>
+                                <dt className="text-muted">{t('buyer.fieldRegion')}</dt>
+                                <dd className="font-semibold">{request.delivery_region ? regionLabel(request.delivery_region, locale) : notGiven}</dd>
                             </div>
                             <div>
-                                <dt className="text-muted">Address</dt>
-                                <dd className="font-semibold">{request.delivery_address || 'Not given'}</dd>
+                                <dt className="text-muted">{t('buyer.fieldAddress')}</dt>
+                                <dd className="font-semibold">{request.delivery_address || notGiven}</dd>
                             </div>
                             <div>
-                                <dt className="text-muted">Needed by</dt>
-                                <dd className="font-semibold">{request.needed_by ? formatDate(request.needed_by) : 'Not given'}</dd>
+                                <dt className="text-muted">{t('buyer.fieldNeededBy')}</dt>
+                                <dd className="font-semibold">{request.needed_by ? formatDate(request.needed_by) : notGiven}</dd>
                             </div>
                         </dl>
                         {request.description && <p className="mt-4 border-t border-rule pt-3 text-sm whitespace-pre-line text-ink-soft">{request.description}</p>}
@@ -91,9 +93,10 @@ function Body({ data }) {
 }
 
 function RequestedItems({ request }) {
+    const { t } = useI18n();
     const offered = new Set(request.offered_product_ids);
     return (
-        <Panel title="Requested materials" bodyClassName="p-0 sm:p-0">
+        <Panel title={t('supplier.requestedMaterials')} bodyClassName="p-0 sm:p-0">
             <ul className="divide-y divide-rule">
                 {request.items.map((item) => (
                     <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
@@ -107,7 +110,7 @@ function RequestedItems({ request }) {
                             </span>
                             {!offered.has(item.product_id) && (
                                 <Link to={`/supplier/catalog?add=${item.product_id}`} className="block text-sm font-semibold text-pal-700 hover:underline">
-                                    Add to your catalog
+                                    {t('supplier.addToMyProducts')}
                                 </Link>
                             )}
                         </span>
@@ -125,13 +128,12 @@ function defaultValidUntil() {
 }
 
 function QuoteForm({ request }) {
+    const { t } = useI18n();
     const toast = useToast();
     const queryClient = useQueryClient();
     const offered = useMemo(() => new Set(request.offered_product_ids), [request.offered_product_ids]);
     const [lines, setLines] = useState(() =>
-        Object.fromEntries(
-            request.items.map((item) => [item.id, { include: offered.has(item.product_id), price: '', quantity: String(item.quantity) }]),
-        ),
+        Object.fromEntries(request.items.map((item) => [item.id, { include: offered.has(item.product_id), price: '', quantity: String(item.quantity) }])),
     );
     const [terms, setTerms] = useState({ delivery_fee: '0', valid_until: defaultValidUntil(), notes: '' });
 
@@ -158,7 +160,7 @@ function QuoteForm({ request }) {
             queryClient.invalidateQueries({ queryKey: ['market'] });
             queryClient.invalidateQueries({ queryKey: ['quotations'] });
             queryClient.invalidateQueries({ queryKey: ['summary'] });
-            toast('Quotation sent to the buyer');
+            toast(t('supplier.offerSentToast'));
         },
     });
 
@@ -177,7 +179,10 @@ function QuoteForm({ request }) {
             }}
             className="space-y-6"
         >
-            <Panel title="Your prices" bodyClassName="p-0 sm:p-0">
+            <Notice tone="info" title={t('supplier.quoteHowTitle')}>
+                {t('supplier.quoteHowBody')}
+            </Notice>
+            <Panel title={t('supplier.yourPrices')} bodyClassName="p-0 sm:p-0">
                 <ul className="divide-y divide-rule">
                     {request.items.map((item) => {
                         const line = lines[item.id];
@@ -188,7 +193,7 @@ function QuoteForm({ request }) {
                                     <label className="flex items-start gap-2.5">
                                         <input
                                             type="checkbox"
-                                            className="mt-1 h-4 w-4 accent-pal-600"
+                                            className="mt-1 h-4 w-4 accent-[var(--color-action)]"
                                             checked={line.include}
                                             disabled={!inCatalog}
                                             onChange={(e) => update(item.id, { include: e.target.checked })}
@@ -196,18 +201,17 @@ function QuoteForm({ request }) {
                                         <span>
                                             <span className="block font-semibold">{item.product?.name}</span>
                                             <span className="block text-sm text-muted">
-                                                Requested {formatNumber(item.quantity)} {item.unit}
+                                                {t('supplier.requestedAmount', { n: formatNumber(item.quantity), unit: item.unit })}
                                                 {item.notes && `. ${item.notes}`}
                                             </span>
                                         </span>
                                     </label>
                                     {!inCatalog && (
                                         <p className="mt-1 ml-6.5 text-sm">
-                                            Not in your catalog.{' '}
+                                            {t('supplier.notInProducts')}{' '}
                                             <Link to={`/supplier/catalog?add=${item.product_id}`} className="font-semibold text-pal-700 hover:underline">
-                                                Add it
-                                            </Link>{' '}
-                                            to quote this line.
+                                                {t('supplier.addItToPrice')}
+                                            </Link>
                                         </p>
                                     )}
                                     {(lineError(item, 'product_id') || lineError(item, 'unit_price')) && (
@@ -217,7 +221,7 @@ function QuoteForm({ request }) {
                                 {line.include && (
                                     <>
                                         <label>
-                                            <span className="block text-xs text-muted">Quantity</span>
+                                            <span className="block text-xs text-muted">{t('buyer.colQuantity')}</span>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -229,7 +233,7 @@ function QuoteForm({ request }) {
                                             />
                                         </label>
                                         <label>
-                                            <span className="block text-xs text-muted">Unit price (TZS)</span>
+                                            <span className="block text-xs text-muted">{t('supplier.priceEachTzs')}</span>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -249,20 +253,20 @@ function QuoteForm({ request }) {
                 </ul>
             </Panel>
 
-            <Panel title="Terms">
+            <Panel title={t('supplier.terms')}>
                 <div className="grid gap-4 sm:grid-cols-2">
                     <TextField
-                        label="Delivery fee (TZS)"
+                        label={t('supplier.deliveryFeeTzs')}
                         type="number"
                         min="0"
                         inputMode="decimal"
-                        hint="Enter 0 if delivery is included or the buyer collects."
+                        hint={t('supplier.deliveryFeeHint')}
                         value={terms.delivery_fee}
                         onChange={(e) => setTerms({ ...terms, delivery_fee: e.target.value })}
                         error={errors.delivery_fee}
                     />
                     <TextField
-                        label="Prices valid until"
+                        label={t('supplier.validUntil')}
                         type="date"
                         min={new Date().toISOString().slice(0, 10)}
                         value={terms.valid_until}
@@ -271,9 +275,9 @@ function QuoteForm({ request }) {
                     />
                     <TextAreaField
                         className="sm:col-span-2"
-                        label="Notes for the buyer"
+                        label={t('supplier.notesForBuyer')}
                         optional
-                        placeholder="Delivery time, payment terms, product grade"
+                        placeholder={t('supplier.notesForBuyerPlaceholder')}
                         value={terms.notes}
                         onChange={(e) => setTerms({ ...terms, notes: e.target.value })}
                         error={errors.notes}
@@ -283,15 +287,13 @@ function QuoteForm({ request }) {
 
             <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t border-rule bg-paper/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-[var(--radius-panel)] sm:border">
                 <div>
-                    <p className="text-sm text-muted">
-                        Quotation total, {included.length} of {request.items.length} lines
-                    </p>
-                    <Money amount={total} className="font-display text-[1.7rem] leading-none font-semibold" />
+                    <p className="text-sm text-muted">{t('supplier.offerTotal', { included: included.length, total: request.items.length })}</p>
+                    <Money amount={total} className="text-[1.6rem] leading-none font-extrabold" />
                 </div>
                 <div className="flex flex-col items-end gap-1">
                     <FormError error={submit.error && !Object.keys(errors).some((k) => k.startsWith('items.') || k in terms) ? submit.error.message : null} />
-                    <Button type="submit" size="lg" disabled={included.length === 0} loading={submit.isPending} loadingText="Sending">
-                        Send quotation
+                    <Button type="submit" size="lg" disabled={included.length === 0} loading={submit.isPending} loadingText={t('auth.sending')}>
+                        {t('supplier.sendOffer')}
                     </Button>
                 </div>
             </div>
@@ -300,6 +302,7 @@ function QuoteForm({ request }) {
 }
 
 function MyQuotation({ quotation, request }) {
+    const { t } = useI18n();
     const toast = useToast();
     const queryClient = useQueryClient();
     const [confirming, setConfirming] = useState(false);
@@ -309,14 +312,14 @@ function MyQuotation({ quotation, request }) {
             queryClient.invalidateQueries({ queryKey: ['market-request', String(request.id)] });
             queryClient.invalidateQueries({ queryKey: ['quotations'] });
             setConfirming(false);
-            toast('Quotation withdrawn');
+            toast(t('supplier.withdrawnToast'));
         },
     });
     const canWithdraw = ['draft', 'submitted'].includes(quotation.status) && request.is_open_for_quotes;
 
     return (
         <Panel
-            title="Your quotation"
+            title={t('supplier.yourOffer')}
             number={quotation.quotation_number}
             status={<StatusBadge kind="quotation" status={quotation.status} />}
             bodyClassName="p-0 sm:p-0"
@@ -327,42 +330,42 @@ function MyQuotation({ quotation, request }) {
                         <span>
                             {line.product?.name}
                             <span className="block text-muted">
-                                {formatNumber(line.quantity)} {line.unit} at <Money amount={line.unit_price} />
+                                {t('supplier.lineAt', { n: formatNumber(line.quantity), unit: line.unit, price: formatMoney(line.unit_price) })}
                             </span>
                         </span>
                         <Money amount={line.total_price} className="font-semibold" />
                     </li>
                 ))}
                 <li className="flex justify-between px-4 py-2.5 text-sm sm:px-5">
-                    <span className="text-muted">Delivery</span>
+                    <span className="text-muted">{t('orders.delivery')}</span>
                     <Money amount={quotation.delivery_fee} />
                 </li>
                 <li className="flex items-center justify-between bg-concrete/60 px-4 py-3 sm:px-5">
-                    <span className="font-semibold">Total</span>
-                    <Money amount={quotation.total_amount} className="font-display text-[1.5rem] font-semibold" />
+                    <span className="font-semibold">{t('common.total')}</span>
+                    <Money amount={quotation.total_amount} className="text-[1.4rem] font-extrabold" />
                 </li>
             </ul>
             {(quotation.valid_until || canWithdraw) && (
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-rule px-4 py-3 sm:px-5">
-                    <span className="text-sm text-muted">{quotation.valid_until && `Valid until ${formatDate(quotation.valid_until)}`}</span>
+                    <span className="text-sm text-muted">{quotation.valid_until && t('buyer.validUntil', { date: formatDate(quotation.valid_until) })}</span>
                     {canWithdraw && (
                         <Button size="sm" variant="danger" onClick={() => setConfirming(true)}>
-                            Withdraw quotation
+                            {t('supplier.withdraw')}
                         </Button>
                     )}
                 </div>
             )}
             <ConfirmDialog
                 open={confirming}
-                title="Withdraw this quotation?"
-                confirmLabel="Withdraw quotation"
+                title={t('supplier.withdrawTitle')}
+                confirmLabel={t('supplier.withdraw')}
                 confirmVariant="danger"
                 busy={withdraw.isPending}
                 error={withdraw.error?.message}
                 onCancel={() => setConfirming(false)}
                 onConfirm={() => withdraw.mutate()}
             >
-                <p>The buyer will no longer be able to accept it. You cannot send another quotation for this request.</p>
+                <p>{t('supplier.withdrawBody')}</p>
             </ConfirmDialog>
         </Panel>
     );

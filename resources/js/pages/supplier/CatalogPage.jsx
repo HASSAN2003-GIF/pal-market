@@ -4,8 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import ProductPicker from '../../components/ProductPicker';
 import { Button, ButtonLink, ConfirmDialog, EmptyState, FormError, Money, Notice, PageHeader, Panel, QueryBoundary, useToast } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
+import { useT } from '../../i18n';
 import { api } from '../../lib/api';
-import { formatNumber } from '../../lib/format';
+import { formatMoney } from '../../lib/format';
 
 function useCatalogMutation(fn, success) {
     const queryClient = useQueryClient();
@@ -21,15 +22,16 @@ function useCatalogMutation(fn, success) {
 }
 
 export default function CatalogPage() {
+    const t = useT();
     const { user } = useAuth();
     const approved = user?.supplier?.status === 'approved';
     const products = useQuery({ queryKey: ['supplier-products'], queryFn: api.supplierProducts });
     const locations = useQuery({ queryKey: ['supplier-locations'], queryFn: api.supplierLocations });
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const add = useCatalogMutation((productId) => api.addSupplierProduct({ product_id: productId }), 'Added to your catalog');
+    const add = useCatalogMutation((productId) => api.addSupplierProduct({ product_id: productId }), t('supplier.productAddedToast'));
 
-    // "Add to my catalog" links arrive with ?add=<product id>.
+    // "Add to my products" links arrive with ?add=<product id>.
     const handledAdd = useRef(false);
     useEffect(() => {
         const toAdd = searchParams.get('add');
@@ -44,38 +46,42 @@ export default function CatalogPage() {
 
     return (
         <>
-            <PageHeader
-                title="Catalog & stock"
-                description="The products you sell, your current price, and stock at each location. Buyers see these on product pages; you can only quote on products listed here."
-            />
+            <PageHeader title={t('nav.catalog')} description={t('supplier.catalogDescription')} />
 
             {!approved ? (
-                <Notice tone="attention" title="Available after approval">
-                    Your catalog opens once an administrator approves your supplier account.
+                <Notice tone="attention" title={t('supplier.afterApprovalTitle')}>
+                    {t('supplier.catalogAfterApproval')}
                 </Notice>
             ) : (
                 <>
                     {locations.data && activeLocations.length === 0 && (
-                        <Notice tone="attention" className="mb-4" title="Add a location to record stock" action={<ButtonLink size="sm" to="/supplier/locations">Add location</ButtonLink>}>
-                            Stock is held per location, such as a shop or yard.
+                        <Notice
+                            tone="attention"
+                            className="mb-4"
+                            title={t('supplier.needShopTitle')}
+                            action={
+                                <ButtonLink size="sm" to="/supplier/locations">
+                                    {t('supplier.addShop')}
+                                </ButtonLink>
+                            }
+                        >
+                            {t('supplier.needShopBody')}
                         </Notice>
                     )}
                     <Panel className="mb-6">
                         <ProductPicker
-                            label="Add a product you sell"
+                            label={t('supplier.addProductYouSell')}
                             excludeIds={(products.data?.supplier_products ?? []).map((sp) => sp.product_id)}
                             onPick={(product) => add.mutate(product.id)}
                         />
                         <FormError error={add.error?.fieldErrors?.product_id ?? add.error?.message} />
-                        <p className="mt-2 text-sm text-muted">
-                            Missing a product? Ask PAL Market support to add it to the shared catalog.
-                        </p>
+                        <p className="mt-2 text-sm text-muted">{t('supplier.missingProduct')}</p>
                     </Panel>
 
                     <QueryBoundary query={products}>
                         {({ supplier_products: rows }) =>
                             rows.length === 0 ? (
-                                <EmptyState title="Your catalog is empty">Search above to add the products you stock.</EmptyState>
+                                <EmptyState title={t('supplier.catalogEmptyTitle')}>{t('supplier.catalogEmptyBody')}</EmptyState>
                             ) : (
                                 <ul className="space-y-3">
                                     {rows.map((sp) => (
@@ -92,6 +98,7 @@ export default function CatalogPage() {
 }
 
 function CatalogRow({ item, locations }) {
+    const t = useT();
     const currentPrice = item.prices.find((p) => p.is_active) ?? null;
     const [price, setPrice] = useState(currentPrice ? String(Math.round(Number(currentPrice.price))) : '');
     const [confirmRemove, setConfirmRemove] = useState(false);
@@ -101,10 +108,13 @@ function CatalogRow({ item, locations }) {
             currentPrice
                 ? api.updateSupplierPrice(currentPrice.id, { price: Number(price) })
                 : api.addSupplierPrice({ supplier_product_id: item.id, price: Number(price), currency: 'TZS', unit: item.product.unit }),
-        'Price saved',
+        t('supplier.priceSavedToast'),
     );
-    const toggle = useCatalogMutation(() => api.updateSupplierProduct(item.id, { is_active: !item.is_active }), item.is_active ? 'Hidden from buyers' : 'Listed for buyers');
-    const remove = useCatalogMutation(() => api.removeSupplierProduct(item.id), 'Removed from your catalog');
+    const toggle = useCatalogMutation(
+        () => api.updateSupplierProduct(item.id, { is_active: !item.is_active }),
+        item.is_active ? t('supplier.hiddenToast') : t('supplier.listedToast'),
+    );
+    const remove = useCatalogMutation(() => api.removeSupplierProduct(item.id), t('supplier.removedToast'));
 
     const stockedAt = new Set(item.inventories.map((inv) => inv.supplier_location_id));
     const unstocked = locations.filter((l) => !stockedAt.has(l.id));
@@ -113,20 +123,20 @@ function CatalogRow({ item, locations }) {
         <li className="overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-rule px-4 py-3 sm:px-5">
                 <div>
-                    <Link to={`/materials/${item.product_id}`} className="font-display text-[1.4rem] leading-tight font-semibold hover:text-pal-700">
+                    <Link to={`/materials/${item.product_id}`} className="text-[1.2rem] leading-tight font-extrabold hover:text-pal-700">
                         {item.product.name}
                     </Link>
                     <p className="text-sm text-muted">
-                        {item.product.category?.name}, per {item.product.unit}
-                        {!item.is_active && <span className="ml-2 font-semibold text-warn">Hidden from buyers</span>}
+                        {item.product.category?.name} · {t('common.perUnit', { unit: item.product.unit })}
+                        {!item.is_active && <span className="ml-2 font-semibold text-warn">{t('supplier.hiddenFromBuyers')}</span>}
                     </p>
                 </div>
                 <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => toggle.mutate()} loading={toggle.isPending}>
-                        {item.is_active ? 'Hide' : 'List again'}
+                        {item.is_active ? t('common.hide') : t('supplier.listAgain')}
                     </Button>
                     <Button size="sm" variant="ghost" className="text-danger" onClick={() => setConfirmRemove(true)}>
-                        Remove
+                        {t('common.remove')}
                     </Button>
                 </div>
             </div>
@@ -139,7 +149,7 @@ function CatalogRow({ item, locations }) {
                     }}
                 >
                     <label className="block text-sm font-semibold" htmlFor={`price-${item.id}`}>
-                        Price per {item.product.unit} (TZS)
+                        {t('supplier.pricePer', { unit: item.product.unit })}
                     </label>
                     <div className="mt-1.5 flex gap-2">
                         <input
@@ -153,20 +163,26 @@ function CatalogRow({ item, locations }) {
                             onChange={(e) => setPrice(e.target.value)}
                             aria-invalid={savePrice.error ? 'true' : undefined}
                         />
-                        <Button type="submit" size="md" variant="secondary" loading={savePrice.isPending} disabled={!price || (currentPrice && Number(price) === Number(currentPrice.price))}>
-                            Save
+                        <Button
+                            type="submit"
+                            size="md"
+                            variant="secondary"
+                            loading={savePrice.isPending}
+                            disabled={!price || (currentPrice && Number(price) === Number(currentPrice.price))}
+                        >
+                            {t('common.save')}
                         </Button>
                     </div>
                     {savePrice.error ? (
                         <p className="mt-1 text-sm text-danger">{savePrice.error.fieldErrors?.price ?? savePrice.error.message}</p>
                     ) : (
-                        <p className="mt-1 text-sm text-muted">{currentPrice ? <>Listed at <Money amount={currentPrice.price} /></> : 'No price yet: buyers will not see an offer.'}</p>
+                        <p className="mt-1 text-sm text-muted">{currentPrice ? t('supplier.listedAt', { price: formatMoney(currentPrice.price) }) : t('supplier.noPriceYet')}</p>
                     )}
                 </form>
 
                 <div>
-                    <p className="text-sm font-semibold">Stock by location</p>
-                    {item.inventories.length === 0 && <p className="mt-1.5 text-sm text-muted">No stock recorded.</p>}
+                    <p className="text-sm font-semibold">{t('supplier.stockByShop')}</p>
+                    {item.inventories.length === 0 && <p className="mt-1.5 text-sm text-muted">{t('supplier.noStock')}</p>}
                     <ul className="mt-1.5 divide-y divide-rule">
                         {item.inventories.map((inventory) => (
                             <StockRow key={inventory.id} inventory={inventory} unit={item.product.unit} />
@@ -178,30 +194,31 @@ function CatalogRow({ item, locations }) {
 
             <ConfirmDialog
                 open={confirmRemove}
-                title={`Remove ${item.product.name}?`}
-                confirmLabel="Remove product"
+                title={t('supplier.removeTitle', { name: item.product.name })}
+                confirmLabel={t('supplier.removeConfirm')}
                 confirmVariant="danger"
                 busy={remove.isPending}
                 error={remove.error?.message}
                 onCancel={() => setConfirmRemove(false)}
                 onConfirm={() => remove.mutate()}
             >
-                <p>Its price and stock records are deleted too. To stop selling it temporarily, use Hide instead.</p>
+                <p>{t('supplier.removeBody')}</p>
             </ConfirmDialog>
         </li>
     );
 }
 
 function StockRow({ inventory, unit }) {
+    const t = useT();
     const [quantity, setQuantity] = useState(String(inventory.quantity));
-    const save = useCatalogMutation(() => api.updateInventory(inventory.id, { quantity: Number(quantity) }), 'Stock updated');
+    const save = useCatalogMutation(() => api.updateInventory(inventory.id, { quantity: Number(quantity) }), t('supplier.stockSavedToast'));
     const low = inventory.quantity <= inventory.low_stock_threshold;
 
     return (
         <li className="flex flex-wrap items-center justify-between gap-2 py-2">
             <span className="text-sm">
                 {inventory.supplier_location?.name}
-                {low && <span className="ml-2 rounded-full bg-safety-soft px-2 py-0.5 text-xs font-semibold text-warn">Low stock</span>}
+                {low && <span className="ml-2 rounded-full bg-safety-soft px-2 py-0.5 text-xs font-semibold text-warn">{t('supplier.lowStock')}</span>}
             </span>
             <form
                 className="flex items-center gap-2"
@@ -211,13 +228,13 @@ function StockRow({ inventory, unit }) {
                 }}
             >
                 <label className="flex items-center gap-2">
-                    <span className="sr-only">Quantity at {inventory.supplier_location?.name}</span>
+                    <span className="sr-only">{t('supplier.amountAt', { name: inventory.supplier_location?.name })}</span>
                     <input type="number" min="0" inputMode="numeric" className="field-input tabular w-28 py-1.5" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                     <span className="text-sm text-muted">{unit}</span>
                 </label>
                 {Number(quantity) !== inventory.quantity && (
                     <Button type="submit" size="sm" loading={save.isPending}>
-                        Save
+                        {t('common.save')}
                     </Button>
                 )}
             </form>
@@ -227,6 +244,7 @@ function StockRow({ inventory, unit }) {
 }
 
 function AddStock({ item, locations }) {
+    const t = useT();
     const [form, setForm] = useState({ location: String(locations[0].id), quantity: '', threshold: '10' });
     const add = useCatalogMutation(
         () =>
@@ -236,7 +254,7 @@ function AddStock({ item, locations }) {
                 quantity: Number(form.quantity),
                 low_stock_threshold: Number(form.threshold || 0),
             }),
-        'Stock recorded',
+        t('supplier.stockSavedToast'),
     );
 
     return (
@@ -248,7 +266,7 @@ function AddStock({ item, locations }) {
             }}
         >
             <label className="text-sm">
-                <span className="block text-xs text-muted">Location</span>
+                <span className="block text-xs text-muted">{t('supplier.shop')}</span>
                 <select className="field-input py-1.5" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
                     {locations.map((location) => (
                         <option key={location.id} value={location.id}>
@@ -258,18 +276,17 @@ function AddStock({ item, locations }) {
                 </select>
             </label>
             <label className="text-sm">
-                <span className="block text-xs text-muted">Quantity</span>
+                <span className="block text-xs text-muted">{t('buyer.colQuantity')}</span>
                 <input type="number" min="0" required className="field-input tabular w-24 py-1.5" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
             </label>
             <label className="text-sm">
-                <span className="block text-xs text-muted">Warn below</span>
+                <span className="block text-xs text-muted">{t('supplier.warnBelow')}</span>
                 <input type="number" min="0" className="field-input tabular w-20 py-1.5" value={form.threshold} onChange={(e) => setForm({ ...form, threshold: e.target.value })} />
             </label>
             <Button type="submit" size="sm" loading={add.isPending}>
-                Add stock
+                {t('supplier.addStock')}
             </Button>
             {add.error && <p className="w-full text-sm text-danger">{Object.values(add.error.fieldErrors)[0] ?? add.error.message}</p>}
-            <span className="sr-only" aria-live="polite">{add.isSuccess ? `Recorded ${formatNumber(form.quantity)}` : ''}</span>
         </form>
     );
 }
