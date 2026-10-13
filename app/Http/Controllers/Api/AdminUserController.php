@@ -52,9 +52,9 @@ class AdminUserController extends Controller
             ],
         ]);
 
-        $user->update([
+        $user->forceFill([
             'role' => $validated['role'],
-        ]);
+        ])->save();
 
         return response()->json([
             'user' => $user->only([

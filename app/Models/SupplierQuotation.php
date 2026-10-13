@@ -18,6 +18,7 @@ class SupplierQuotation extends Model
         'total_amount',
         'currency',
         'status',
+        'submitted_at',
         'valid_until',
         'notes',
     ];
@@ -27,6 +28,7 @@ class SupplierQuotation extends Model
         'delivery_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'valid_until' => 'datetime',
+        'submitted_at' => 'datetime',
     ];
 
     public function buyerRequest(): BelongsTo

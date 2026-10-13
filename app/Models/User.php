@@ -11,29 +11,40 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+/*
+ * "role", "suspended_at" and the verification timestamps are deliberately not
+ * mass assignable: they change only through explicit forceFill() calls in
+ * code paths that have already authorized the change.
+ */
 #[Fillable([
     'name',
     'email',
     'phone',
     'password',
-    'role',
     'google_id',
     'avatar',
 ])]
 #[Hidden([
     'password',
     'remember_token',
+    'google_id',
 ])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const ROLES = ['admin', 'buyer', 'supplier'];
+
+    public const SELF_SERVICE_ROLES = ['buyer', 'supplier'];
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -63,6 +74,11 @@ class User extends Authenticatable
         return $this->role === 'supplier';
     }
 
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
     public function isEmailVerified(): bool
     {
         return $this->email_verified_at !== null;
@@ -76,5 +92,25 @@ class User extends Authenticatable
     public function isVerified(): bool
     {
         return $this->isEmailVerified() || $this->isPhoneVerified();
+    }
+
+    /**
+     * The supplier profile, but only while it is approved to trade.
+     */
+    public function activeSupplier(): ?Supplier
+    {
+        $supplier = $this->supplier;
+
+        return $supplier?->status === 'approved' ? $supplier : null;
+    }
+
+    /**
+     * The buyer profile, but only while it is allowed to trade.
+     */
+    public function activeBuyerProfile(): ?BuyerProfile
+    {
+        $profile = $this->buyerProfile;
+
+        return $profile?->status === 'active' ? $profile : null;
     }
 }
