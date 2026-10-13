@@ -1,12 +1,20 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+/*
+ * Requires a cron entry on the server:
+ *   * * * * * cd /path/to/pal-market && php artisan schedule:run >> /dev/null 2>&1
+ */
 
 Schedule::command('app:expire-supplier-quotations')
-    ->everyMinute();
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('app:expire-buyer-requests')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('sanctum:prune-expired --hours=24')->daily();
+
+Schedule::command('auth:clear-resets')->everySixHours();

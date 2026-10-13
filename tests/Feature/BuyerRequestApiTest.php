@@ -15,6 +15,7 @@ use Tests\TestCase;
 class BuyerRequestApiTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\BuildsMarketplace;
 
     public function test_unauthenticated_user_cannot_access_buyer_requests(): void
     {
@@ -499,6 +500,13 @@ class BuyerRequestApiTest extends TestCase
             'title' => 'Publish request',
             'description' => 'Ready to publish.',
             'status' => 'draft',
+        ]);
+
+        // Only requests with at least one item can be published.
+        $request->items()->create([
+            'product_id' => $this->makeProduct()->id,
+            'quantity' => 10,
+            'unit' => 'bag',
         ]);
 
         Sanctum::actingAs($user);

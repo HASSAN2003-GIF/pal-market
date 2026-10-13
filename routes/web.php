@@ -3,16 +3,11 @@
 use App\Http\Controllers\Api\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/auth/google/redirect', [
-    GoogleAuthController::class,
-    'redirect',
-]);
+// Google OAuth runs on web routes so the session can hold the OAuth state.
+Route::middleware('throttle:auth')->group(function () {
+    Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect']);
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+});
 
-Route::get('/auth/google/callback', [
-    GoogleAuthController::class,
-    'callback',
-]);
-
-Route::get('/{any}', function () {
-    return view('welcome');
-})->where('any', '^(?!api|auth/google/(redirect|callback)$).*$');
+// Everything else is the React single-page app.
+Route::view('/{any?}', 'welcome')->where('any', '^(?!api/|up$|auth/google/(redirect|callback)$).*$');

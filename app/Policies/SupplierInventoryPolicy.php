@@ -20,18 +20,18 @@ class SupplierInventoryPolicy
 
     public function create(User $user): bool
     {
-        return $user->supplier?->status === 'approved';
+        return $user->activeSupplier() !== null;
     }
 
     public function update(User $user, SupplierInventory $supplierInventory): bool
     {
-        return $user->supplier?->id ===
+        return $user->activeSupplier()?->id ===
             $supplierInventory->supplierProduct->supplier_id;
     }
 
     public function delete(User $user, SupplierInventory $supplierInventory): bool
     {
-        return $user->supplier?->id ===
+        return $user->activeSupplier()?->id ===
             $supplierInventory->supplierProduct->supplier_id;
     }
 }

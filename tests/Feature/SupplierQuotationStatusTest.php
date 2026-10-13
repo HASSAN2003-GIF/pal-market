@@ -100,6 +100,15 @@ class SupplierQuotationStatusTest extends TestCase
             'status' => 'draft',
         ]);
 
+        // A quotation must price at least one item before it can be submitted.
+        $quotation->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'unit' => 'bag',
+            'unit_price' => 25000,
+            'total_price' => 2500000,
+        ]);
+
         $quotation = app(SupplierQuotationStatusService::class)
             ->submit($quotation);
 

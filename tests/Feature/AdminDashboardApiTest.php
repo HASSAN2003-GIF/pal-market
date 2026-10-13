@@ -60,13 +60,11 @@ class AdminDashboardApiTest extends TestCase
         BuyerProfile::create([
             'user_id' => $buyerOne->id,
             'business_name' => 'Buyer One Company',
-            'phone' => '+255700000001',
         ]);
 
         BuyerProfile::create([
             'user_id' => $buyerTwo->id,
             'business_name' => 'Buyer Two Company',
-            'phone' => '+255700000002',
         ]);
 
         $supplierUserOne = User::factory()->create([

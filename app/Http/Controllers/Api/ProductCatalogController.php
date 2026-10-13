@@ -45,6 +45,24 @@ class ProductCatalogController extends Controller
         ]);
     }
 
+    /**
+     * Active categories and brands for marketplace filters.
+     */
+    public function filters(): JsonResponse
+    {
+        return response()->json([
+            'categories' => \App\Models\Category::query()
+                ->where('is_active', true)
+                ->withCount(['products' => fn ($q) => $q->where('is_active', true)])
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
+            'brands' => \App\Models\Brand::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
+        ]);
+    }
+
     public function show(int $product): JsonResponse
     {
         $product = $this->productCatalogService->find($product);

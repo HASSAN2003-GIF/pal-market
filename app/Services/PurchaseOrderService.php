@@ -4,25 +4,26 @@ namespace App\Services;
 
 use App\Models\PurchaseOrder;
 use App\Models\SupplierQuotation;
+use App\Support\DocumentNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderService
 {
-    public function createFromQuotation(
-        SupplierQuotation $quotation
-    ): PurchaseOrder {
+    public function createFromQuotation(SupplierQuotation $quotation): PurchaseOrder
+    {
         return DB::transaction(function () use ($quotation) {
+            // Lock the quotation so concurrent requests cannot both create an
+            // order (the unique index is the final backstop).
+            $quotation = SupplierQuotation::query()->lockForUpdate()->findOrFail($quotation->id);
+
             if ($quotation->status !== 'accepted') {
                 throw ValidationException::withMessages([
                     'status' => 'Only accepted quotations can create purchase orders.',
                 ]);
             }
 
-            $quotation->load([
-                'buyerRequest',
-                'items',
-            ]);
+            $quotation->load(['buyerRequest', 'items']);
 
             if ($quotation->items->isEmpty()) {
                 throw ValidationException::withMessages([
@@ -30,23 +31,17 @@ class PurchaseOrderService
                 ]);
             }
 
-            $purchaseOrderAlreadyExists = PurchaseOrder::query()
-                ->where('supplier_quotation_id', $quotation->id)
-                ->exists();
-
-            if ($purchaseOrderAlreadyExists) {
+            if (PurchaseOrder::query()->where('supplier_quotation_id', $quotation->id)->exists()) {
                 throw ValidationException::withMessages([
                     'supplier_quotation_id' => 'A purchase order already exists for this quotation.',
                 ]);
             }
 
-            $orderNumber = 'PO-'.now()->format('YmdHis').'-'.$quotation->supplier_id;
-
             $purchaseOrder = PurchaseOrder::create([
                 'buyer_profile_id' => $quotation->buyerRequest->buyer_profile_id,
                 'supplier_id' => $quotation->supplier_id,
                 'supplier_quotation_id' => $quotation->id,
-                'order_number' => $orderNumber,
+                'order_number' => DocumentNumber::make('PO'),
                 'subtotal' => $quotation->subtotal,
                 'delivery_fee' => $quotation->delivery_fee,
                 'total_amount' => $quotation->total_amount,

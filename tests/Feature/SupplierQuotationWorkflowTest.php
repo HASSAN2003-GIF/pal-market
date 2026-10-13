@@ -746,7 +746,9 @@ class SupplierQuotationWorkflowTest extends TestCase
             25000
         );
 
-        $this->expectException(QueryException::class);
+        // Rejected by the service with a readable validation error before it
+        // reaches the database unique index (previously a raw QueryException).
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         $service->addItem(
             $quotation,

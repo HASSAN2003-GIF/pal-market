@@ -20,18 +20,18 @@ class SupplierPricePolicy
 
     public function create(User $user): bool
     {
-        return $user->supplier?->status === 'approved';
+        return $user->activeSupplier() !== null;
     }
 
     public function update(User $user, SupplierPrice $supplierPrice): bool
     {
-        return $user->supplier?->id ===
+        return $user->activeSupplier()?->id ===
             $supplierPrice->supplierProduct->supplier_id;
     }
 
     public function delete(User $user, SupplierPrice $supplierPrice): bool
     {
-        return $user->supplier?->id ===
+        return $user->activeSupplier()?->id ===
             $supplierPrice->supplierProduct->supplier_id;
     }
 }

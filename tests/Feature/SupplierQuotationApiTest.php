@@ -69,6 +69,9 @@ class SupplierQuotationApiTest extends TestCase
     {
         $data = $this->createQuotationScenario();
         $quotation = $data['quotation'];
+        // Buyers see quotations once submitted; drafts stay private to the
+        // supplier (see test_buyer_cannot_view_suppliers_draft_quotation).
+        $quotation->update(['status' => 'submitted']);
 
         $response = $this
             ->actingAs($quotation->buyerRequest->buyerProfile->user)
@@ -80,6 +83,17 @@ class SupplierQuotationApiTest extends TestCase
                 'quotation.id',
                 $quotation->id
             );
+    }
+
+    public function test_buyer_cannot_view_suppliers_draft_quotation(): void
+    {
+        $data = $this->createQuotationScenario();
+        $quotation = $data['quotation'];
+        $quotation->update(['status' => 'draft']);
+
+        $this->actingAs($quotation->buyerRequest->buyerProfile->user)
+            ->getJson("/api/quotations/{$quotation->id}")
+            ->assertForbidden();
     }
 
     public function test_supplier_cannot_view_another_suppliers_quotation(): void

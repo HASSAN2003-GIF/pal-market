@@ -19,16 +19,16 @@ class SupplierLocationPolicy
 
     public function create(User $user): bool
     {
-        return $user->supplier?->status === 'approved';
+        return $user->activeSupplier() !== null;
     }
 
     public function update(User $user, SupplierLocation $supplierLocation): bool
     {
-        return $user->supplier?->id === $supplierLocation->supplier_id;
+        return $user->activeSupplier()?->id === $supplierLocation->supplier_id;
     }
 
     public function delete(User $user, SupplierLocation $supplierLocation): bool
     {
-        return $user->supplier?->id === $supplierLocation->supplier_id;
+        return $user->activeSupplier()?->id === $supplierLocation->supplier_id;
     }
 }

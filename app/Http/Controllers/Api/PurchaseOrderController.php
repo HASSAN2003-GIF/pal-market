@@ -5,161 +5,129 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierQuotation;
+use App\Services\AuditLogger;
 use App\Services\PurchaseOrderService;
 use App\Services\PurchaseOrderStatusService;
+use App\Support\Paginated;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderController extends Controller
 {
+    private const RELATIONS = [
+        'buyerProfile:id,business_name',
+        'supplier:id,business_name',
+        'supplierQuotation:id,quotation_number,buyer_request_id,valid_until',
+        'supplierQuotation.buyerRequest:id,request_number,title,delivery_region,delivery_address,needed_by',
+        'items.product:id,name,unit',
+    ];
+
     public function __construct(
         private PurchaseOrderService $purchaseOrderService,
-        private PurchaseOrderStatusService $purchaseOrderStatusService
+        private PurchaseOrderStatusService $purchaseOrderStatusService,
+        private AuditLogger $audit,
     ) {}
 
-    public function store(
-        Request $request,
-        SupplierQuotation $quotation
-    ): JsonResponse {
-        $this->authorize('create', [PurchaseOrder::class, $quotation]);
+    /**
+     * Orders where the signed-in user is the buyer or the supplier.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', PurchaseOrder::class);
 
-        try {
-            $purchaseOrder = $this->purchaseOrderService
-                ->createFromQuotation($quotation);
+        $validated = $request->validate([
+            'status' => ['nullable', 'in:pending,confirmed,processing,shipped,delivered,completed,cancelled'],
+            'search' => ['nullable', 'string', 'max:100'],
+        ]);
 
-            return response()->json([
-                'message' => 'Purchase order created successfully.',
-                'purchase_order' => $purchaseOrder->load([
-                    'buyerProfile',
-                    'supplier',
-                    'supplierQuotation',
-                    'items.product',
-                ]),
-            ], 201);
-        } catch (ValidationException $exception) {
-            return response()->json([
-                'message' => 'Unable to create purchase order.',
-                'errors' => $exception->errors(),
-            ], 422);
-        }
+        $user = $request->user();
+
+        $orders = PurchaseOrder::query()
+            ->where(fn (Builder $q) => $q
+                ->when($user->buyerProfile, fn (Builder $w, $profile) => $w->orWhere('buyer_profile_id', $profile->id))
+                ->when($user->supplier, fn (Builder $w, $supplier) => $w->orWhere('supplier_id', $supplier->id)))
+            ->with(self::RELATIONS)
+            ->withCount('items')
+            ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
+            ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where('order_number', 'like', Paginated::like($term)))
+            ->latest()
+            ->latest('id')
+            ->paginate(Paginated::perPage($request));
+
+        return Paginated::json($orders);
     }
 
-    public function show(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
+    public function store(Request $request, SupplierQuotation $quotation): JsonResponse
+    {
+        $this->authorize('create', [PurchaseOrder::class, $quotation]);
+
+        $purchaseOrder = $this->purchaseOrderService->createFromQuotation($quotation);
+
+        $this->audit->record('purchase_order.created', "Raised {$purchaseOrder->order_number} from {$quotation->quotation_number}.", $purchaseOrder);
+
+        return response()->json([
+            'message' => 'Purchase order created successfully.',
+            'purchase_order' => $purchaseOrder->load(['buyerProfile', 'supplier', 'supplierQuotation', 'items.product']),
+        ], 201);
+    }
+
+    public function show(PurchaseOrder $purchaseOrder): JsonResponse
+    {
         $this->authorize('view', $purchaseOrder);
 
         return response()->json([
-            'purchase_order' => $purchaseOrder->load([
-                'buyerProfile',
-                'supplier',
-                'supplierQuotation',
-                'items.product',
-            ]),
+            'purchase_order' => $purchaseOrder->load(self::RELATIONS),
         ]);
     }
 
-    public function confirm(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
-        $this->authorize('confirm', $purchaseOrder);
-
-        return $this->transition(
-            $purchaseOrder,
-            fn () => $this->purchaseOrderStatusService
-                ->confirm($purchaseOrder),
-            'Purchase order confirmed successfully.'
-        );
+    public function confirm(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        return $this->transition($purchaseOrder, 'confirm', 'Purchase order confirmed successfully.');
     }
 
-    public function process(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
-        $this->authorize('process', $purchaseOrder);
-
-        return $this->transition(
-            $purchaseOrder,
-            fn () => $this->purchaseOrderStatusService
-                ->process($purchaseOrder),
-            'Purchase order processed successfully.'
-        );
+    public function process(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        return $this->transition($purchaseOrder, 'process', 'Purchase order processed successfully.');
     }
 
-    public function ship(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
-        $this->authorize('ship', $purchaseOrder);
-
-        return $this->transition(
-            $purchaseOrder,
-            fn () => $this->purchaseOrderStatusService
-                ->ship($purchaseOrder),
-            'Purchase order shipped successfully.'
-        );
+    public function ship(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        return $this->transition($purchaseOrder, 'ship', 'Purchase order shipped successfully.');
     }
 
-    public function deliver(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
-        $this->authorize('deliver', $purchaseOrder);
-
-        return $this->transition(
-            $purchaseOrder,
-            fn () => $this->purchaseOrderStatusService
-                ->deliver($purchaseOrder),
-            'Purchase order delivered successfully.'
-        );
+    public function deliver(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        return $this->transition($purchaseOrder, 'deliver', 'Purchase order delivered successfully.');
     }
 
-    public function complete(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
-        $this->authorize('complete', $purchaseOrder);
-
-        return $this->transition(
-            $purchaseOrder,
-            fn () => $this->purchaseOrderStatusService
-                ->complete($purchaseOrder),
-            'Purchase order completed successfully.'
-        );
+    public function complete(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        return $this->transition($purchaseOrder, 'complete', 'Purchase order completed successfully.');
     }
 
-    public function cancel(
-        PurchaseOrder $purchaseOrder
-    ): JsonResponse {
-        $this->authorize('cancel', $purchaseOrder);
-
-        return $this->transition(
-            $purchaseOrder,
-            fn () => $this->purchaseOrderStatusService
-                ->cancel($purchaseOrder),
-            'Purchase order cancelled successfully.'
-        );
+    public function cancel(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        return $this->transition($purchaseOrder, 'cancel', 'Purchase order cancelled successfully.');
     }
 
-    private function transition(
-        PurchaseOrder $purchaseOrder,
-        callable $callback,
-        string $message
-    ): JsonResponse {
-        try {
-            $purchaseOrder = $callback();
+    private function transition(PurchaseOrder $purchaseOrder, string $action, string $message): JsonResponse
+    {
+        $this->authorize($action, $purchaseOrder);
 
-            return response()->json([
-                'message' => $message,
-                'purchase_order' => $purchaseOrder->load([
-                    'buyerProfile',
-                    'supplier',
-                    'supplierQuotation',
-                    'items.product',
-                ]),
-            ]);
-        } catch (ValidationException $exception) {
-            return response()->json([
-                'message' => 'Unable to update purchase order.',
-                'errors' => $exception->errors(),
-            ], 422);
-        }
+        $from = $purchaseOrder->status;
+        $purchaseOrder = $this->purchaseOrderStatusService->{$action}($purchaseOrder);
+
+        $this->audit->record(
+            "purchase_order.{$action}",
+            "{$purchaseOrder->order_number}: {$from} → {$purchaseOrder->status}.",
+            $purchaseOrder,
+            ['from' => $from, 'to' => $purchaseOrder->status],
+        );
+
+        return response()->json([
+            'message' => $message,
+            'purchase_order' => $purchaseOrder->load(['buyerProfile', 'supplier', 'supplierQuotation', 'items.product']),
+        ]);
     }
 }
