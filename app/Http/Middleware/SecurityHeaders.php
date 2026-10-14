@@ -35,7 +35,8 @@ class SecurityHeaders
                 "script-src 'self'",
                 // React sets inline style attributes; no inline <style> or JS.
                 "style-src 'self' 'unsafe-inline'",
-                "img-src 'self' data: https://*.googleusercontent.com",
+                // blob: shows photo previews before upload.
+                "img-src 'self' data: blob: https://*.googleusercontent.com",
                 "font-src 'self' data:",
                 "connect-src 'self'",
                 "form-action 'self'",
