@@ -41,7 +41,11 @@ RUN composer dump-autoload --optimize --no-dev \
     && rm -f public/hot \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs storage/fonts storage/app/public \
     && chown -R www-data:www-data storage bootstrap/cache /data/caddy /config/caddy \
-    && chmod +x docker/entrypoint.sh
+    && chmod +x docker/entrypoint.sh \
+    # The image grants FrankenPHP the "bind to ports below 1024" capability.
+    # It listens on 8080, so drop it: hosts that run containers with
+    # no-new-privileges (Render) refuse to start a binary that has it.
+    && setcap -r /usr/local/bin/frankenphp
 
 USER www-data
 
