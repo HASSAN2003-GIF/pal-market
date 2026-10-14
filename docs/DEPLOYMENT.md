@@ -1,6 +1,6 @@
 # Deploying PAL Market
 
-PAL Market has not been deployed by this work; no hosting provider, domain or credentials are configured. This runbook covers what any host needs: a PHP 8.3+ web server (Nginx + PHP-FPM, or a container), MySQL 8, a cron runner, outbound SMTP and HTTPS.
+The chosen hosts are Render (API and database) and Vercel (website); follow `docs/DEPLOY-RENDER-VERCEL.md` for those. This runbook covers what any host needs: a PHP 8.3+ web server (Nginx + PHP-FPM, or a container), MySQL 8, a cron runner, outbound SMTP and HTTPS.
 
 ## 1. Server requirements
 

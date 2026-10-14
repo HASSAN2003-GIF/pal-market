@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "build:vercel": "vite build --config vite.vercel.config.js",
         "check:i18n": "node scripts/check-i18n.mjs",
         "dev": "vite"
     },

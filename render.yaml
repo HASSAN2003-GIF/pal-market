@@ -1,0 +1,91 @@
+# Render Blueprint for the PAL Market API (Laravel) and its PostgreSQL database.
+# The public site is served by Vercel (vercel.json), which forwards /api, /media
+# and the Google sign-in routes here. Step-by-step: docs/DEPLOY-RENDER-VERCEL.md
+#
+# Values marked "sync: false" are asked for when the Blueprint is created and
+# are never stored in this repository.
+
+databases:
+  - name: pal-market-db
+    plan: free            # free databases expire after 30 days; use basic-256mb for a real launch
+    region: frankfurt
+    databaseName: pal_market
+    user: pal_market
+    ipAllowList: []       # reachable only from Render services in the same account
+
+services:
+  - type: web
+    name: pal-market-api  # gives https://pal-market-api.onrender.com (vercel.json points there)
+    runtime: docker
+    plan: free            # sleeps after 15 idle minutes; starter keeps it awake
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        sync: false       # the public Vercel address, e.g. https://pal-market.vercel.app
+      - key: ADMIN_EMAIL
+        sync: false       # your email; the first administrator account
+      - key: ADMIN_REQUIRE_2FA
+        value: "true"
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: pal-market-db
+          property: connectionString
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      # Render's load balancer and Vercel sit in front of the app.
+      - key: TRUSTED_PROXIES
+        value: "*"
+      # Photos: Render's free plan has no permanent disk, so photos must go to
+      # S3-compatible storage (e.g. Cloudflare R2). Until these are set,
+      # MEDIA_DISK stays "public" and uploaded photos are lost on each deploy.
+      - key: MEDIA_DISK
+        sync: false       # "s3" once the AWS_* values below are filled in
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: auto
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false       # R2: https://<account id>.r2.cloudflarestorage.com
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"
+      # Email (password reset for everyone except the first admin).
+      - key: MAIL_MAILER
+        sync: false       # "smtp" once a provider is chosen; "log" until then
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: PAL Market

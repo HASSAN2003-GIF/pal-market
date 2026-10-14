@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -42,6 +43,16 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(SupplierPrice::class, SupplierPricePolicy::class);
 
         $this->configureRateLimiting();
+
+        // In production the API sits behind the public site (Vercel forwards
+        // /api to Render), so links in emails and the admin setup link must
+        // use APP_URL rather than the host the request arrived on.
+        if ($this->app->isProduction() && ($root = config('app.url'))) {
+            URL::forceRootUrl($root);
+            if (str_starts_with($root, 'https://')) {
+                URL::forceScheme('https');
+            }
+        }
 
         // Password reset emails link to the SPA, which posts to the API.
         ResetPassword::createUrlUsing(fn (User $user, string $token) => url('/reset-password').'?'.http_build_query([
