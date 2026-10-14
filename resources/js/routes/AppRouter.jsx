@@ -40,6 +40,7 @@ const AdminSuppliersPage = page(() => import('../pages/admin/AdminSuppliersPage'
 const AdminBuyersPage = page(() => import('../pages/admin/AdminBuyersPage'));
 const AdminUsersPage = page(() => import('../pages/admin/AdminUsersPage'));
 const AdminCatalogPage = page(() => import('../pages/admin/AdminCatalogPage'));
+const AdminProposalsPage = page(() => import('../pages/admin/AdminProposalsPage'));
 const AdminRequestsPage = page(() => import('../pages/admin/AdminRequestsPage'));
 const AdminOrdersPage = page(() => import('../pages/admin/AdminOrdersPage'));
 const AdminAuditLogPage = page(() => import('../pages/admin/AdminAuditLogPage'));
@@ -114,6 +115,7 @@ export default function AppRouter() {
                             <Route path="admin/buyers" element={<AdminBuyersPage />} />
                             <Route path="admin/users" element={<AdminUsersPage />} />
                             <Route path="admin/catalog" element={<AdminCatalogPage />} />
+                            <Route path="admin/proposals" element={<AdminProposalsPage />} />
                             <Route path="admin/requests" element={<AdminRequestsPage />} />
                             <Route path="admin/orders" element={<AdminOrdersPage />} />
                             <Route path="admin/audit-log" element={<AdminAuditLogPage />} />

@@ -39,9 +39,11 @@ export class ApiError extends Error {
     }
 }
 
-export async function request(endpoint, { method = 'GET', body, query, signal } = {}) {
+export async function request(endpoint, { method = 'GET', body, query, signal, as = 'json' } = {}) {
     const token = getToken();
     const search = query ? toQueryString(query) : '';
+    // Files go up as multipart form data; the browser sets the boundary.
+    const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
 
     let response;
     try {
@@ -52,10 +54,10 @@ export async function request(endpoint, { method = 'GET', body, query, signal } 
                 Accept: 'application/json',
                 // Server messages and validation errors come back in this language.
                 'X-Locale': getLocale(),
-                ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+                ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {}),
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: body !== undefined ? JSON.stringify(body) : undefined,
+            body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
         });
     } catch (error) {
         if (error.name === 'AbortError') throw error;
@@ -63,6 +65,11 @@ export async function request(endpoint, { method = 'GET', body, query, signal } 
     }
 
     const isJson = (response.headers.get('content-type') || '').includes('application/json');
+
+    if (response.ok && as === 'blob') {
+        return response.blob();
+    }
+
     const data = isJson ? await response.json().catch(() => null) : null;
 
     if (!response.ok) {
@@ -102,6 +109,13 @@ const put = (url, body) => request(url, { method: 'PUT', body });
 const patch = (url, body) => request(url, { method: 'PATCH', body });
 const del = (url) => request(url, { method: 'DELETE' });
 
+function photoForm(files, altText) {
+    const form = new FormData();
+    Array.from(files).forEach((file) => form.append('images[]', file));
+    if (altText) form.append('alt_text', altText);
+    return form;
+}
+
 export const api = {
     // Account
     register: (payload) => post('/register', payload),
@@ -120,6 +134,7 @@ export const api = {
     products: (query) => request('/products', { query }),
     product: (id, query) => request(`/products/${id}`, { query }),
     catalogFilters: () => request('/catalog/filters'),
+    suggestProducts: (q, { limit, signal } = {}) => request('/products/suggest', { query: { q, limit }, signal }),
 
     // Buyer requests
     buyerRequests: (query) => request('/buyer-requests', { query }),
@@ -149,12 +164,20 @@ export const api = {
     purchaseOrders: (query) => request('/purchase-orders', { query }),
     purchaseOrder: (id) => request(`/purchase-orders/${id}`),
     transitionPurchaseOrder: (id, action) => post(`/purchase-orders/${id}/${action}`),
+    orderDocument: (id) => request(`/purchase-orders/${id}/document`),
+    orderDocumentPdf: (id, query) => request(`/purchase-orders/${id}/document/pdf`, { query, as: 'blob' }),
+    updateOrderSignatories: (id, payload) => put(`/purchase-orders/${id}/document/signatories`, payload),
 
     // Supplier catalog
     supplierProducts: () => request('/supplier-products'),
     addSupplierProduct: (payload) => post('/supplier-products', payload),
     updateSupplierProduct: (id, payload) => put(`/supplier-products/${id}`, payload),
     removeSupplierProduct: (id) => del(`/supplier-products/${id}`),
+    uploadListingPhotos: (id, files) => request(`/supplier-products/${id}/images`, { method: 'POST', body: photoForm(files) }),
+    removeListingPhoto: (id, imageId) => del(`/supplier-products/${id}/images/${imageId}`),
+    setListingMainPhoto: (id, imageId) => post(`/supplier-products/${id}/images/${imageId}/primary`),
+    productProposals: () => request('/product-proposals'),
+    proposeProduct: (payload) => post('/product-proposals', payload),
     addSupplierPrice: (payload) => post('/supplier-prices', payload),
     updateSupplierPrice: (id, payload) => put(`/supplier-prices/${id}`, payload),
     addInventory: (payload) => post('/supplier-inventory', payload),
@@ -180,6 +203,12 @@ export const api = {
         products: (query) => request('/admin/catalog/products', { query }),
         createProduct: (payload) => post('/admin/catalog/products', payload),
         updateProduct: (id, payload) => patch(`/admin/catalog/products/${id}`, payload),
+        uploadProductPhotos: (id, files, altText) => request(`/admin/catalog/products/${id}/images`, { method: 'POST', body: photoForm(files, altText) }),
+        removeProductPhoto: (id, imageId) => del(`/admin/catalog/products/${id}/images/${imageId}`),
+        setProductMainPhoto: (id, imageId) => post(`/admin/catalog/products/${id}/images/${imageId}/primary`),
+        proposals: (query) => request('/admin/product-proposals', { query }),
+        approveProposal: (id, payload) => post(`/admin/product-proposals/${id}/approve`, payload),
+        rejectProposal: (id, reviewNote) => post(`/admin/product-proposals/${id}/reject`, { review_note: reviewNote }),
         taxonomy: () => request('/admin/catalog/taxonomy'),
         createCategory: (payload) => post('/admin/catalog/categories', payload),
         updateCategory: (id, payload) => patch(`/admin/catalog/categories/${id}`, payload),

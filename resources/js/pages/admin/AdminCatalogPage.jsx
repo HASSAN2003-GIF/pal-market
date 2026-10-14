@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import PhotoManager from '../../components/PhotoManager';
+import ProductThumb from '../../components/ProductThumb';
 import SearchInput from '../../components/SearchInput';
 import { Button, FormError, PageHeader, Pagination, Panel, QueryBoundary, SelectField, TextAreaField, TextField, useToast } from '../../components/ui';
 import { useListParams } from '../../hooks/useListParams';
@@ -26,6 +28,8 @@ function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
     const t = useT();
     const [form, setForm] = useState({
         name: initial?.name ?? '',
+        name_sw: initial?.name_sw ?? '',
+        aliases: (initial?.aliases ?? []).map((a) => a.alias).join('\n'),
         category_id: initial?.category_id ? String(initial.category_id) : '',
         brand_id: initial?.brand_id ? String(initial.brand_id) : '',
         unit: initial?.unit ?? '',
@@ -39,6 +43,11 @@ function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
                 category_id: Number(form.category_id),
                 brand_id: form.brand_id ? Number(form.brand_id) : null,
                 description: form.description || null,
+                name_sw: form.name_sw || null,
+                aliases: form.aliases
+                    .split(/[\n,]/)
+                    .map((a) => a.trim())
+                    .filter(Boolean),
             };
             return initial ? api.admin.updateProduct(initial.id, data) : api.admin.createProduct(data);
         },
@@ -60,6 +69,7 @@ function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
             </div>
             <p className="text-sm text-muted sm:col-span-2">{t('admin.productNamesNote')}</p>
             <TextField label={t('admin.productName')} required value={form.name} onChange={set('name')} error={errors.name} placeholder="Simba Cement 42.5R" />
+            <TextField label={t('admin.nameSw')} optional value={form.name_sw} onChange={set('name_sw')} error={errors.name_sw} placeholder="Saruji ya Simba 42.5R" />
             <TextField label={t('admin.sellingUnit')} required value={form.unit} onChange={set('unit')} error={errors.unit} placeholder={t('admin.sellingUnitPlaceholder')} />
             <SelectField label={t('search.category')} required value={form.category_id} onChange={set('category_id')} error={errors.category_id}>
                 <option value="">{t('admin.chooseCategory')}</option>
@@ -78,6 +88,16 @@ function ProductForm({ initial, taxonomy, onDone, submitLabel }) {
                 ))}
             </SelectField>
             <TextAreaField className="sm:col-span-2" label={t('admin.description')} optional value={form.description} onChange={set('description')} />
+            <TextAreaField
+                className="sm:col-span-2"
+                label={t('admin.aliases')}
+                hint={t('admin.aliasesHint')}
+                optional
+                rows={3}
+                value={form.aliases}
+                onChange={set('aliases')}
+                error={errors.aliases ?? Object.entries(errors).find(([k]) => k.startsWith('aliases.'))?.[1]}
+            />
             <div className="flex gap-2 sm:col-span-2">
                 <Button type="submit" loading={save.isPending}>
                     {submitLabel}
@@ -131,6 +151,33 @@ function TaxonomyList({ title, newLabel, items, create, updateItem }) {
     );
 }
 
+/** Catalog photos; the list is refreshed so the edit panel stays current. */
+function CatalogPhotos({ product }) {
+    const t = useT();
+    const queryClient = useQueryClient();
+    const [images, setImages] = useState(product.images ?? []);
+    const refresh = (response) => {
+        if (response?.images) setImages(response.images);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'catalog', 'products'] });
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+        return response;
+    };
+
+    return (
+        <div className="mt-6 border-t border-rule pt-4">
+            <h3 className="mb-2 font-bold">{t('photos.title')}</h3>
+            <PhotoManager
+                catalog
+                name={product.name}
+                images={images}
+                upload={(files) => api.admin.uploadProductPhotos(product.id, files).then(refresh)}
+                remove={(image) => api.admin.removeProductPhoto(product.id, image.id).then(refresh)}
+                makeMain={(image) => api.admin.setProductMainPhoto(product.id, image.id).then(refresh)}
+            />
+        </div>
+    );
+}
+
 export default function AdminCatalogPage() {
     const t = useT();
     const [params, update] = useListParams();
@@ -149,12 +196,16 @@ export default function AdminCatalogPage() {
             key: 'name',
             label: t('admin.colProduct'),
             render: (p) => (
+                <span className="flex items-start gap-3">
+                <ProductThumb src={p.images?.[0]?.urls?.thumb} alt="" size="sm" />
                 <span>
                     <span className="block font-semibold">{p.name}</span>
+                    {p.name_sw && <span className="block text-ink-soft">{p.name_sw}</span>}
                     <span className="block text-muted">
                         {p.category?.name}
                         {p.brand && `, ${p.brand.name}`} · {t('common.perUnit', { unit: p.unit })}
                     </span>
+                </span>
                 </span>
             ),
         },
@@ -197,6 +248,7 @@ export default function AdminCatalogPage() {
                         submitLabel={editing === 'new' ? t('admin.addProduct') : t('common.saveChanges')}
                         onDone={() => setEditing(null)}
                     />
+                    {editing !== 'new' && <CatalogPhotos product={editing} />}
                 </Panel>
             )}
             <div className="grid gap-6 xl:grid-cols-[1fr_18rem]">

@@ -31,6 +31,7 @@ const NAV = {
         { to: '/admin/buyers', label: 'nav.adminBuyers' },
         { to: '/admin/users', label: 'nav.adminUsers' },
         { to: '/admin/catalog', label: 'nav.adminCatalog' },
+        { to: '/admin/proposals', label: 'nav.adminProposals' },
         { to: '/admin/requests', label: 'nav.adminRequests' },
         { to: '/admin/orders', label: 'nav.adminOrders' },
         { to: '/admin/audit-log', label: 'nav.adminActivity' },

@@ -35,4 +35,5 @@ export default {
     pendingBody: "You can already look at buyers' requests. When PAL Market approves your business, add your shops, products and prices, then start sending price offers.",
     pausedTitle: 'Trading is paused on this business',
     pausedBody: 'You can see your history, but you cannot create or change requests, offers or orders. Contact PAL Market support to fix this.',
+    adminProposals: 'Product requests',
 };

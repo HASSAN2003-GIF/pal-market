@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
+import PhotoManager from '../../components/PhotoManager';
 import ProductPicker from '../../components/ProductPicker';
+import ProductThumb from '../../components/ProductThumb';
+import { MyProposals, ProposeProductForm } from './ProposeProduct';
 import { Button, ButtonLink, ConfirmDialog, EmptyState, FormError, Money, Notice, PageHeader, Panel, QueryBoundary, useToast } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useT } from '../../i18n';
@@ -28,6 +31,7 @@ export default function CatalogPage() {
     const products = useQuery({ queryKey: ['supplier-products'], queryFn: api.supplierProducts });
     const locations = useQuery({ queryKey: ['supplier-locations'], queryFn: api.supplierLocations });
     const [searchParams, setSearchParams] = useSearchParams();
+    const [proposing, setProposing] = useState(null); // product name typed, or ''
 
     const add = useCatalogMutation((productId) => api.addSupplierProduct({ product_id: productId }), t('supplier.productAddedToast'));
 
@@ -73,10 +77,18 @@ export default function CatalogPage() {
                             label={t('supplier.addProductYouSell')}
                             excludeIds={(products.data?.supplier_products ?? []).map((sp) => sp.product_id)}
                             onPick={(product) => add.mutate(product.id)}
+                            onPropose={(name) => setProposing(name)}
                         />
                         <FormError error={add.error?.fieldErrors?.product_id ?? add.error?.message} />
-                        <p className="mt-2 text-sm text-muted">{t('supplier.missingProduct')}</p>
+                        {proposing === null && (
+                            <button type="button" className="tap mt-2 text-sm font-semibold text-pal-700 hover:underline" onClick={() => setProposing('')}>
+                                {t('proposals.notListedPlain')}
+                            </button>
+                        )}
                     </Panel>
+
+                    {proposing !== null && <ProposeProductForm key={proposing} initialName={proposing} onDone={() => setProposing(null)} />}
+                    <MyProposals />
 
                     <QueryBoundary query={products}>
                         {({ supplier_products: rows }) =>
@@ -99,6 +111,7 @@ export default function CatalogPage() {
 
 function CatalogRow({ item, locations }) {
     const t = useT();
+    const queryClient = useQueryClient();
     const currentPrice = item.prices.find((p) => p.is_active) ?? null;
     const [price, setPrice] = useState(currentPrice ? String(Math.round(Number(currentPrice.price))) : '');
     const [confirmRemove, setConfirmRemove] = useState(false);
@@ -122,7 +135,9 @@ function CatalogRow({ item, locations }) {
     return (
         <li className="overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-rule px-4 py-3 sm:px-5">
-                <div>
+                <div className="flex min-w-0 items-start gap-3">
+                    <ProductThumb src={item.images?.[0]?.urls?.thumb} alt="" size="sm" className="mt-1.5" />
+                    <div className="min-w-0">
                     <Link to={`/materials/${item.product_id}`} className="inline-block py-2 text-[1.2rem] leading-tight font-extrabold hover:text-pal-700">
                         {item.product.name}
                     </Link>
@@ -130,6 +145,7 @@ function CatalogRow({ item, locations }) {
                         {item.product.category?.name} · {t('common.perUnit', { unit: item.product.unit })}
                         {!item.is_active && <span className="ml-2 font-semibold text-warn">{t('supplier.hiddenFromBuyers')}</span>}
                     </p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => toggle.mutate()} loading={toggle.isPending}>
@@ -191,6 +207,23 @@ function CatalogRow({ item, locations }) {
                     {unstocked.length > 0 && <AddStock item={item} locations={unstocked} />}
                 </div>
             </div>
+
+            <details className="group border-t border-rule px-4 py-3 sm:px-5">
+                <summary className="tap cursor-pointer font-semibold">
+                    {t('photos.title')}{' '}
+                    <span className="font-normal text-muted">({item.images.length})</span>
+                </summary>
+                <div className="mt-3">
+                    <PhotoManager
+                        name={item.product.name}
+                        images={item.images}
+                        upload={(files) => api.uploadListingPhotos(item.id, files)}
+                        remove={(image) => api.removeListingPhoto(item.id, image.id)}
+                        makeMain={(image) => api.setListingMainPhoto(item.id, image.id)}
+                        onChanged={() => queryClient.invalidateQueries({ queryKey: ['supplier-products'] })}
+                    />
+                </div>
+            </details>
 
             <ConfirmDialog
                 open={confirmRemove}

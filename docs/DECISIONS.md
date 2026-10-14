@@ -52,10 +52,23 @@ Decisions taken during the production-readiness pass (October 2026), with the re
 | Headers stop sticking when the screen is shorter than 500px. | Phones in landscape otherwise lose a third of the screen to fixed bars. |
 | Only the Barlow Condensed weight actually used (600) is loaded. | Two unused font files removed from every page load. |
 
+## Discovery, photos and order documents (October 2026)
+
+- **Catalog domain.** The catalog is construction materials. The feature brief used farm produce as examples; nothing here is specific to either, and no farm products were added. The search vocabulary includes a few common farm words (mahindi, mchele, mbolea) so it keeps working if such products are added.
+- **Search.** `ProductSearch` normalises text (case, accents, punctuation, `50kg` = `50 kg`, unit spellings), matches whole words, word starts, plurals, product aliases, Kiswahili names and a small EN/SW vocabulary, and allows one or two typos in longer words (never in numbers, so `12mm` never matches `16mm`). Every response says how it matched (`exact`, `close` + suggested spelling, `related`, `none`), and the interface says so in words: alternatives are never presented as exact matches. No ranking signals are invented (no fake popularity or ratings): order is match quality, then products stocked in the person's area.
+- **No external product data.** Suggestions come only from the catalog and the vocabulary. No outside product database is queried, so nothing is presented as "verified".
+- **Supplier proposals.** Suppliers cannot create catalog products directly; they propose one and an administrator approves it (new or linked to an existing product) or declines with a reason. This keeps one catalog entry per product, so buyers compare like with like.
+- **Photos.** Only re-encoded variants are kept (thumb 480 px, large 1600 px, WebP), under random names. Re-encoding drops EXIF metadata, including phone GPS positions. Files are served by `/media/...` on the app's own origin, without session or cookies, so the CSP needs no extra host and `storage:link` is not needed. Cards show the catalog photo first, otherwise a photo from an approved supplier's active listing; products without photos show a neutral placeholder, never a stock image.
+- **Order documents.** Issued when the seller confirms the order, as a frozen snapshot with a version number and a SHA-256 fingerprint (printed in the footer). PDFs are rendered on demand from the snapshot in English or Kiswahili, so later catalog or profile edits cannot change an issued document, and nothing is stored twice. Saving signatory names creates a new version; saving the same names again does not. Order lines now keep the product name they were ordered under.
+
 ## Known limitations
 
 - No email/SMS notifications for new quotations or order updates. Users see changes when they open the app. `VerificationService` (OTP) and the empty `app/Services/Sms` driver stubs are left unused from earlier work.
-- No file uploads (product images, supplier documents). Product rows show no imagery rather than placeholders.
+- Photos are limited to products (catalog and supplier listings). Supplier business documents (licences, TIN certificates) cannot be uploaded yet.
+- Order documents have blank boxes for hand signatures and a stamp. There is no digital approval workflow (engineer verifies, supervisor approves inside the app): buyer accounts are single users, and that workflow needs a company team model with engineer and supervisor members. Buyers can print the signatories' names; nothing is signed by the system.
+- Search runs in PHP over a cached index of the active catalog. That suits a curated catalog of up to a few thousand products; beyond that, move to a search engine (Meilisearch, Typesense or MySQL full-text) behind `ProductSearch`.
+- The search vocabulary (`config/search.php`) and the photo limits (`config/media.php`) are reviewed by hand; there is no admin screen for the vocabulary (product aliases do have one).
+- Photos are processed in the web request with GD. Very large uploads are refused (over 5 MB, or over 4096 px on a side) rather than queued.
 - Quotation currency is fixed to TZS.
 - `TRUSTED_PROXIES` is read in `bootstrap/app.php` and therefore must be a real environment variable when configuration is cached.
 - No browser end-to-end test suite; flows were verified with feature tests and a manual browser walkthrough.

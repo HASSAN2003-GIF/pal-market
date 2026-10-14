@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PinIcon } from '../components/icons';
+import ProductGallery from '../components/ProductGallery';
+import ProductThumb from '../components/ProductThumb';
 import {
     Button,
     ButtonLink,
@@ -19,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n';
 import { api } from '../lib/api';
 import { formatNumber } from '../lib/format';
+import { productName, secondaryName } from '../lib/products';
 import { useArea } from '../location/LocationContext';
 import { regionLabel } from '../location/regions';
 
@@ -50,13 +53,19 @@ function ProductBody({ product }) {
     return (
         <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_22rem]">
             <div className="min-w-0">
-                <p className="text-muted">
-                    {product.category?.name}
-                    {product.brand && `, ${product.brand.name}`}
-                </p>
-                <h1 className="mt-1 text-[2.3rem] sm:text-[2.9rem]">{product.name}</h1>
-                <p className="mt-2 text-ink-soft">{t('product.soldPer', { unit: product.unit })}</p>
-                {product.description && <p className="mt-4 max-w-2xl text-ink-soft">{product.description}</p>}
+                <div className="grid gap-6 sm:grid-cols-[minmax(0,16rem)_1fr] lg:grid-cols-[minmax(0,18rem)_1fr]">
+                    <ProductGallery images={product.images ?? []} name={product.name} />
+                    <div className="min-w-0">
+                        <p className="text-muted">
+                            {product.category?.name}
+                            {product.brand && `, ${product.brand.name}`}
+                        </p>
+                        <h1 className="mt-1 text-[2.3rem] sm:text-[2.9rem]">{productName(product, locale)}</h1>
+                        {secondaryName(product, locale) && <p className="text-ink-soft">{secondaryName(product, locale)}</p>}
+                        <p className="mt-2 text-ink-soft">{t('product.soldPer', { unit: product.unit })}</p>
+                        {product.description && <p className="mt-4 max-w-2xl text-ink-soft">{product.description}</p>}
+                    </div>
+                </div>
 
                 <h2 className="mt-10 text-[1.7rem]">{t('product.offersTitle')}</h2>
                 {region && offers.length > 0 && (
@@ -73,7 +82,8 @@ function ProductBody({ product }) {
                 ) : (
                     <ul className="mt-3 divide-y divide-rule overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">
                         {offers.map((offer) => (
-                            <li key={offer.supplier_product_id} className="grid gap-2 px-4 py-3.5 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-6">
+                            <li key={offer.supplier_product_id} className="grid gap-2 px-4 py-3.5 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center sm:gap-6">
+                                <ProductThumb src={offer.images?.[0]?.thumb} alt={t('photos.photoFrom', { name: offer.supplier.business_name })} size="sm" className="hidden sm:inline-block" />
                                 <div className="min-w-0">
                                     <p className="font-bold">{offer.supplier.business_name}</p>
                                     <p className="text-sm text-ink-soft">

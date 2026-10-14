@@ -3,11 +3,13 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { AreaButton } from '../components/PreferenceControls';
 import { CloseIcon, PinIcon } from '../components/icons';
-import { EmptyState, ErrorState, LoadingRows, Money, Pagination, cx } from '../components/ui';
+import ProductThumb from '../components/ProductThumb';
+import { EmptyState, ErrorState, LoadingRows, Money, Notice, Pagination, cx } from '../components/ui';
 import { useListParams } from '../hooks/useListParams';
 import { useI18n } from '../i18n';
 import { api } from '../lib/api';
 import { pluralize } from '../lib/format';
+import { productName, secondaryName } from '../lib/products';
 import { useArea } from '../location/LocationContext';
 import { regionLabel } from '../location/regions';
 
@@ -44,6 +46,7 @@ export default function MaterialsPage() {
     const categories = filters.data?.categories ?? [];
     const rows = products.data?.data ?? [];
     const total = products.data?.meta?.total;
+    const searchInfo = products.data?.search;
     const category = categories.find((c) => String(c.id) === String(params.category_id ?? ''));
     const areaName = region ? regionLabel(region, locale) : null;
 
@@ -174,23 +177,40 @@ export default function MaterialsPage() {
                         </ul>
                     )}
 
+                    {rows.length > 0 && searchInfo?.mode === 'close' && (
+                        <Notice tone="info" className="mt-4" title={t('discover.closeTitle', { q: params.search })}>
+                            {searchInfo.suggestion ? t('discover.closeBody', { suggestion: searchInfo.suggestion }) : t('discover.closeBodyPlain')}
+                        </Notice>
+                    )}
+                    {rows.length > 0 && searchInfo?.mode === 'related' && (
+                        <Notice tone="info" className="mt-4" title={t('discover.relatedTitle', { q: params.search })}>
+                            {t('discover.relatedBody')}
+                        </Notice>
+                    )}
+
                     <div className="mt-4" aria-busy={products.isFetching}>
                         {products.isPending ? (
                             <LoadingRows rows={6} label={t('materials.loading')} />
                         ) : products.isError ? (
                             <ErrorState error={products.error} onRetry={() => products.refetch()} />
                         ) : rows.length === 0 ? (
-                            <EmptyState title={t('materials.emptyTitle')}>{onlyLocal ? t('materials.emptyLocal', { region: areaName }) : t('materials.emptyBody')}</EmptyState>
+                            <EmptyState title={t('materials.emptyTitle')}>
+                                {onlyLocal ? t('materials.emptyLocal', { region: areaName }) : t('materials.emptyBody')}
+                                {params.search && <span className="mt-2 block">{t('discover.searchHelp')}</span>}
+                            </EmptyState>
                         ) : (
                             <ul className="divide-y divide-rule overflow-hidden rounded-[var(--radius-panel)] border border-rule bg-paper">
                                 {rows.map((product) => (
                                     <li key={product.id}>
                                         <Link
                                             to={`/materials/${product.id}`}
-                                            className="grid gap-1.5 px-4 py-3.5 hover:bg-pal-50 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6"
+                                            className="flex items-start gap-3 px-4 py-3.5 hover:bg-pal-50 sm:items-center sm:gap-4"
                                         >
+                                            <ProductThumb src={product.image?.thumb} alt={product.image?.alt ?? ''} />
+                                            <span className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6">
                                             <span className="min-w-0">
-                                                <span className="block font-bold text-ink">{product.name}</span>
+                                                <span className="block font-bold text-ink">{productName(product, locale)}</span>
+                                                {secondaryName(product, locale) && <span className="block text-sm text-ink-soft">{secondaryName(product, locale)}</span>}
                                                 <span className="block text-sm text-muted">
                                                     {product.category?.name}
                                                     {product.brand && `, ${product.brand.name}`} · {t('common.perUnit', { unit: product.unit })}
@@ -212,6 +232,7 @@ export default function MaterialsPage() {
                                                 ) : (
                                                     <span className="text-muted">{t('materials.askForPrice')}</span>
                                                 )}
+                                            </span>
                                             </span>
                                         </Link>
                                     </li>

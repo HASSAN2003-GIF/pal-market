@@ -118,4 +118,7 @@ export default {
     brands: 'Chapa',
     newCategory: 'Aina mpya',
     newBrand: 'Chapa mpya',
+    nameSw: 'Jina kwa Kiswahili',
+    aliases: 'Majina mengine wanayotumia wanunuzi',
+    aliasesHint: 'Moja kwa kila mstari: majina ya biashara, majina ya mtaani, tahajia za kawaida. Hutumika katika utafutaji na mapendekezo.',
 };

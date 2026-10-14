@@ -118,4 +118,7 @@ export default {
     brands: 'Brands',
     newCategory: 'New category',
     newBrand: 'New brand',
+    nameSw: 'Name in Kiswahili',
+    aliases: 'Other names buyers use',
+    aliasesHint: 'One per line: trade names, local names, common spellings. Used by search and suggestions.',
 };

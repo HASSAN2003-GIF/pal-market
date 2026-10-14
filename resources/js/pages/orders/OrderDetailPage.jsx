@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import LineItemList from '../../components/LineItemList';
+import ProductThumb from '../../components/ProductThumb';
+import OrderDocumentPanel from './OrderDocumentPanel';
 import { Button, ConfirmDialog, DocNumber, Money, Notice, PageHeader, Panel, QueryBoundary, StatusBadge, cx, useToast } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n';
@@ -91,7 +93,7 @@ function OrderBody({ order }) {
                         currency={order.currency}
                         rows={order.items.map((item) => ({
                             key: item.id,
-                            name: item.product?.name,
+                            name: item.product_name ?? item.product?.name,
                             quantity: formatNumber(item.quantity),
                             unit: item.unit,
                             unitPrice: item.unit_price,
@@ -133,7 +135,12 @@ function OrderBody({ order }) {
                             <tbody className="divide-y divide-rule">
                                 {order.items.map((item) => (
                                     <tr key={item.id}>
-                                        <td className="px-4 py-2.5 sm:px-5">{item.product?.name}</td>
+                                        <td className="px-4 py-2.5 sm:px-5">
+                                            <span className="flex items-center gap-3">
+                                                <ProductThumb src={item.image} alt="" size="xs" />
+                                                <span>{item.product_name ?? item.product?.name}</span>
+                                            </span>
+                                        </td>
                                         <td className="tabular px-4 py-2.5 text-right">
                                             {formatNumber(item.quantity)} {item.unit}
                                         </td>
@@ -176,6 +183,7 @@ function OrderBody({ order }) {
                     </div>
                 </Panel>
 
+                <div className="space-y-6">
                 <Panel title={t('orders.delivery')}>
                     <dl className="space-y-2.5 text-sm">
                         <div>
@@ -210,6 +218,8 @@ function OrderBody({ order }) {
                     )}
                     <p className="mt-4 border-t border-rule pt-3 text-xs text-muted">{t('orders.paymentNote')}</p>
                 </Panel>
+                <OrderDocumentPanel order={order} />
+                </div>
             </div>
 
             <ConfirmDialog

@@ -35,4 +35,5 @@ export default {
     pendingBody: 'Tayari unaweza kuangalia maombi ya wanunuzi. PAL Market ikiidhinisha biashara yako, ongeza maduka, bidhaa na bei zako, kisha anza kutuma ofa za bei.',
     pausedTitle: 'Biashara imesimamishwa kwa muda',
     pausedBody: 'Unaweza kuona historia yako, lakini huwezi kuunda au kubadilisha maombi, ofa au oda. Wasiliana na msaada wa PAL Market kutatua hili.',
+    adminProposals: 'Maombi ya bidhaa',
 };

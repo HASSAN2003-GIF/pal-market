@@ -19,8 +19,8 @@ The SPA is served by Laravel from the same origin as the API (`resources/views/w
 | Role | Can do |
 | --- | --- |
 | Buyer | Create requests (title, delivery region/address, needed-by date, items), publish them for a quoting window, compare quotations, accept one (which raises the purchase order), confirm delivery and complete orders. |
-| Supplier | Browse open requests (pending suppliers included). Once approved: maintain catalog, prices, stock and locations, send quotations, withdraw them, and confirm, prepare and dispatch orders. |
-| Admin | Approve, suspend and reactivate suppliers and buyers; suspend, reactivate, re-role or delete user accounts (with safeguards); manage products, categories and brands; view all requests, orders and the audit log. |
+| Supplier | Browse open requests (pending suppliers included). Once approved: maintain catalog (with photos; ask for products not yet listed), prices, stock and locations, send quotations, withdraw them, and confirm, prepare and dispatch orders. |
+| Admin | Approve, suspend and reactivate suppliers and buyers; suspend, reactivate, re-role or delete user accounts (with safeguards); manage products (Kiswahili names, search aliases, photos), categories and brands; review product requests from suppliers; view all requests, orders and the audit log. |
 
 Request: `draft → open → closed | cancelled | expired`. Quotation: `draft → submitted → accepted | rejected | expired | cancelled (withdrawn)`. Purchase order: `pending → confirmed → processing → shipped → delivered → completed`, or `cancelled` by the buyer before dispatch.
 
@@ -90,13 +90,14 @@ All endpoints are under `/api` and return JSON. Authenticated endpoints need `Au
 | Area | Endpoints |
 | --- | --- |
 | Account | `POST register, login, logout, forgot-password, reset-password, auth/google/exchange`; `GET/PUT me`; `PUT me/password`; `PUT me/preferences` (`locale`, `region`); `GET workspace/summary` |
-| Catalog (public) | `GET products` (`search`, `category_id`, `brand_id`, `sort=price_asc\|price_desc\|name`, `region`, `only_local`), `GET products/{id}` (`region` marks `in_region` offers), `GET catalog/filters` |
+| Catalog (public) | `GET products` (`search`, `category_id`, `brand_id`, `sort=price_asc\|price_desc\|name`, `region`, `only_local`; the response's `search.mode` is `exact`, `close` with a `suggestion`, `related` or `none`), `GET products/suggest?q=` (type-ahead), `GET products/{id}` (`region` marks `in_region` offers; `images`), `GET catalog/filters`, `GET /media/products/{uuid}/{thumb\|large}.webp` |
 | Buyer requests | `GET/POST buyer-requests`; `GET/PUT/DELETE buyer-requests/{id}`; `POST/PUT/DELETE buyer-requests/{id}/items[/{item}]`; `POST buyer-requests/{id}/publish`, `/cancel` |
 | Market (suppliers) | `GET market-requests`, `GET market-requests/{id}` |
 | Quotations | `POST buyer-requests/{id}/quotations` (optionally with `items` and `submit: true` for one atomic call); `GET quotations`, `GET/PUT quotations/{id}`; `POST quotations/{id}/items`, `DELETE …/items/{item}`; `POST quotations/{id}/submit`, `/withdraw`, `/accept` (`create_purchase_order: true` raises the order in the same transaction), `/reject` |
 | Purchase orders | `POST quotations/{id}/purchase-order`; `GET purchase-orders`, `GET purchase-orders/{id}`; `POST purchase-orders/{id}/confirm`, `/process`, `/ship`, `/deliver`, `/complete`, `/cancel` |
-| Supplier catalog | REST resources `supplier-products`, `supplier-prices`, `supplier-inventory`, `supplier-locations` |
-| Admin | `GET admin/dashboard`; `admin/users` (+ `/role`, `/suspend`, `/reactivate`, delete); `admin/suppliers` (+ `/approve`, `/suspend`, `/reactivate`); `admin/buyers` (+ `/suspend`, `/reactivate`); `admin/catalog/products|categories|brands|taxonomy`; `GET admin/buyer-requests`, `admin/purchase-orders`, `admin/audit-logs` |
+| Order documents | `GET purchase-orders/{id}/document` (versions, availability); `GET purchase-orders/{id}/document/pdf?lang=en\|sw&version=&disposition=inline\|attachment` (buyer, supplier, admins); `PUT purchase-orders/{id}/document/signatories` (buyer) |
+| Supplier catalog | REST resources `supplier-products`, `supplier-prices`, `supplier-inventory`, `supplier-locations`; `POST supplier-products/{id}/images` (multipart `images[]`), `POST …/images/{image}/primary`, `DELETE …/images/{image}`; `GET/POST product-proposals` |
+| Admin | `GET admin/dashboard`; `admin/users` (+ `/role`, `/suspend`, `/reactivate`, delete); `admin/suppliers` (+ `/approve`, `/suspend`, `/reactivate`); `admin/buyers` (+ `/suspend`, `/reactivate`); `admin/catalog/products|categories|brands|taxonomy` (products take `name_sw` and `aliases[]`; `POST admin/catalog/products/{id}/images`, `/primary`, delete); `GET admin/product-proposals`, `POST …/{id}/approve`, `/reject`; `GET admin/buyer-requests`, `admin/purchase-orders`, `admin/audit-logs` |
 | Health | `GET /up` (app boots), `GET /api/health` (database and cache reachable; `503` otherwise) |
 
 List endpoints accept `page`, `per_page` (max 50 or 100) and endpoint-specific filters such as `status` and `search`, and return a `meta` block with pagination details.
