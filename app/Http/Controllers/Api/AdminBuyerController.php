@@ -25,9 +25,9 @@ class AdminBuyerController extends Controller
             ->with('user:id,name,email,phone')
             ->withCount(['requests', 'purchaseOrders'])
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('business_name', 'like', Paginated::like($term))
-                ->orWhereHas('user', fn (Builder $u) => $u->where('email', 'like', Paginated::like($term))
-                    ->orWhere('name', 'like', Paginated::like($term)))))
+                ->whereLike('business_name', Paginated::like($term))
+                ->orWhereHas('user', fn (Builder $u) => $u->whereLike('email', Paginated::like($term))
+                    ->orWhereLike('name', Paginated::like($term)))))
             ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->orderBy('id')
             ->paginate(Paginated::perPage($request, 25, 100));

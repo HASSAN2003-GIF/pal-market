@@ -37,8 +37,8 @@ class BuyerRequestController extends Controller
             ])
             ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('title', 'like', Paginated::like($term))
-                ->orWhere('request_number', 'like', Paginated::like($term))))
+                ->whereLike('title', Paginated::like($term))
+                ->orWhereLike('request_number', Paginated::like($term))))
             ->latest()
             ->latest('id')
             ->paginate(Paginated::perPage($request));

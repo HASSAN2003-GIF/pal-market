@@ -42,6 +42,43 @@ jobs:
       - name: Audit Composer dependencies
         run: composer audit --no-interaction
 
+  postgres:
+    name: PHP tests on PostgreSQL (production database)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: pal_test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: pal_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: testpass
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4' # the version in the production Dockerfile
+          extensions: mbstring, pdo_pgsql, intl, gd, exif
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run test suite
+        run: php artisan test
+
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest

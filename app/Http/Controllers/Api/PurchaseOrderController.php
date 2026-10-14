@@ -53,7 +53,7 @@ class PurchaseOrderController extends Controller
             ->with(self::RELATIONS)
             ->withCount('items')
             ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
-            ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where('order_number', 'like', Paginated::like($term)))
+            ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->whereLike('order_number', Paginated::like($term)))
             ->latest()
             ->latest('id')
             ->paginate(Paginated::perPage($request));

@@ -28,8 +28,8 @@ class AdminMarketplaceController extends Controller
             ->with('buyerProfile:id,business_name')
             ->withCount(['items', 'quotations as submitted_quotations_count' => fn (Builder $q) => $q->where('status', '!=', 'draft')])
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('title', 'like', Paginated::like($term))
-                ->orWhere('request_number', 'like', Paginated::like($term))))
+                ->whereLike('title', Paginated::like($term))
+                ->orWhereLike('request_number', Paginated::like($term))))
             ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->latest('id')
             ->paginate(Paginated::perPage($request, 25, 100));
@@ -47,7 +47,7 @@ class AdminMarketplaceController extends Controller
         $orders = PurchaseOrder::query()
             ->with(['buyerProfile:id,business_name', 'supplier:id,business_name'])
             ->withCount('items')
-            ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where('order_number', 'like', Paginated::like($term)))
+            ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->whereLike('order_number', Paginated::like($term)))
             ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->latest('id')
             ->paginate(Paginated::perPage($request, 25, 100));
@@ -63,10 +63,10 @@ class AdminMarketplaceController extends Controller
         ]);
 
         $logs = AuditLog::query()
-            ->when($validated['action'] ?? null, fn (Builder $q, $action) => $q->where('action', 'like', addcslashes($action, '%_\\').'%'))
+            ->when($validated['action'] ?? null, fn (Builder $q, $action) => $q->whereLike('action', addcslashes($action, '%_\\').'%'))
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('description', 'like', Paginated::like($term))
-                ->orWhere('actor_label', 'like', Paginated::like($term))))
+                ->whereLike('description', Paginated::like($term))
+                ->orWhereLike('actor_label', Paginated::like($term))))
             ->latest('id')
             ->paginate(Paginated::perPage($request, 30, 100));
 

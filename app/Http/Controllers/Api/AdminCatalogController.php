@@ -38,8 +38,8 @@ class AdminCatalogController extends Controller
             ->with(['category:id,name', 'brand:id,name', 'aliases:id,product_id,alias', 'images'])
             ->withCount('supplierProducts')
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('name', 'like', Paginated::like($term))
-                ->orWhere('name_sw', 'like', Paginated::like($term))))
+                ->whereLike('name', Paginated::like($term))
+                ->orWhereLike('name_sw', Paginated::like($term))))
             ->when($validated['category_id'] ?? null, fn (Builder $q, $id) => $q->where('category_id', $id))
             ->when($validated['status'] ?? null, fn (Builder $q, $status) => $q->where('is_active', $status === 'active'))
             ->orderBy('name')

@@ -87,8 +87,8 @@ class ProductCatalogService
 
         match ($filters['sort'] ?? null) {
             // Unpriced products last in both directions.
-            'price_asc' => $query->orderByRaw('from_price is null')->orderBy('from_price'),
-            'price_desc' => $query->orderByRaw('from_price is null')->orderByDesc('from_price'),
+            'price_asc' => $this->orderByPrice($query, 'asc'),
+            'price_desc' => $this->orderByPrice($query, 'desc'),
             'name' => null,
             // Default: best search match first, then products stocked in the
             // person's region.
@@ -107,6 +107,21 @@ class ProductCatalogService
         }
 
         return $page;
+    }
+
+    /**
+     * Unpriced products last in both directions. PostgreSQL cannot use a
+     * select alias inside an expression, so it gets NULLS LAST instead.
+     */
+    private function orderByPrice($query, string $direction): void
+    {
+        if ($query->getConnection()->getDriverName() === 'pgsql') {
+            $query->orderByRaw("from_price {$direction} nulls last");
+
+            return;
+        }
+
+        $query->orderByRaw('from_price is null')->orderBy('from_price', $direction);
     }
 
     private function orderByRelevance($query, ?string $region): void

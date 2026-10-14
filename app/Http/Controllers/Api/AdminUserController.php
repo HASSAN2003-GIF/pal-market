@@ -36,9 +36,9 @@ class AdminUserController extends Controller
         $users = User::query()
             ->select(self::FIELDS)
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('name', 'like', Paginated::like($term))
-                ->orWhere('email', 'like', Paginated::like($term))
-                ->orWhere('phone', 'like', Paginated::like($term))))
+                ->whereLike('name', Paginated::like($term))
+                ->orWhereLike('email', Paginated::like($term))
+                ->orWhereLike('phone', Paginated::like($term))))
             ->when($validated['role'] ?? null, fn (Builder $q, $role) => $q->where('role', $role))
             ->when(($validated['status'] ?? null) === 'suspended', fn (Builder $q) => $q->whereNotNull('suspended_at'))
             ->when(($validated['status'] ?? null) === 'active', fn (Builder $q) => $q->whereNull('suspended_at'))

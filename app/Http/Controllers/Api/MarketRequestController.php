@@ -38,8 +38,8 @@ class MarketRequestController extends Controller
             ])
             ->withCount('items')
             ->when($validated['search'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $w) => $w
-                ->where('title', 'like', Paginated::like($term))
-                ->orWhere('request_number', 'like', Paginated::like($term))))
+                ->whereLike('title', Paginated::like($term))
+                ->orWhereLike('request_number', Paginated::like($term))))
             ->when($validated['region'] ?? null, fn (Builder $q, $region) => $q->where('delivery_region', $region))
             ->when($validated['category_id'] ?? null, fn (Builder $q, $categoryId) => $q
                 ->whereHas('items.product', fn (Builder $p) => $p->where('category_id', $categoryId)))
