@@ -23,6 +23,23 @@ class PurchaseOrderPolicy
             || ($user->supplier !== null && $user->supplier->id === $purchaseOrder->supplier_id);
     }
 
+    /**
+     * The printable order: the two parties and administrators.
+     */
+    public function viewDocument(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $user->isAdmin() || $this->view($user, $purchaseOrder);
+    }
+
+    /**
+     * Names in the approval boxes are the buyer's to fill in.
+     */
+    public function editDocument(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        return $this->isActiveBuyer($user, $purchaseOrder)
+            && in_array($purchaseOrder->status, ['confirmed', 'processing', 'shipped', 'delivered', 'completed'], true);
+    }
+
     public function create(User $user, SupplierQuotation $quotation): bool
     {
         return $user->activeBuyerProfile()?->id === $quotation->buyerRequest->buyer_profile_id;

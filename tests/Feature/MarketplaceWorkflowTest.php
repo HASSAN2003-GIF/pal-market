@@ -97,7 +97,9 @@ class MarketplaceWorkflowTest extends TestCase
         $this->getJson('/api/purchase-orders?status=completed')->assertOk()->assertJsonPath('meta.total', 1);
         $this->getJson('/api/workspace/summary')->assertOk()->assertJsonPath('summary.buyer.requests_by_status.closed', 1);
 
-        $this->assertSame(6, AuditLog::where('subject_type', 'PurchaseOrder')->count());
+        // Six status changes plus the order document issued on confirmation.
+        $this->assertSame(7, AuditLog::where('subject_type', 'PurchaseOrder')->count());
+        $this->assertTrue(AuditLog::where('action', 'order_document.issued')->exists());
     }
 
     public function test_atomic_quotation_rolls_back_entirely_when_a_line_is_invalid(): void

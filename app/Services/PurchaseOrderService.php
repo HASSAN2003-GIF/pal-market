@@ -23,7 +23,7 @@ class PurchaseOrderService
                 ]);
             }
 
-            $quotation->load(['buyerRequest', 'items']);
+            $quotation->load(['buyerRequest', 'items.product']);
 
             if ($quotation->items->isEmpty()) {
                 throw ValidationException::withMessages([
@@ -53,6 +53,8 @@ class PurchaseOrderService
             foreach ($quotation->items as $quotationItem) {
                 $purchaseOrder->items()->create([
                     'product_id' => $quotationItem->product_id,
+                    // Kept so the order reads the same if the catalog name changes.
+                    'product_name' => $quotationItem->product?->name,
                     'quantity' => $quotationItem->quantity,
                     'unit' => $quotationItem->unit,
                     'unit_price' => $quotationItem->unit_price,

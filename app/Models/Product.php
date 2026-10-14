@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ProductSearch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -13,6 +14,7 @@ class Product extends Model
         'category_id',
         'brand_id',
         'name',
+        'name_sw',
         'slug',
         'description',
         'unit',
@@ -26,6 +28,13 @@ class Product extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // The in-memory search index is rebuilt after any catalog change.
+        static::saved(fn () => ProductSearch::flush());
+        static::deleted(fn () => ProductSearch::flush());
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -34,6 +43,16 @@ class Product extends Model
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public function aliases(): HasMany
+    {
+        return $this->hasMany(ProductAlias::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id');
     }
 
     public function supplierProducts(): HasMany

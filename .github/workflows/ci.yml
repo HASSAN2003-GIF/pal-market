@@ -18,7 +18,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5' # matches the Sail runtime in compose.yaml
-          extensions: mbstring, pdo_sqlite, pdo_mysql, intl
+          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, gd, exif
           coverage: none
 
       - name: Install Composer dependencies

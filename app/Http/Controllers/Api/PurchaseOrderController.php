@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierQuotation;
 use App\Services\AuditLogger;
+use App\Services\OrderDocumentService;
 use App\Services\PurchaseOrderService;
 use App\Services\PurchaseOrderStatusService;
 use App\Support\Paginated;
+use App\Support\ProductImages;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,13 +22,14 @@ class PurchaseOrderController extends Controller
         'supplier:id,business_name',
         'supplierQuotation:id,quotation_number,buyer_request_id,valid_until',
         'supplierQuotation.buyerRequest:id,request_number,title,delivery_region,delivery_address,needed_by',
-        'items.product:id,name,unit',
+        'items.product:id,name,name_sw,unit',
     ];
 
     public function __construct(
         private PurchaseOrderService $purchaseOrderService,
         private PurchaseOrderStatusService $purchaseOrderStatusService,
         private AuditLogger $audit,
+        private OrderDocumentService $documents,
     ) {}
 
     /**
@@ -76,8 +79,12 @@ class PurchaseOrderController extends Controller
     {
         $this->authorize('view', $purchaseOrder);
 
+        $purchaseOrder->load(self::RELATIONS);
+        $covers = ProductImages::covers($purchaseOrder->items->pluck('product_id'));
+        $purchaseOrder->items->each(fn ($item) => $item->setAttribute('image', $covers[$item->product_id]['thumb'] ?? null));
+
         return response()->json([
-            'purchase_order' => $purchaseOrder->load(self::RELATIONS),
+            'purchase_order' => $purchaseOrder,
         ]);
     }
 
@@ -124,6 +131,11 @@ class PurchaseOrderController extends Controller
             $purchaseOrder,
             ['from' => $from, 'to' => $purchaseOrder->status],
         );
+
+        // The order document is issued when the supplier confirms the order.
+        if ($action === 'confirm') {
+            $this->documents->issue($purchaseOrder, 'confirmed', request()->user());
+        }
 
         return response()->json([
             'message' => $message,

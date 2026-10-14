@@ -64,5 +64,19 @@ class AppServiceProvider extends ServiceProvider
         // Writes that create marketplace records.
         RateLimiter::for('marketplace-writes', fn (Request $request) => Limit::perMinute(60)
             ->by($request->user()?->id ?: $request->ip()));
+
+        // Type-ahead fires on every keystroke (the client debounces).
+        RateLimiter::for('catalog-suggest', fn (Request $request) => Limit::perMinute(90)
+            ->by('suggest:'.($request->user()?->id ?: $request->ip())));
+
+        // Photo uploads are processed in the request: keep them modest.
+        RateLimiter::for('uploads', fn (Request $request) => [
+            Limit::perMinute(20)->by('uploads:'.($request->user()?->id ?: $request->ip())),
+            Limit::perHour(200)->by('uploads-hour:'.($request->user()?->id ?: $request->ip())),
+        ]);
+
+        // PDF rendering is CPU-bound.
+        RateLimiter::for('documents', fn (Request $request) => Limit::perMinute(20)
+            ->by('documents:'.($request->user()?->id ?: $request->ip())));
     }
 }

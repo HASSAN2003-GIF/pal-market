@@ -18,6 +18,7 @@ class PurchaseOrderStatusService
 
         $purchaseOrder->update([
             'status' => 'confirmed',
+            'confirmed_at' => now(),
         ]);
 
         return $purchaseOrder->refresh();

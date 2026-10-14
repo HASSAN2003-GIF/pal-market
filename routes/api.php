@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminBuyerController;
 use App\Http\Controllers\Api\AdminCatalogController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\AdminMarketplaceController;
+use App\Http\Controllers\Api\AdminProductProposalController;
 use App\Http\Controllers\Api\AdminSupplierController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
@@ -11,8 +12,11 @@ use App\Http\Controllers\Api\BuyerRequestController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MarketRequestController;
+use App\Http\Controllers\Api\OrderDocumentController;
 use App\Http\Controllers\Api\PreferencesController;
 use App\Http\Controllers\Api\ProductCatalogController;
+use App\Http\Controllers\Api\ProductImageController;
+use App\Http\Controllers\Api\ProductProposalController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\SupplierInventoryController;
 use App\Http\Controllers\Api\SupplierLocationController;
@@ -40,6 +44,7 @@ Route::middleware('throttle:auth')->group(function () {
 
 Route::get('/catalog/filters', [ProductCatalogController::class, 'filters']);
 Route::get('/products', [ProductCatalogController::class, 'index']);
+Route::get('/products/suggest', [ProductCatalogController::class, 'suggest'])->middleware('throttle:catalog-suggest');
 Route::get('/products/{product}', [ProductCatalogController::class, 'show'])->whereNumber('product');
 
 /*
@@ -88,6 +93,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/purchase-orders/{purchaseOrder}/deliver', [PurchaseOrderController::class, 'deliver']);
         Route::post('/purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete']);
         Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
+        Route::put('/purchase-orders/{purchaseOrder}/document/signatories', [OrderDocumentController::class, 'updateSignatories']);
+
+        // Product proposals and listing photos (suppliers)
+        Route::post('/product-proposals', [ProductProposalController::class, 'store']);
+        Route::delete('/supplier-products/{supplierProduct}/images/{image}', [ProductImageController::class, 'destroyForListing'])->scopeBindings();
+        Route::post('/supplier-products/{supplierProduct}/images/{image}/primary', [ProductImageController::class, 'primaryForListing'])->scopeBindings();
     });
 
     // Market feed (suppliers)
@@ -99,6 +110,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
     Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show']);
+    Route::get('/purchase-orders/{purchaseOrder}/document', [OrderDocumentController::class, 'show']);
+    Route::get('/purchase-orders/{purchaseOrder}/document/pdf', [OrderDocumentController::class, 'download'])->middleware('throttle:documents');
+
+    Route::get('/product-proposals', [ProductProposalController::class, 'index']);
+    Route::post('/supplier-products/{supplierProduct}/images', [ProductImageController::class, 'storeForListing'])->middleware('throttle:uploads');
 
     // Supplier catalog, stock, prices and locations
     Route::apiResource('supplier-products', SupplierProductController::class);
@@ -138,6 +154,12 @@ Route::middleware(['auth:sanctum', 'active', 'admin'])->prefix('admin')->group(f
     Route::get('/catalog/products', [AdminCatalogController::class, 'products']);
     Route::post('/catalog/products', [AdminCatalogController::class, 'storeProduct']);
     Route::patch('/catalog/products/{product}', [AdminCatalogController::class, 'updateProduct']);
+    Route::post('/catalog/products/{product}/images', [ProductImageController::class, 'storeForProduct'])->middleware('throttle:uploads');
+    Route::post('/catalog/products/{product}/images/{image}/primary', [ProductImageController::class, 'primaryForProduct'])->scopeBindings();
+    Route::delete('/catalog/products/{product}/images/{image}', [ProductImageController::class, 'destroyForProduct'])->scopeBindings();
+    Route::get('/product-proposals', [AdminProductProposalController::class, 'index']);
+    Route::post('/product-proposals/{proposal}/approve', [AdminProductProposalController::class, 'approve']);
+    Route::post('/product-proposals/{proposal}/reject', [AdminProductProposalController::class, 'reject']);
     Route::get('/catalog/taxonomy', [AdminCatalogController::class, 'categories']);
     Route::post('/catalog/categories', [AdminCatalogController::class, 'storeCategory']);
     Route::patch('/catalog/categories/{category}', [AdminCatalogController::class, 'updateCategory']);

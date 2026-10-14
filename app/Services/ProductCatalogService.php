@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\SupplierPrice;
-use App\Support\Paginated;
+use App\Support\ProductImages;
 use App\Support\Regions;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -12,6 +12,13 @@ use Illuminate\Support\Collection;
 
 class ProductCatalogService
 {
+    /**
+     * How the last list() search matched, for the response (see ProductSearch).
+     */
+    public ?array $lastSearch = null;
+
+    public function __construct(private ProductSearch $productSearch) {}
+
     public function list(array $filters = []): LengthAwarePaginator
     {
         $perPage = min(
@@ -53,14 +60,11 @@ class ProductCatalogService
             ])
             ->where('is_active', true);
 
-        if (! empty($filters['search'])) {
-            $search = Paginated::like($filters['search']);
+        $this->lastSearch = null;
 
-            $query->where(function ($query) use ($search) {
-                $query
-                    ->where('name', 'like', $search)
-                    ->orWhere('description', 'like', $search);
-            });
+        if (is_string($filters['search'] ?? null) && trim($filters['search']) !== '') {
+            $this->lastSearch = $this->productSearch->search(mb_substr($filters['search'], 0, 100));
+            $query->whereIn('products.id', $this->lastSearch['ids'] ?: [0]);
         }
 
         if (! empty($filters['category_id'])) {
@@ -86,15 +90,37 @@ class ProductCatalogService
             'price_asc' => $query->orderByRaw('from_price is null')->orderBy('from_price'),
             'price_desc' => $query->orderByRaw('from_price is null')->orderByDesc('from_price'),
             'name' => null,
-            // Default: products stocked in the person's region first.
-            default => $region ? $query->orderByDesc('local_offers_count') : null,
+            // Default: best search match first, then products stocked in the
+            // person's region.
+            default => $this->orderByRelevance($query, $region),
         };
 
-        return $query
+        $page = $query
             ->orderBy('name')
             ->orderBy('id')
             ->paginate($perPage)
             ->withQueryString();
+
+        $covers = ProductImages::covers(collect($page->items())->pluck('id'));
+        foreach ($page->items() as $product) {
+            $product->setAttribute('image', $covers[$product->id] ?? null);
+        }
+
+        return $page;
+    }
+
+    private function orderByRelevance($query, ?string $region): void
+    {
+        $ids = $this->lastSearch['ids'] ?? [];
+
+        if ($ids !== []) {
+            $cases = collect($ids)->map(fn ($id, $rank) => 'when '.((int) $id).' then '.((int) $rank))->implode(' ');
+            $query->orderByRaw("case products.id {$cases} else ".count($ids).' end');
+        }
+
+        if ($region) {
+            $query->orderByDesc('local_offers_count');
+        }
     }
 
     public function find(int $productId): Product
@@ -103,6 +129,7 @@ class ProductCatalogService
             ->with([
                 'category',
                 'brand',
+                'images',
                 'supplierProducts' => function ($query) {
                     $query
                         ->where('is_active', true)
@@ -111,6 +138,7 @@ class ProductCatalogService
                         })
                         ->with([
                             'supplier',
+                            'images',
                             'prices' => function ($query) {
                                 $query
                                     ->where('is_active', true)
@@ -184,6 +212,7 @@ class ProductCatalogService
                             ->business_name,
                     ],
                     'supplier_sku' => $supplierProduct->supplier_sku,
+                    'images' => $supplierProduct->images->map(fn ($image) => ProductImages::present($image, 'supplier'))->values(),
                     'price' => $price->price,
                     'currency' => $price->currency,
                     'unit' => $price->unit,

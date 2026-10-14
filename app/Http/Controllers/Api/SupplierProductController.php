@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupplierProduct;
+use App\Services\ProductImageService;
 use App\Services\SupplierProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class SupplierProductController extends Controller
                 'product.brand',
                 'inventories.supplierLocation',
                 'prices',
+                'images',
             ])
             ->latest()
             ->get();
@@ -81,6 +83,7 @@ class SupplierProductController extends Controller
                 'product.brand',
                 'inventories.supplierLocation',
                 'prices',
+                'images',
             ]),
         ]);
     }
@@ -114,10 +117,13 @@ class SupplierProductController extends Controller
     }
 
     public function destroy(
-        SupplierProduct $supplierProduct
+        SupplierProduct $supplierProduct,
+        ProductImageService $images,
     ): JsonResponse {
         $this->authorize('delete', $supplierProduct);
 
+        // Remove the stored photo files, not just their rows.
+        $supplierProduct->images->each(fn ($image) => $images->delete($image));
         $supplierProduct->delete();
 
         return response()->json([
