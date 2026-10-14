@@ -31,7 +31,7 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
-        sync: false       # the public Vercel address, e.g. https://pal-market.vercel.app
+        value: https://palmarket-eta.vercel.app   # the public Vercel address; change when a custom domain is added
       - key: ADMIN_EMAIL
         sync: false       # your email; the first administrator account
       - key: ADMIN_REQUIRE_2FA
