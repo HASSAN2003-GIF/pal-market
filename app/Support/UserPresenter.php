@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\TwoFactorService;
 
 /**
  * The single shape in which the API exposes the signed-in user, so the
@@ -26,6 +27,9 @@ class UserPresenter
             'created_at' => $user->created_at?->toIso8601String(),
             'locale' => $user->locale,
             'region' => $user->region,
+            'two_factor_enabled' => $user->hasTwoFactorEnabled(),
+            // Administrators must turn on two-step sign-in before using the console.
+            'two_factor_required' => $user->isAdmin() && TwoFactorService::requiredForAdmins(),
             'buyer_profile' => $user->buyerProfile ? [
                 'id' => $user->buyerProfile->id,
                 'business_name' => $user->buyerProfile->business_name,

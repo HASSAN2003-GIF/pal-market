@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AccountProvisioner;
 use App\Services\AuditLogger;
+use App\Services\TwoFactorService;
 use App\Support\UserPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -106,6 +107,16 @@ class GoogleAuthController extends Controller
         if (! $user || $user->isSuspended()) {
             throw ValidationException::withMessages([
                 'code' => __('This sign-in link has expired. Please sign in with Google again.'),
+            ]);
+        }
+
+        // Google proves the email address; an authenticator code is still
+        // required when two-step sign-in is on.
+        if ($user->hasTwoFactorEnabled()) {
+            return response()->json([
+                'two_factor_required' => true,
+                'challenge' => app(TwoFactorService::class)->createChallenge($user),
+                'message' => __('Enter the 6-digit code from your authenticator app.'),
             ]);
         }
 

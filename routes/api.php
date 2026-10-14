@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\SupplierLocationController;
 use App\Http\Controllers\Api\SupplierPriceController;
 use App\Http\Controllers\Api\SupplierProductController;
 use App\Http\Controllers\Api\SupplierQuotationController;
+use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\WorkspaceSummaryController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,7 @@ Route::middleware('throttle:auth')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/auth/google/exchange', [GoogleAuthController::class, 'exchange']);
+    Route::post('/login/two-factor', [AuthController::class, 'twoFactorLogin']);
 });
 
 Route::get('/catalog/filters', [ProductCatalogController::class, 'filters']);
@@ -58,6 +60,13 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::put('/me', [AuthController::class, 'updateProfile']);
     Route::put('/me/password', [AuthController::class, 'updatePassword']);
     Route::put('/me/preferences', [PreferencesController::class, 'update']);
+    Route::get('/me/two-factor', [TwoFactorController::class, 'show']);
+    Route::middleware('throttle:auth')->group(function () {
+        Route::post('/me/two-factor', [TwoFactorController::class, 'start']);
+        Route::post('/me/two-factor/confirm', [TwoFactorController::class, 'confirm']);
+        Route::post('/me/two-factor/recovery-codes', [TwoFactorController::class, 'regenerate']);
+        Route::delete('/me/two-factor', [TwoFactorController::class, 'disable']);
+    });
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/workspace/summary', WorkspaceSummaryController::class);
 

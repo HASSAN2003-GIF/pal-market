@@ -29,6 +29,8 @@ use Laravel\Sanctum\HasApiTokens;
     'password',
     'remember_token',
     'google_id',
+    'two_factor_secret',
+    'two_factor_recovery_codes',
 ])]
 class User extends Authenticatable implements HasLocalePreference
 {
@@ -47,6 +49,9 @@ class User extends Authenticatable implements HasLocalePreference
             'suspended_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -64,6 +69,11 @@ class User extends Authenticatable implements HasLocalePreference
     public function buyerProfile(): HasOne
     {
         return $this->hasOne(BuyerProfile::class);
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
     }
 
     public function isAdmin(): bool

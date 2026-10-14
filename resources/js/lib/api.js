@@ -120,6 +120,14 @@ export const api = {
     // Account
     register: (payload) => post('/register', payload),
     login: (payload) => post('/login', payload),
+    twoFactorLogin: (challenge, payload) => post('/login/two-factor', { challenge, ...payload }),
+    twoFactor: {
+        status: () => request('/me/two-factor'),
+        start: (password) => post('/me/two-factor', { password }),
+        confirm: (code) => post('/me/two-factor/confirm', { code }),
+        regenerate: (password) => post('/me/two-factor/recovery-codes', { password }),
+        disable: (password, code) => request('/me/two-factor', { method: 'DELETE', body: { password, code } }),
+    },
     logout: () => post('/logout'),
     me: () => request('/me'),
     updateProfile: (payload) => put('/me', payload),

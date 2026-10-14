@@ -30,7 +30,11 @@ export default function GoogleAuthSuccessPage() {
         }
 
         completeGoogleSignIn(code)
-            .then((user) => navigate(homePathFor(user), { replace: true }))
+            .then((result) =>
+                result?.twoFactorChallenge
+                    ? navigate('/login', { replace: true, state: { twoFactorChallenge: result.twoFactorChallenge } })
+                    : navigate(homePathFor(result), { replace: true }),
+            )
             .catch((err) => fail(err.fieldErrors?.code ?? err.message));
     }, [completeGoogleSignIn, navigate, searchParams]);
 

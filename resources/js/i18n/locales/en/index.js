@@ -20,5 +20,6 @@ import proposals from './proposals';
 import search from './search';
 import status from './status';
 import supplier from './supplier';
+import twoFactor from './twoFactor';
 
-export default flatten({ account, admin, auth, buyer, common, discover, help, home, layout, location, materials, nav, orderDoc, orders, photos, product, proposals, search, status, supplier });
+export default flatten({ account, admin, auth, buyer, common, discover, help, home, layout, location, materials, nav, orderDoc, orders, photos, product, proposals, search, status, supplier, twoFactor });

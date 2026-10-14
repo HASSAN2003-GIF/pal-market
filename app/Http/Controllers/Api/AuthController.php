@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AccountProvisioner;
 use App\Services\AuditLogger;
+use App\Services\TwoFactorService;
 use App\Support\UserPresenter;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class AuthController extends Controller
     public function __construct(
         private AccountProvisioner $provisioner,
         private AuditLogger $audit,
+        private TwoFactorService $twoFactor,
     ) {}
 
     public function register(Request $request): JsonResponse
@@ -102,8 +104,75 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Password was right; with two-step sign-in a code is still needed.
+        if ($user->hasTwoFactorEnabled()) {
+            return response()->json([
+                'two_factor_required' => true,
+                'challenge' => $this->twoFactor->createChallenge($user),
+                'message' => __('Enter the 6-digit code from your authenticator app.'),
+            ]);
+        }
+
+        return $this->completeLogin($user);
+    }
+
+    /**
+     * Second step of sign-in: a code from the authenticator app, or one of
+     * the backup codes.
+     */
+    public function twoFactorLogin(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'challenge' => ['required', 'string', 'size:64'],
+            'code' => ['nullable', 'string', 'max:20', 'required_without:recovery_code'],
+            'recovery_code' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $user = $this->twoFactor->challengeUser($validated['challenge']);
+
+        if (! $user || ! $user->hasTwoFactorEnabled()) {
+            throw ValidationException::withMessages([
+                'code' => __('This sign-in has expired. Please sign in again.'),
+            ]);
+        }
+
+        $usedRecovery = ! empty($validated['recovery_code']);
+        $valid = $usedRecovery
+            ? $this->twoFactor->useRecoveryCode($user, $validated['recovery_code'])
+            : $this->twoFactor->verifyCode($user, $user->two_factor_secret, (string) $validated['code']);
+
+        if (! $valid) {
+            $this->twoFactor->failChallenge($validated['challenge']);
+            logger()->notice('Failed two-step sign-in code', ['user_id' => $user->id, 'ip' => $request->ip()]);
+
+            throw ValidationException::withMessages([
+                $usedRecovery ? 'recovery_code' : 'code' => __('That code is not correct. Check the time on your phone and try again.'),
+            ]);
+        }
+
+        $this->twoFactor->clearChallenge($validated['challenge']);
+
+        if ($user->isSuspended()) {
+            return response()->json([
+                'message' => __('This account has been suspended. Please contact PAL Market support.'),
+            ], 403);
+        }
+
+        if ($usedRecovery) {
+            $this->audit->record('account.two_factor_recovery_used', 'Signed in with a backup code ('.$this->twoFactor->remainingRecoveryCodes($user).' left).', $user, actor: $user);
+        }
+
+        return $this->completeLogin($user);
+    }
+
+    private function completeLogin(User $user): JsonResponse
+    {
         $this->provisioner->ensureProfile($user);
         $user->forceFill(['last_login_at' => now()])->save();
+
+        if ($user->isAdmin()) {
+            $this->audit->record('admin.signed_in', 'Administrator signed in.', $user, actor: $user);
+        }
 
         return response()->json([
             'message' => __('Login successful.'),

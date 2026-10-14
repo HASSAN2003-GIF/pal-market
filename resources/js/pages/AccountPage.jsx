@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { AreaButton, LanguageSwitch } from '../components/PreferenceControls';
+import TwoFactorSetup from '../components/TwoFactorSetup';
 import { Button, FormError, PageHeader, Panel, StatusBadge, TextAreaField, TextField, cx, useToast } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../i18n';
@@ -20,6 +21,7 @@ export default function AccountPage() {
                 <div className="space-y-6">
                     <PreferencesPanel />
                     <PasswordForm />
+                    <TwoFactorSetup />
                 </div>
             </div>
         </>

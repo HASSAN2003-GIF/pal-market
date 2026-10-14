@@ -54,6 +54,8 @@ export function AuthProvider({ children }) {
     }, [clearSession, loadUser]);
 
     const startSession = useCallback((response) => {
+        // Password accepted, authenticator code still needed: no token yet.
+        if (response.two_factor_required) return { twoFactorChallenge: response.challenge };
         setToken(response.token);
         setUser(response.user);
         setSessionNotice(null);
@@ -70,6 +72,7 @@ export function AuthProvider({ children }) {
             login: async (credentials) => startSession(await api.login(credentials)),
             register: async (payload) => startSession(await api.register(payload)),
             completeGoogleSignIn: async (code) => startSession(await api.exchangeGoogleCode(code)),
+            verifyTwoFactor: async (challenge, payload) => startSession(await api.twoFactorLogin(challenge, payload)),
             refreshUser: loadUser,
             setUser,
             logout: async () => {
