@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: PHP tests and style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5' # matches the Sail runtime in compose.yaml
+          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, gd, exif
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run test suite (SQLite in memory)
+        run: php artisan test
+
+      - name: Check code style of changed PHP files
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }} -- '*.php')
+          if [ -n "$FILES" ]; then ./vendor/bin/pint --test $FILES; fi
+
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction
+
+  postgres:
+    name: PHP tests on PostgreSQL (production database)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: pal_test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: pal_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: testpass
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4' # the version in the production Dockerfile
+          extensions: mbstring, pdo_pgsql, intl, gd, exif
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run test suite
+        run: php artisan test
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Check English and Kiswahili interface text
+        run: npm run check:i18n
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Audit npm dependencies (production)
+        run: npm audit --omit=dev --audit-level=high

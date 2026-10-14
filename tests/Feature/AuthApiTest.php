@@ -45,7 +45,12 @@ class AuthApiTest extends TestCase
 
         $user = User::where('email', 'hassan@example.com')->first();
 
-        $this->assertNotNull($user->email_verified_at);
+        // Registration does not verify the email address, so it must not be
+        // recorded as verified (that flag gates linking Google sign-in to an
+        // existing account). Sign-in works regardless: see
+        // test_user_can_login_with_email_immediately_after_registration.
+        $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->buyerProfile, 'Registration must create the buyer profile.');
     }
 
     public function test_registration_does_not_require_phone(): void

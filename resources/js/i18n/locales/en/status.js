@@ -1,0 +1,40 @@
+export default {
+    'request.draft': 'Not sent yet',
+    'request.draftHint': 'Only you can see this request.',
+    'request.open': 'Waiting for offers',
+    'request.openHint': 'Approved sellers can send you price offers.',
+    'request.closed': 'Offer accepted',
+    'request.closedHint': 'You accepted a price offer.',
+    'request.cancelled': 'Cancelled',
+    'request.cancelledHint': 'You took this request back.',
+    'request.expired': 'Time ran out',
+    'request.expiredHint': 'The time for offers ended.',
+
+    'quotation.draft': 'Not sent yet',
+    'quotation.submitted': 'Waiting for the buyer',
+    'quotation.accepted': 'Accepted',
+    'quotation.rejected': 'Declined',
+    'quotation.expired': 'Time ran out',
+    'quotation.cancelled': 'Withdrawn',
+
+    'order.pending': 'Waiting for the seller',
+    'order.confirmed': 'Confirmed',
+    'order.processing': 'Being prepared',
+    'order.shipped': 'On the way',
+    'order.delivered': 'Delivered',
+    'order.completed': 'Completed',
+    'order.cancelled': 'Cancelled',
+
+    'supplier.pending': 'Waiting for approval',
+    'supplier.approved': 'Approved',
+    'supplier.suspended': 'Suspended',
+
+    'buyer.active': 'Active',
+    'buyer.suspended': 'Suspended',
+
+    'action.confirm': 'Confirm order',
+    'action.process': 'Start preparing',
+    'action.ship': 'Mark as sent',
+    'action.deliver': 'I received it',
+    'action.complete': 'Finish order',
+};

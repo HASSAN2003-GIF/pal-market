@@ -90,7 +90,7 @@ class SupplierPriceController extends Controller
             );
 
             return response()->json([
-                'message' => 'Supplier price created successfully.',
+                'message' => __('Supplier price created successfully.'),
                 'supplier_price' => $supplierPrice->load([
                     'supplierProduct.product.category',
                     'supplierProduct.product.brand',
@@ -98,7 +98,7 @@ class SupplierPriceController extends Controller
             ], 201);
         } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Unable to create supplier price.',
+                'message' => __('Unable to create supplier price.'),
                 'errors' => $exception->errors(),
             ], 422);
         }
@@ -171,7 +171,7 @@ class SupplierPriceController extends Controller
             );
 
             return response()->json([
-                'message' => 'Supplier price updated successfully.',
+                'message' => __('Supplier price updated successfully.'),
                 'supplier_price' => $supplierPrice->load([
                     'supplierProduct.product.category',
                     'supplierProduct.product.brand',
@@ -179,7 +179,7 @@ class SupplierPriceController extends Controller
             ]);
         } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Unable to update supplier price.',
+                'message' => __('Unable to update supplier price.'),
                 'errors' => $exception->errors(),
             ], 422);
         }
@@ -192,7 +192,7 @@ class SupplierPriceController extends Controller
         $supplierPrice->delete();
 
         return response()->json([
-            'message' => 'Supplier price deleted successfully.',
+            'message' => __('Supplier price deleted successfully.'),
         ]);
     }
 }

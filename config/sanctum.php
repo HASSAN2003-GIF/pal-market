@@ -50,7 +50,9 @@ return [
     |
     */
 
-    'expiration' => null,
+    // API tokens expire after 7 days by default (previously never). Expired
+    // tokens are pruned daily by the scheduler (routes/console.php).
+    'expiration' => (int) env('SANCTUM_TOKEN_EXPIRATION', 60 * 24 * 7) ?: null,
 
     /*
     |--------------------------------------------------------------------------

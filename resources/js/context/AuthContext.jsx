@@ -1,93 +1,98 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import {
-    getCurrentUser,
-    loginUser,
-    logoutUser,
-    registerUser,
-} from '../lib/api';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api, getToken, onUnauthorized, setToken } from '../lib/api';
 
 const AuthContext = createContext(null);
 
-const TOKEN_KEY = 'pal_market_token';
-
-export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    async function loadUser() {
-        const token = localStorage.getItem(TOKEN_KEY);
-
-        if (!token) {
-            setUser(null);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const response = await getCurrentUser();
-            setUser(response.user);
-        } catch {
-            localStorage.removeItem(TOKEN_KEY);
-            setUser(null);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        loadUser();
-    }, []);
-
-    async function login(credentials) {
-        const response = await loginUser(credentials);
-
-        localStorage.setItem(TOKEN_KEY, response.token);
-        setUser(response.user);
-
-        return response;
-    }
-
-    async function register(payload) {
-    const response = await registerUser(payload);
-
-    localStorage.setItem(TOKEN_KEY, response.token);
-    setUser(response.user);
-
-    return response;
+/** Where each role lands after signing in. */
+export function homePathFor(user) {
+    if (!user) return '/login';
+    if (user.role === 'admin') return '/admin';
+    if (user.role === 'supplier') return '/supplier';
+    return '/buyer';
 }
 
-    async function logout() {
-        try {
-            await logoutUser();
-        } finally {
-            localStorage.removeItem(TOKEN_KEY);
+export function AuthProvider({ children }) {
+    const queryClient = useQueryClient();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [sessionNotice, setSessionNotice] = useState(null);
+
+    const clearSession = useCallback(
+        (reason) => {
+            setToken(null);
             setUser(null);
-        }
-    }
-
-    const value = {
-        user,
-        loading,
-        isAuthenticated: Boolean(user),
-        login,
-        register,
-        logout,
-        loadUser,
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
+            queryClient.clear();
+            // Dictionary keys; the layouts show them in the current language.
+            if (reason === 'expired') setSessionNotice('auth.sessionEnded');
+            if (reason === 'suspended') setSessionNotice('auth.accountSuspended');
+        },
+        [queryClient],
     );
+
+    const loadUser = useCallback(async () => {
+        if (!getToken()) {
+            setUser(null);
+            setLoading(false);
+            return null;
+        }
+        try {
+            const { user: current } = await api.me();
+            setUser(current);
+            return current;
+        } catch {
+            clearSession();
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [clearSession]);
+
+    useEffect(() => {
+        onUnauthorized(clearSession);
+        loadUser();
+    }, [clearSession, loadUser]);
+
+    const startSession = useCallback((response) => {
+        // Password accepted, authenticator code still needed: no token yet.
+        if (response.two_factor_required) return { twoFactorChallenge: response.challenge };
+        setToken(response.token);
+        setUser(response.user);
+        setSessionNotice(null);
+        return response.user;
+    }, []);
+
+    const value = useMemo(
+        () => ({
+            user,
+            loading,
+            isAuthenticated: Boolean(user),
+            sessionNotice,
+            dismissSessionNotice: () => setSessionNotice(null),
+            login: async (credentials) => startSession(await api.login(credentials)),
+            register: async (payload) => startSession(await api.register(payload)),
+            completeGoogleSignIn: async (code) => startSession(await api.exchangeGoogleCode(code)),
+            verifyTwoFactor: async (challenge, payload) => startSession(await api.twoFactorLogin(challenge, payload)),
+            refreshUser: loadUser,
+            setUser,
+            logout: async () => {
+                try {
+                    await api.logout();
+                } catch {
+                    // Token may already be invalid; clear locally regardless.
+                } finally {
+                    clearSession();
+                }
+            },
+        }),
+        [user, loading, sessionNotice, startSession, loadUser, clearSession],
+    );
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
     const context = useContext(AuthContext);
-
-    if (!context) {
-        throw new Error('useAuth must be used inside AuthProvider.');
-    }
-
+    if (!context) throw new Error('useAuth must be used inside AuthProvider.');
     return context;
 }

@@ -22,7 +22,7 @@ class VerificationService
     {
         if (! in_array($channel, ['email', 'phone'], true)) {
             throw ValidationException::withMessages([
-                'channel' => 'The verification channel must be email or phone.',
+                'channel' => __('The verification channel must be email or phone.'),
             ]);
         }
 
@@ -95,13 +95,13 @@ class VerificationService
 
         if (! $verification) {
             throw ValidationException::withMessages([
-                'code' => 'No active verification code was found.',
+                'code' => __('No active verification code was found.'),
             ]);
         }
 
         if ($verification->isExpired()) {
             throw ValidationException::withMessages([
-                'code' => 'This verification code has expired.',
+                'code' => __('This verification code has expired.'),
             ]);
         }
 
@@ -116,7 +116,7 @@ class VerificationService
             $verification->incrementAttempts();
 
             throw ValidationException::withMessages([
-                'code' => 'The verification code is incorrect.',
+                'code' => __('The verification code is incorrect.'),
             ]);
         }
 

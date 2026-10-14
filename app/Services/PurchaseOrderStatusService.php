@@ -18,6 +18,7 @@ class PurchaseOrderStatusService
 
         $purchaseOrder->update([
             'status' => 'confirmed',
+            'confirmed_at' => now(),
         ]);
 
         return $purchaseOrder->refresh();
@@ -96,7 +97,7 @@ class PurchaseOrderStatusService
             'processing',
         ], true)) {
             throw ValidationException::withMessages([
-                'status' => 'Only pending, confirmed, or processing purchase orders can be cancelled.',
+                'status' => __('Only pending, confirmed, or processing purchase orders can be cancelled.'),
             ]);
         }
 

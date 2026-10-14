@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ProductSearch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -19,6 +20,11 @@ class Brand extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => ProductSearch::flush());
     }
 
     public function products(): HasMany

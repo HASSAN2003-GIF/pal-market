@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupplierProduct;
+use App\Services\ProductImageService;
 use App\Services\SupplierProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class SupplierProductController extends Controller
                 'product.brand',
                 'inventories.supplierLocation',
                 'prices',
+                'images',
             ])
             ->latest()
             ->get();
@@ -56,7 +58,7 @@ class SupplierProductController extends Controller
             );
 
             return response()->json([
-                'message' => 'Product added to supplier catalog successfully.',
+                'message' => __('Product added to supplier catalog successfully.'),
                 'supplier_product' => $supplierProduct->load([
                     'product.category',
                     'product.brand',
@@ -64,7 +66,7 @@ class SupplierProductController extends Controller
             ], 201);
         } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Unable to add product.',
+                'message' => __('Unable to add product.'),
                 'errors' => $exception->errors(),
             ], 422);
         }
@@ -81,6 +83,7 @@ class SupplierProductController extends Controller
                 'product.brand',
                 'inventories.supplierLocation',
                 'prices',
+                'images',
             ]),
         ]);
     }
@@ -105,7 +108,7 @@ class SupplierProductController extends Controller
         );
 
         return response()->json([
-            'message' => 'Supplier product updated successfully.',
+            'message' => __('Supplier product updated successfully.'),
             'supplier_product' => $supplierProduct->load([
                 'product.category',
                 'product.brand',
@@ -114,14 +117,17 @@ class SupplierProductController extends Controller
     }
 
     public function destroy(
-        SupplierProduct $supplierProduct
+        SupplierProduct $supplierProduct,
+        ProductImageService $images,
     ): JsonResponse {
         $this->authorize('delete', $supplierProduct);
 
+        // Remove the stored photo files, not just their rows.
+        $supplierProduct->images->each(fn ($image) => $images->delete($image));
         $supplierProduct->delete();
 
         return response()->json([
-            'message' => 'Supplier product removed successfully.',
+            'message' => __('Supplier product removed successfully.'),
         ]);
     }
 }

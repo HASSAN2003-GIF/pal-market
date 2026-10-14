@@ -34,7 +34,7 @@ class SupplierPriceService
 
         if (! $supplierProduct->is_active) {
             throw ValidationException::withMessages([
-                'supplier_product_id' => 'The selected supplier product is inactive.',
+                'supplier_product_id' => __('The selected supplier product is inactive.'),
             ]);
         }
 
@@ -54,7 +54,7 @@ class SupplierPriceService
             $until
         )) {
             throw ValidationException::withMessages([
-                'effective_from' => 'The active price period overlaps an existing active price.',
+                'effective_from' => __('The active price period overlaps an existing active price.'),
             ]);
         }
 
@@ -100,7 +100,7 @@ class SupplierPriceService
             $supplierPrice->id
         )) {
             throw ValidationException::withMessages([
-                'effective_from' => 'The active price period overlaps an existing active price.',
+                'effective_from' => __('The active price period overlaps an existing active price.'),
             ]);
         }
 
@@ -126,7 +126,7 @@ class SupplierPriceService
             $effectiveUntil->lte($effectiveFrom)
         ) {
             throw ValidationException::withMessages([
-                'effective_until' => 'The effective until date must be after the effective from date.',
+                'effective_until' => __('The effective until date must be after the effective from date.'),
             ]);
         }
     }

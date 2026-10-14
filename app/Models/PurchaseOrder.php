@@ -18,6 +18,7 @@ class PurchaseOrder extends Model
         'total_amount',
         'currency',
         'status',
+        'confirmed_at',
         'notes',
     ];
 
@@ -25,7 +26,13 @@ class PurchaseOrder extends Model
         'subtotal' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'confirmed_at' => 'datetime',
     ];
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(OrderDocument::class)->orderByDesc('version');
+    }
 
     public function buyerProfile(): BelongsTo
     {

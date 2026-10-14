@@ -61,7 +61,7 @@ class SupplierInventoryController extends Controller
             );
 
             return response()->json([
-                'message' => 'Supplier inventory created successfully.',
+                'message' => __('Supplier inventory created successfully.'),
                 'inventory' => $inventory->load([
                     'supplierProduct.product.category',
                     'supplierProduct.product.brand',
@@ -70,7 +70,7 @@ class SupplierInventoryController extends Controller
             ], 201);
         } catch (ValidationException $exception) {
             return response()->json([
-                'message' => 'Unable to create supplier inventory.',
+                'message' => __('Unable to create supplier inventory.'),
                 'errors' => $exception->errors(),
             ], 422);
         }
@@ -110,7 +110,7 @@ class SupplierInventoryController extends Controller
         );
 
         return response()->json([
-            'message' => 'Supplier inventory updated successfully.',
+            'message' => __('Supplier inventory updated successfully.'),
             'inventory' => $inventory->load([
                 'supplierProduct.product.category',
                 'supplierProduct.product.brand',
@@ -127,7 +127,7 @@ class SupplierInventoryController extends Controller
         $supplierInventory->delete();
 
         return response()->json([
-            'message' => 'Supplier inventory deleted successfully.',
+            'message' => __('Supplier inventory deleted successfully.'),
         ]);
     }
 }

@@ -17,6 +17,7 @@ use Tests\TestCase;
 class BuyerRequestTest extends TestCase
 {
     use RefreshDatabase;
+    use \Tests\Concerns\BuildsMarketplace;
 
     public function test_buyer_can_create_a_request_with_products(): void
     {
@@ -208,6 +209,13 @@ class BuyerRequestTest extends TestCase
             'title' => 'Cement requirement',
             'description' => 'Need cement.',
             'status' => 'draft',
+        ]);
+
+        // Only requests with at least one item can be published.
+        $request->items()->create([
+            'product_id' => $this->makeProduct()->id,
+            'quantity' => 10,
+            'unit' => 'bag',
         ]);
 
         $request = app(BuyerRequestStatusService::class)

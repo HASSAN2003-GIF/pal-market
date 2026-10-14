@@ -17,7 +17,7 @@ class SupplierProductService
     ): SupplierProduct {
         if ($supplier->status !== 'approved') {
             throw ValidationException::withMessages([
-                'supplier_id' => 'Only approved suppliers can register products.',
+                'supplier_id' => __('Only approved suppliers can register products.'),
             ]);
         }
 
@@ -28,7 +28,7 @@ class SupplierProductService
 
         if (! $product) {
             throw ValidationException::withMessages([
-                'product_id' => 'The selected product is not available.',
+                'product_id' => __('The selected product is not available.'),
             ]);
         }
 
@@ -38,7 +38,7 @@ class SupplierProductService
 
         if ($alreadyExists) {
             throw ValidationException::withMessages([
-                'product_id' => 'This product is already registered by this supplier.',
+                'product_id' => __('This product is already registered by this supplier.'),
             ]);
         }
 

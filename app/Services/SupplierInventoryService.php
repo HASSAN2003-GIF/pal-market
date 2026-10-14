@@ -31,7 +31,7 @@ class SupplierInventoryService
         }
         if (! $supplierProduct->is_active) {
             throw ValidationException::withMessages([
-                'supplier_product_id' => 'The selected supplier product is inactive.',
+                'supplier_product_id' => __('The selected supplier product is inactive.'),
             ]);
         }
 
@@ -48,7 +48,7 @@ class SupplierInventoryService
 
         if ($supplierLocation->status !== 'active') {
             throw ValidationException::withMessages([
-                'supplier_location_id' => 'The selected supplier location is inactive.',
+                'supplier_location_id' => __('The selected supplier location is inactive.'),
             ]);
         }
 
@@ -59,7 +59,7 @@ class SupplierInventoryService
 
         if ($alreadyExists) {
             throw ValidationException::withMessages([
-                'supplier_location_id' => 'Inventory already exists for this product at this location.',
+                'supplier_location_id' => __('Inventory already exists for this product at this location.'),
             ]);
         }
 

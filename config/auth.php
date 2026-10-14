@@ -112,6 +112,15 @@ return [
     |
     */
 
+    /*
+    | Administrators must use an authenticator app (two-step sign-in) before
+    | the admin console opens. Only switch off for local development.
+    */
+    'admin_two_factor' => (bool) env('ADMIN_REQUIRE_2FA', true),
+
+    // First administrator on hosts without a shell; see pal:bootstrap-admin.
+    'bootstrap_admin_email' => env('ADMIN_EMAIL'),
+
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];

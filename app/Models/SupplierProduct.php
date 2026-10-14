@@ -42,4 +42,9 @@ class SupplierProduct extends Model
     {
         return $this->hasMany(SupplierPrice::class);
     }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id');
+    }
 }

@@ -22,7 +22,7 @@ class SupplierLocationService
     ): SupplierLocation {
         if ($supplier->status !== 'approved') {
             throw ValidationException::withMessages([
-                'supplier_id' => 'Only approved suppliers can create locations.',
+                'supplier_id' => __('Only approved suppliers can create locations.'),
             ]);
         }
 

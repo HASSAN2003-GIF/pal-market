@@ -21,6 +21,7 @@ class ExpireSupplierQuotations extends Command
             ->where('status', 'submitted')
             ->whereNotNull('valid_until')
             ->where('valid_until', '<=', now())
+            ->lazyById()
             ->each(function (SupplierQuotation $quotation) use (
                 $statusService,
                 &$expiredCount
